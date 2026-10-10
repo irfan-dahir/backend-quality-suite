@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "ai-design-suite",
+  "description": "Project-agnostic AI design suite — design-system auditing, documentation scaffolding, copy/brand voice, asset pipeline, and mock-API contract automation.",
+  "owner": {
+    "name": "Irfan Dahir",
+    "url": "https://github.com/irfan-dahir"
+  },
+  "_sourceComment": "Each source is an explicit ./plugins/<name> path rather than a bare name plus metadata.pluginRoot. pluginRoot is a newer marketplace feature: on Claude Code 2.1.211 it makes every install fail with 'This plugin uses a source type your Claude Code version does not support', which reads like the CLI is too old generally when in fact only this one field is unsupported. Explicit paths install correctly on both old and new versions, so they cost nothing and widen compatibility. Verified by installing successfully on 2.1.211 with explicit paths after the pluginRoot form failed on the same version.",
+  "plugins": [
+    {
+      "name": "design-suite",
+      "source": "./plugins/design-suite",
+      "description": "The universal engine: design-token, accessibility, contrast, copy, asset and mock-API audits; documentation scaffolding; screen scaffolding. Reads all project specifics from a .design-suite/ profile in the consuming repo.",
+      "license": "MIT",
+      "category": "design",
+      "tags": ["design-system", "documentation", "audit", "accessibility", "design-tokens"]
+    },
+    {
+      "name": "house-style",
+      "source": "./plugins/house-style",
+      "description": "Org-level conventions layered on top of design-suite: client-readiness reporting, letterhead and Typst styles, PR-process reminders. Internal projects only — client-facing repos should install design-suite alone.",
+      "license": "MIT",
+      "category": "workflow",
+      "tags": ["org", "reporting", "pr-workflow"]
+    }
+  ]
+}

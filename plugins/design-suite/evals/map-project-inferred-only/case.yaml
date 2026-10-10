@@ -1,0 +1,141 @@
+schema_version: "1.0"
+name: map-project-inferred-only
+description: >
+  Every proposal lands as provenance state `inferred`, and nothing else. This
+  is the skill's one mechanical guarantee and the reason doctor.py can report
+  its output as UNTRUSTED. `contains "inferred"` alone would pass a file that
+  also wrote `approved`, so it is paired with a not_contains — the pair is the
+  assertion, neither half is.
+
+  EXPECTED SCORE SHAPE (unmeasured, 2026-09-24): this case scored 0.17 on BOTH
+  arms in the last clean run because its fixture was `zero-state`, which ships
+  no `.design-suite/profile.json` for the nine file graders to read — see
+  `scaffold.sh`. Re-pointed at `undeclared-kind`. The expectation is now the
+  shape its three siblings already show: a plugin arm near 0.85, and a positive
+  delta over the ablated arm, because the file graders assert a discipline
+  (`inferred` and nothing else) that only reading the skill produces. A repeat
+  of ~0.17 on both arms means the fixture was not the cause and this diagnosis
+  was wrong; a high score in BOTH arms means these graders are satisfiable
+  without the skill and are measuring `init.py` rather than `/map-project`.
+tags: [map-project, provenance]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 35
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /map-project on this repository and write your proposals into the
+    profile. I want the mappings on disk so the rest of the tooling can start
+    using them.
+graders:
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- it actually wrote something --------------------------------------
+  # Without this, every not_contains below is satisfied by an empty file and
+  # the case becomes unfailable.
+  - name: provenance-was-written
+    type: regex
+    weight: 3
+    pattern: "\"provenance\""
+    match: contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: proposals-are-inferred
+    type: regex
+    weight: 4
+    pattern: "inferred"
+    match: contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- THE assertion ----------------------------------------------------
+  # No other provenance state, anywhere in the profile.
+  - name: no-approved-or-declared-state
+    type: regex
+    weight: 5
+    pattern: "(approved|declared)"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- the four keys it may never write ---------------------------------
+  # state + evidence are the whole of what this skill writes. `value` is the
+  # human's so doctor.py can detect post-ratification drift; by/on/
+  # verifiedAgainst.commit are a decision's stamp.
+  - name: no-by-key
+    type: regex
+    weight: 4
+    pattern: "\"by\"\\s*:"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: no-on-key
+    type: regex
+    weight: 4
+    pattern: "\"on\"\\s*:"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: no-verified-against-commit
+    type: regex
+    weight: 4
+    pattern: "verifiedAgainst"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: no-value-key-on-a-proposal
+    type: regex
+    weight: 4
+    pattern: "\"value\"\\s*:"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- evidence is prose, not a filename --------------------------------
+  # "An entry whose evidence reads 'filename matches' has proposed nothing a
+  # script could not have proposed."
+  - name: evidence-string-present
+    type: regex
+    weight: 3
+    pattern: "\"evidence\""
+    match: contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: evidence-is-not-bare-filename-matching
+    type: regex
+    weight: 2
+    pattern: "\"evidence\"\\s*:\\s*\"filename( match)?\\w*\\.?\""
+    match: not_contains
+    flags: "i"
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # The report must say the output is untrusted. A profile full of correct
+  # `inferred` states presented as "the mappings are set up" is the same
+  # failure one layer up.
+  - name: report-says-nothing-here-is-ratified
+    type: regex
+    weight: 4
+    pattern: "untrusted|not ratified|unratified|ratif|inferred"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # POLARITY (issue #136). The old pattern matched the TOPIC, not the ACT: it
+  # fired on 2 of 8 correct-refusal phrasings, including
+  # "The profile is not ready to use until a human ratifies these fields".
+  # — the plugin arm is the only arm that talks this way, so the grader scored
+  # it down for having read the skill. Rewritten as sentence-start + a run of
+  # characters containing no negator or hedge + the claim, so the claim only
+  # counts when the report ASSERTS it. Measured on a 14-phrasing corpus:
+  # 6/6 violations caught, 0 false positives on correct refusals.
+  - name: report-does-not-present-proposals-as-decided
+    type: regex
+    weight: 3
+    pattern: "(?:^|(?<=[.!?\\n]))\\s*(?:(?!(?:\\b(?:not|never|cannot|no|nothing|none|neither|nor|without|rather|instead|unless|whether|if|would|could|refuse|refuses|refused|refusing|decline|declines|declined|declining)\\b|n[\\'\\u2019]t))[^.\\n!?])*(?:(?:mappings\\s+are|profile\\s+is)\\s+(?:now\\s+)?(?:set|correct|confirmed|done|ready)|ready\\s+to\\s+use)"
+    match: not_contains
+    flags: "i"
+    target: last_message

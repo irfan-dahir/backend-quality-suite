@@ -1,0 +1,94 @@
+# {{PROJECT_NAME}} — Rollback Convention
+
+How this project undoes a bad release. This is a fragment, not a standalone
+document role: paste it into whatever plays the `release` role here (see
+`RELEASE.md.template` §5, "What to do when a release is bad") and fill in the
+`<!-- DECIDE -->` markers below it. The convention statement itself is not a
+`<!-- DECIDE -->` — it is fixed, because it is the one part every adopting
+project keeps rather than rewrites.
+
+---
+
+## The convention
+
+**Cut forward. Never move a tag. Attach a release note.**
+
+When a released version turns out to be bad, the fix is a **new** version that
+reverts or corrects the problem — not deleting, retagging, or force-pushing over
+the bad one.
+
+- **Cut forward.** The remedy is the next version number, not a rewind. A
+  consumer already on the bad build moves forward to the fix like any other
+  update; nothing asks them to detect and undo an in-between state.
+- **Never move a tag.** A tag that once pointed at the bad release keeps
+  pointing at it, forever. Retagging makes "what did version X actually
+  contain" stop having one answer — for anyone who already built against it,
+  cached it, or filed a bug against it.
+- **Attach a release note.** The new version's release note says plainly what
+  was wrong in the previous one and what this version changes about it. A
+  silent re-release ships the same confusion back out with a new number on it.
+
+This is the whole convention. Everything below is where a project makes it
+concrete enough to actually follow at 2am.
+
+## 1. What counts as a bad release
+
+<!-- DECIDE: the signal that triggers this convention — a crash-rate threshold,
+     a specific regression class, a data-integrity bug, a security finding.
+     Vague enough that "is this bad enough to roll back" becomes a debate is a
+     project problem, not a template problem: name the bar. -->
+
+| Signal | Threshold / condition | Who confirms it |
+|---|---|---|
+| | | |
+
+## 2. Who has authority to cut a rollback release
+
+<!-- DECIDE: name a role, not a person — people are on leave, people leave the
+     project. Also decide whether this authority can be exercised solo or needs
+     a second approver, given that a rollback release ships under time pressure
+     and skips whatever review a normal release gets. -->
+
+| | |
+|---|---|
+| Authority to declare a release bad | |
+| Authority to cut and ship the rollback | |
+| Can either be exercised alone under pressure? | |
+
+## 3. Where the incident gets recorded
+
+<!-- DECIDE: the decision log entry, an incident doc, a ticket — whichever this
+     project already uses for "something went wrong and here is what we did
+     about it." Point at the role, not a hardcoded path. The rollback release
+     note (below) should link to this record, not duplicate it. -->
+
+| | |
+|---|---|
+| Incident record lives in | |
+| Linked from the rollback release note? | <!-- DECIDE: yes, by convention --> |
+
+## 4. What the rollback release note must contain
+
+At minimum, filled in per incident, not left as boilerplate:
+
+- What was wrong with the previous release
+- What this release changes about it
+- Who is affected, and whether any action is needed on their end
+- A link to the incident record from §3
+
+<!-- DECIDE: anything this project's release notes always need beyond the
+     above — a platform-specific disclosure, a compliance requirement, a
+     customer-support talking point. -->
+
+## 5. What this convention does not cover
+
+<!-- DECIDE: cases this project handles differently, if any — e.g. a release
+     that has not yet reached any user, where deleting the tag before
+     publication may be legitimate; or a platform where "cut forward" is not
+     physically possible (a one-shot data migration) and the real remedy is a
+     documented compensating change instead. Naming the exception here keeps
+     it from being invented ad hoc under pressure. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

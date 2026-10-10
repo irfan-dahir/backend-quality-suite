@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/irfan-dahir/ai-design-suite/chain.schema.json",
+  "title": "chain definition",
+  "description": "An ordered multi-skill playbook, for bin/chain.py. A chain records the sequence and where a run got to; it never invokes a skill. Project chains live in .design-suite/chains/ and take precedence over the suite's templates/chains/.",
+  "type": "object",
+  "required": ["name", "steps"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_readme": { "type": "string" },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/step" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "step": {
+      "type": "object",
+      "required": ["id", "skill"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier used to record this step's outcome. Renaming one loses that step's recorded position."
+        },
+        "skill": {
+          "type": "string",
+          "description": "Skill to run, without the leading slash."
+        },
+        "args": {
+          "type": "string",
+          "description": "Arguments to pass, if the skill takes them."
+        },
+        "purpose": {
+          "type": "string",
+          "description": "What this step is for, in one line. Shown when the step comes up."
+        },
+        "decisionPoint": {
+          "type": "string",
+          "description": "What to ask the user before running this step. Shown before the step runs, not after."
+        },
+        "skipIf": {
+          "type": "string",
+          "description": "The condition under which this step should be skipped. Prose, evaluated by a human — a chain runner that decided this for itself would be guessing at project state."
+        },
+        "checkpoint": {
+          "type": "boolean",
+          "description": "Whether the chain stops for explicit sign-off after this step. DEFAULTS TO TRUE. Set false only when the step has no confirmation requirement of its own and nothing downstream depends on a human having looked at its output.",
+          "default": true
+        },
+        "checkpointReason": {
+          "type": "string",
+          "description": "Why this step is (or is not) a checkpoint. Required reading for anyone tempted to turn one off."
+        },
+        "onFail": {
+          "type": "string",
+          "enum": ["halt", "skip"],
+          "description": "What happens if the step does not succeed. `halt` stops the chain; `skip` moves on. Defaults to halt — a chain that continues past a failed step produces work built on a step that did not happen.",
+          "default": "halt"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

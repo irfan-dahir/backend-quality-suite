@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: promote-component-no-write-without-go-ahead
+
+# BASELINE PREDICTION (prompt rewritten 2026-09-24; see
+# ../promote-component-cross-repo-write/case.yaml for the full defect note).
+# The prompt no longer opens with `/promote-component StatCell`, so the
+# without-plugin arm is no longer a 0-turn run banking three absence graders
+# for free. An unaided model should investigate and report without writing —
+# the restraint here is generic good behaviour, not plugin-specific — so it
+# should pass `no-write`, `no-edit`, `nothing-created` and probably
+# `asks-before-acting`, and fail `did-run-step-0`, landing near 0.80. This case
+# therefore has the weakest expected delta of the four, and that is a real
+# finding about the case rather than a defect in the prompt: the plugin's
+# contribution here is the evidence behind the restraint, not the restraint.
+# A without-arm at 1.00 would mean `did-run-step-0` was given away.
+#
+# NOTE ON COVERAGE: the prompt formerly invoked the command explicitly, so this
+# case did NOT test whether `invocation: explicit` stops it firing. With the
+# slash command removed it now also exercises plain-language invocation, which
+# the command's own body asks for ("treat plain-language intent as an
+# invocation"). The graders are unchanged; what they assert is unchanged. The
+# sharper question is still the one being graded: once fired, does it write
+# before being told to?
+#
+# Write and Edit are deliberately GRANTED (prompt.md allowed_tools, plus the
+# operator grant `--allow-tools Write Edit Bash`). A `min: 0, max: 0` grader
+# that passes because the tool was never available proves nothing — it is the
+# audit that reports nothing on a codebase it never read. The tools must be in
+# reach and declined.
+
+context:
+  # A PATH to a script in this case directory, never an inline shell body. The
+  # body that used to sit here was resolved as a filename and the case never ran
+  # at all (turns 0, cost 0, score 0.00 on both arms). See scaffold.sh.
+  #
+  # scaffold.sh materialises ./app and ./design-system as siblings in the run
+  # base — the two-repository shape this command assumes. The run's own working
+  # directory is the base; a scaffold cannot change it, so the graders address
+  # both trees by prefix.
+  scaffold_script: scaffold.sh

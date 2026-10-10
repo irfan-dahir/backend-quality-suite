@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "design-suite",
+  "version": "0.2.0",
+  "license": "MIT",
+  "description": "Project-agnostic design-system and documentation tooling. Every project specific — paths, globs, token names, accepted exceptions, doc locations — is read from a .design-suite/ profile in the consuming repo, never hardcoded here.",
+  "author": {
+    "name": "Irfan Dahir",
+    "url": "https://github.com/irfan-dahir"
+  },
+  "homepage": "https://github.com/irfan-dahir/ai-design-suite",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "accessibility",
+    "documentation",
+    "brand-voice",
+    "mock-api"
+  ],
+  "mcpServers": {
+    "design-suite-audits": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/audit_server.py"]
+    }
+  }
+}

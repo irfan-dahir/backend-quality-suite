@@ -1,0 +1,96 @@
+# {{PROJECT_NAME}} — Motion & Interaction Spec
+
+How {{PROJECT_NAME}} moves, and what it does that isn't visual — haptics and sound. The source of
+truth `/audit-tokens` measures duration and curve violations against.
+
+> **This document is produced by `/establish-interaction-spec`, not written by hand.**
+> That skill requires explicit sign-off on every section before writing, because motion is a
+> brand-level decision rather than a technical one. The section headings below are **exactly** the
+> ones it drafts — if you rename or reorder them, the skill and this document stop agreeing, and the
+> skill will either duplicate a section or overwrite a hand-written one.
+
+Maintained by whoever changes an animation, a haptic, or a motion token.
+
+---
+
+## Motion tokens
+
+The named durations and curves everything animates with. State the token names, their values, and —
+critically — **what each is for**. A duration scale with no stated purpose per step gets picked from
+at random, which is the same as having no scale.
+
+<!-- DERIVED: extract the motion tokens from the token source named in profile.json's tokens.source.
+     Names and values are mechanical. What each is *for* is a judgement the user must confirm. -->
+
+<!-- DECIDE: if tokens are owned by a separate design system (profile.json's tokens.ownedBy), link
+     out rather than restating the values here, and say so — the same rule the design document
+     follows. Two copies of a duration scale become two different scales. -->
+
+State the accessor feature code uses to reach these, because that is exactly what `/audit-tokens`
+flags the absence of: a raw duration literal is a finding precisely because a named token exists.
+
+## Motion grammar
+
+The rules for *which* motion applies *when*. This is the section that makes motion feel designed
+rather than decorated.
+
+A grammar answers questions like: what does an element arriving into view do, versus one changing in
+place? Does a dismissal reverse its entrance, or exit differently? Which curve belongs to an
+entrance and which to a morph?
+
+<!-- DECIDE: your grammar. Be specific enough to settle an argument. "Motion should feel natural"
+     cannot be violated and so cannot be enforced; "arriving elements ease out, in-place morphs
+     ease in-out" can — and an audit can be written for it. -->
+
+Where a rule exists because of a real finding rather than taste, say so. A rule with a story behind
+it survives; one that reads as arbitrary gets overridden by the next person in a hurry.
+
+## Known violations
+
+Places the implementation does not yet follow this spec, listed openly.
+
+This section is the reason this document can be trusted. A spec that claims full compliance while
+hardcoded durations sit in the codebase is worse than one that names them: the first teaches readers
+the document is aspirational, the second gives them a work list.
+
+<!-- DERIVED: populate from /audit-tokens' duration, curve, and entrance-curve findings. The audit
+     produces the list mechanically; deciding which are violations to fix versus deliberate
+     exceptions needs a human. -->
+
+Anything here that turns out to be deliberate belongs in the design document's accepted-exceptions
+table instead — and then in the audit's `exceptions.json`, or the audit will keep reporting it.
+
+## Haptic feedback
+
+Which interactions produce haptic feedback, and which intensity means what.
+
+<!-- DECIDE: does this project use haptics at all? Answer explicitly. Greenfield is a perfectly good
+     answer — but "we never decided" produces inconsistent haptics added ad hoc per surface, which
+     reads as a bug rather than an absence.
+
+     If yes: map interaction classes to intensities (a destructive confirmation and a selection
+     change should not feel the same), and say what happens on platforms or devices without the
+     capability. -->
+
+## Sound feedback
+
+Which interactions produce sound, and the rules governing it.
+
+<!-- DECIDE: does this project use sound? Most do not, and deciding *not to* is a real decision worth
+     recording — otherwise it gets revisited every few months.
+
+     If yes: state how it respects the OS silent switch and accessibility settings, because that is
+     the part that gets missed and the part users notice. -->
+
+## Reduced motion
+
+<!-- DECIDE: how does this project honour a user's reduce-motion preference?
+
+     Not optional in the way the sections above are — it is an accessibility requirement, and the
+     answer must be a real mechanism rather than an intention. State which motion is suppressed,
+     what replaces it, and whether the fallback is enforced in a shared component or left to each
+     call site. Left to call sites, it will be missed. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

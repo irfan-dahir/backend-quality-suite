@@ -1,0 +1,73 @@
+# RFC-<!-- DECIDE: number --> — <!-- DECIDE: title -->
+
+| | |
+|---|---|
+| Status | <!-- DECIDE: Draft / In review / Accepted / Rejected / Withdrawn / Superseded --> |
+| Author(s) | |
+| Reviewers | |
+| Date opened | <!-- DERIVED --> |
+| Date decided | |
+| Supersedes / superseded by | |
+
+A proposal, not a decision. This document argues for a specific change before
+it happens; once a decision is made, the outcome and its reasoning belong in
+`{{doc:decisions}}` — this document stays as the record of what was proposed
+and why, not as a second copy of the decision log.
+
+---
+
+## 1. Summary
+
+<!-- One paragraph. If someone reads only this section, they should know what
+     is being proposed and why it matters. -->
+
+## 2. Motivation
+
+<!-- What problem does this solve, and for whom? What happens if this is not
+     done — is the status quo merely suboptimal, or actively breaking down? -->
+
+## 3. Proposal
+
+<!-- The actual change, in enough detail that a reviewer could evaluate it
+     without asking follow-up questions about what is meant. Concrete over
+     abstract: a shape, an interface, a sequence of steps — not just a
+     direction. -->
+
+## 4. Alternatives considered
+
+<!-- What else was considered, including "do nothing," and why this proposal
+     is preferred. An RFC with no alternatives section usually means the
+     author only seriously considered one option — say so if that's the case,
+     rather than inventing strawmen. -->
+
+## 5. Drawbacks and risks
+
+<!-- What does this cost — in complexity, migration effort, a new failure
+     mode, a constraint this locks the project into? A proposal with no
+     listed drawbacks has not been examined critically enough yet. -->
+
+## 6. Impact
+
+<!-- DECIDE: what this project needs an RFC to state impact on — e.g.
+     backward compatibility, existing consumers, the build/release process,
+     performance, security. Not every RFC touches every category; say
+     "none" explicitly rather than leaving a category silently unaddressed. -->
+
+| Area | Impact |
+|---|---|
+| | |
+
+## 7. Open questions
+
+<!-- Questions the author doesn't yet have an answer to. An RFC that claims
+     to have no open questions is usually not being read closely enough. -->
+
+## 8. Decision
+
+<!-- Filled in when status moves out of Draft. What was decided, by whom, and
+     why — then link to the corresponding entry in `{{doc:decisions}}` rather
+     than duplicating it here. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

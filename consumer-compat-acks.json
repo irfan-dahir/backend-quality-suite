@@ -1,0 +1,5 @@
+{
+  "_readme": "Acknowledged consumer-visible breaks for the release currently being assembled — everything on main that a project pinned to the latest `design-suite--v*` tag would feel when it repins. Field contract: plugins/design-suite/templates/consumer-compat-acks.schema.json. Enforced by plugins/design-suite/bin/gate_consumer_compat.py, which is wired into .github/workflows/validate.yml and therefore picked up by gates.py. Placed at the repo root beside known-traps.json, and deliberately NOT under templates/: it describes THIS repository's own pending release, so it is a populated instance like known-traps.json, not a scaffold a consumer copies. A consumer project never has one of these — it consumes releases, it does not cut them. Empty is the correct steady state: entries are added when a break is deliberately shipped, and removed when the release that carries them is tagged and their migration notes graduate into that release's notes.",
+  "schemaVersion": 1,
+  "entries": []
+}

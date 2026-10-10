@@ -1,0 +1,18 @@
+# Installs the `design-suite` CLI outside Claude Code:
+#     pipx install .        or        uv tool install .
+# Zero runtime dependencies and zero build dependencies: the backend is the
+# stdlib-only module in _build_backend/, so an offline venv can install it.
+# Version comes from plugins/design-suite/.claude-plugin/plugin.json — one source.
+[build-system]
+requires = []
+build-backend = "design_suite_build"
+backend-path = ["_build_backend"]
+
+[project]
+name = "design-suite"
+dynamic = ["version"]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+design-suite = "design_suite.cli:main"

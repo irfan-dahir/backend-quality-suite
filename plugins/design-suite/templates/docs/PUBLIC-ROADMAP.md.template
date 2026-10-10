@@ -1,0 +1,69 @@
+# {{PROJECT_NAME}} — Roadmap
+
+What we're working on, what's coming next, and what's shipped recently. This
+page is for anyone using or considering this project — it does not assume you
+have any context beyond the project itself.
+
+This is a different document from this project's internal roadmap or decision
+log, if it keeps one: this page states external commitments and direction, not
+the internal reasoning, trade-offs, or rejected alternatives behind them. If
+you're looking for why a particular choice was made, that lives elsewhere and
+isn't published here.
+
+<!-- DECIDE: how often this page is updated, and by whom. A public roadmap
+     that goes stale is worse than none — it reads as a promise nobody is
+     keeping. Name the cadence here once decided, e.g. "Reviewed at the start
+     of each quarter." -->
+
+---
+
+## Now
+
+What's actively being worked on.
+
+<!-- List current work in plain terms — what it is and, if known, roughly
+     when to expect it. Avoid internal codenames or ticket IDs that mean
+     nothing outside the team. -->
+
+| Item | What it is | Expected |
+|---|---|---|
+| | | |
+
+## Next
+
+What's planned but not yet started.
+
+<!-- DECIDE: how confident this section is allowed to sound. "Planned" reads
+     as a stronger commitment than "under consideration" — pick language for
+     this section and use it consistently, so readers can calibrate. -->
+
+| Item | What it is | Status |
+|---|---|---|
+| | | |
+
+## Later / under consideration
+
+Ideas being explored, without a committed timeline.
+
+<!-- This section exists so "is X on the roadmap at all" has an honest answer
+     that isn't "Now" or "Next." Nothing here is a promise. -->
+
+## Recently shipped
+
+<!-- A short list of what recently landed, newest first, with a link to
+     release notes or a changelog entry where one exists. Trim this
+     periodically — it's a highlight reel, not a full changelog. -->
+
+| Item | Shipped |
+|---|---|
+| | |
+
+## Feedback
+
+<!-- DECIDE: where feedback or feature requests about this roadmap should go
+     — an issue tracker, a discussion board, an email address. A roadmap with
+     no stated feedback channel reads as one-directional. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

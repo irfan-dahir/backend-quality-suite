@@ -1,0 +1,95 @@
+# <!-- DECIDE: the component's name, exactly as a consumer writes it in code -->
+
+<!-- One page per published component. Copy this file, fill it in, and register the result in the
+     components index. The section headings and their order are fixed by the component-schema
+     document — a page that reorders or renames them is not machine-checkable, and the schema check
+     is the only thing standing between "documented" and "has a file". Do not improve the
+     structure here; change the schema, then change every page. -->
+
+<!-- DERIVED: the summary line — one sentence, the problem this component solves. Not what it
+     renders. "A button" is what it renders; "the single affirmative action on a surface" is what
+     it is for, and is the sentence that stops it being used six wrong ways. -->
+
+**Status:** <!-- DECIDE: from the status vocabulary in the components index. Not a free-text
+     word — the index counts these. -->
+
+---
+
+## What it is for
+
+<!-- DERIVED: two or three sentences. Where it belongs, and what problem it was added to solve. If
+     the answer is "we needed a place to put this", that is worth knowing and worth writing down. -->
+
+## When not to use it
+
+**This section is not optional and must never be empty.** A component with no stated boundary gets
+used everywhere and stops meaning anything, and the page that omitted the boundary is why.
+
+<!-- DECIDE: at least one case where a reader who has arrived here should use something else
+     instead, naming what. If you genuinely cannot think of one, that is a finding about the
+     component, not about this section: a component that is right in every situation is either
+     doing several jobs or has not met a hard case yet. Write down which. -->
+
+## API
+
+<!-- DERIVED: the public surface, generated from the source so it cannot drift — every parameter, its
+     type, whether it is required, and its default. Generate this; a hand-transcribed signature is
+     wrong by the second change. -->
+
+| Name | Type | Required | Default | What it does |
+|---|---|---|---|---|
+| | | | | |
+
+<!-- DECIDE: for each parameter whose purpose is not obvious from its name, one line of *why it
+     exists*. The generated table can say what a parameter is; only a human can say why a consumer
+     would reach for it. A table of types with no whys is a signature, not documentation. -->
+
+## Variants and states
+
+Every variant a consumer may ask for, and every state the component can be in on its own.
+
+<!-- DECIDE: list them. Include the states that are easy to forget precisely because they are not
+     the happy path — disabled, loading, error, empty, overflowing content, the longest text this
+     will ever hold. A state that is not listed here is a state nobody checked. -->
+
+| Variant or state | What it is for | Notes |
+|---|---|---|
+
+## Tokens it consumes
+
+<!-- DERIVED: the tokens this component reads, extracted from source. This is what makes re-theming
+     claims checkable: a component that reads no semantic token will not move when a brand changes
+     one, however much the theming document promises it will. -->
+
+<!-- DECIDE: name anything this component deliberately hardcodes rather than tokenising, and why.
+     An undocumented hardcoded value is indistinguishable from an oversight, so it gets re-reported
+     forever. -->
+
+## Accessibility
+
+What this component guarantees on its own, and — just as importantly — what it cannot guarantee and
+the consumer must supply.
+
+<!-- DECIDE: split these two explicitly. A page that lists only guarantees implies the consumer has
+     nothing left to do, which is almost never true: a component can enforce a target size but
+     cannot know what a given instance should be announced as. Name what the consumer owes. -->
+
+| Guaranteed by this component | Must be supplied by the consumer |
+|---|---|
+| | |
+
+## Usage
+
+<!-- DERIVED: a minimal working example, taken from a real call site rather than written here, so it
+     is known to compile. Keep it minimal: an example showing eight parameters teaches that eight
+     parameters are normal. -->
+
+## Known limitations
+
+<!-- DECIDE: what this component does not handle well yet, each with enough detail that a consumer
+     hitting it recognises it rather than filing it again. An empty section here is a claim that
+     nothing is known to be wrong — make sure that is true before leaving it empty. -->
+
+---
+
+_Last updated: <!-- DERIVED -->_

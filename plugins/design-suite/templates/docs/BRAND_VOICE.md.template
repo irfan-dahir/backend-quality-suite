@@ -1,0 +1,89 @@
+# {{PROJECT_NAME}} — Brand Voice
+
+How {{PROJECT_NAME}} sounds, and the terminology it uses. The source of truth `/audit-copy` checks
+every user-facing string against, and `/rewrite-copy` writes to.
+
+> **Produced by `/establish-brand-voice`, not written by hand.**
+> The section headings below are **exactly** the six that skill drafts — rename one and the two stop
+> agreeing. That skill presents each attribute for explicit confirmation and never accepts a first
+> draft wholesale, because a voice nobody signed off on is a voice nobody follows.
+
+Maintained by whoever changes user-facing copy.
+
+---
+
+## Audience & context
+
+Who is being written *to*, and in what state of mind. This is the section every other one derives
+from — tone attributes that don't trace back to a real audience are decoration.
+
+<!-- DECIDE: who reads this product's copy, and under what conditions? Be specific about the parts
+     that constrain writing: age, expertise, and above all emotional state. Someone anxious about a
+     health result needs different copy from someone browsing a catalogue, and the difference is not
+     "warmer" — it is shorter sentences, no idioms, and no cleverness. -->
+
+## Tone attributes
+
+Three to five named attributes, each with a *because*. More than five and nobody remembers them; a
+list without reasons gets argued about every time copy is reviewed.
+
+For each attribute, the useful part is the tension it resolves — what it is chosen **over**.
+"Warm, not chummy" is actionable. "Warm" alone is not.
+
+<!-- DECIDE: your attributes, each as "X, not Y" with one line of why. -->
+
+Also state where tone **shifts**: error states, confirmations, and anything destructive usually need
+a different register from marketing surfaces. A single flat voice across all of them reads as
+tone-deaf at exactly the moments that matter.
+
+## Reading-level target
+
+<!-- DECIDE: your target, and how it is measured.
+
+     Name a metric rather than an adjective — `/audit-copy` scores copy mechanically, so "plain
+     English" gives it nothing to check while a Flesch target does. If the audience makes a specific
+     floor non-negotiable, say so here and say why: a target with a reason survives a redesign. -->
+
+## Do's / Don'ts
+
+Concrete pairs, ideally drawn from real copy in this product rather than invented examples.
+
+| Do | Don't | Why |
+|---|---|---|
+
+<!-- DERIVED: seed from the copy inventory `/audit-copy` builds. Real strings from this product are
+     far more persuasive than illustrations, and they show the voice as it actually is rather than as
+     someone hoped. -->
+
+## AI-tell banned phrases
+
+Phrases banned because they read as machine-written: the throat-clearing openers, the empty
+intensifiers, the symmetrical "it's not just X, it's Y" constructions.
+
+This section exists as its own list rather than folded into Don'ts because it is checked differently
+— it is a literal string blocklist, and `/rewrite-copy` uses it as one.
+
+<!-- DECIDE: your banned list. Start from what actually appears in this product's copy rather than a
+     generic set; a blocklist of phrases nobody writes is noise that hides the ones people do. -->
+
+## Terminology glossary
+
+The canonical term for each concept, and the synonyms that are banned in its favour. This is the
+section that stops the same thing being called three names across a product.
+
+| Canonical | Banned synonyms | Notes |
+|---|---|---|
+
+Two rules worth stating:
+
+- **Match the product's own domain language**, not internal shorthand. If the code says `kit` and the
+  UI says `test kit`, one of them is wrong and this table decides which.
+- **A banned synonym must be genuinely banned.** A glossary that lists preferences rather than rules
+  cannot be audited, and `/audit-copy` will report noise until someone stops trusting it.
+
+<!-- DERIVED: candidate terms can be extracted from the copy inventory by finding near-synonyms
+     already in use. Which one wins is a decision. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

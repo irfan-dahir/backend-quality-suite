@@ -1,0 +1,17 @@
+schema_version: "1.1"
+name: review-docs-zero-state-refusal
+description: >-
+  The workspace has source files and no `.design-suite/` at all, so every
+  backing script exits 2. The governing principle stated as a test: a review
+  that could not look must not be indistinguishable from a review that looked
+  and found nothing. This is the case that matters most in the suite.
+tags: [review-docs, refusal, governing-principle, phase3]
+runs: 3
+execution:
+  prompt: |
+    Review this project's documentation and tell me what has drifted.
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, TodoWrite]
+context:
+  scaffold_script: scaffold.sh

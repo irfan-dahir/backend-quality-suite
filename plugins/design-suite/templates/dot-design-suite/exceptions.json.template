@@ -1,0 +1,34 @@
+{
+  "_readme": "Accepted, deliberate exceptions to the audits — never a place to silence a finding you have not actually decided to accept. Each audit that consults this file (audit_tokens.py, audit_copy.py, audit_error_handling.py, audit_api_consistency.py, audit_unwired_roles.py, audit_unused_tokens.py) reads it as category -> exception spec; check the relevant script's docstring before adding a category it does not expect. Keep this file small: an exceptions list that grows without review is an audit that has quietly stopped auditing.",
+  "color": {
+    "themeFileToSkip": "TODO or delete: a file that legitimately defines raw colours, e.g. the theme/tokens file itself, so the audit does not flag its own definitions",
+    "allowlistFiles": [
+      {
+        "path": "TODO or delete: repo-relative path exempted from this category, e.g. 'lib/vendor/third_party_widget.dart'",
+        "reason": "TODO: why this file is legitimately exempt — reviewed by a human, not inferred"
+      }
+    ],
+    "allowlistRegions": [
+      {
+        "_comment": "Same effect as allowlistFiles — audit_tokens.py applies both — but 'scope' narrows it in prose for a reader. 'path' may be a glob, e.g. 'lib/features/chat/**'. The engine applies the entry at path granularity: if the exempt region is narrower than the file, say so in 'scope' and keep the file small, because nothing machine-checks that the prose and the path agree.",
+        "path": "TODO or delete: repo-relative path or glob",
+        "scope": "TODO: which part of the file the decision actually covers",
+        "reason": "TODO: why this is legitimately exempt — reviewed by a human, not inferred"
+      }
+    ],
+    "reportAnyway": [
+      {
+        "_comment": "Outranks both allowlists above: a path here is never suppressed, however broad a glob covers it. For a known-open item that must keep appearing in every report — a debt, not an accepted exception.",
+        "path": "TODO or delete: repo-relative path or glob",
+        "reason": "TODO: why this must keep being reported"
+      }
+    ]
+  },
+  "spacing": {
+    "allowlistFiles": []
+  },
+  "unusedTokens": {
+    "_comment": "Consumed by bin/audit_unused_tokens.py. exempt: {tokenName: reason} for a declared token this project has decided is legitimately unread by the swept source (e.g. one an asset pipeline or a generated theme consumes instead) — a debt with a reason, not a way to make a finding disappear.",
+    "exempt": {}
+  }
+}

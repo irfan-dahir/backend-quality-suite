@@ -1,0 +1,73 @@
+# {{PROJECT_NAME}} — API Surface
+
+Every endpoint this client consumes: shape, auth, and who owns it. Read when
+wiring a screen to data, and when a response stops matching what the code expects.
+
+<!-- DECIDE: is this document authored, or generated from a spec the backend owns?
+     If the backend publishes OpenAPI, this should be a thin pointer plus the
+     client-side notes in §4 — duplicating a spec you do not own guarantees drift. -->
+
+---
+
+## 1. Ownership and source of truth
+
+| | |
+|---|---|
+| Backend owned by | <!-- DECIDE --> |
+| Spec lives at | <!-- DECIDE: URL or path --> |
+| This document is | <!-- DECIDE: authored / derived from the spec --> |
+
+**If the spec is owned elsewhere, that spec wins.** Contradictions get fixed here,
+not there.
+
+## 2. Base URLs and environments
+
+<!-- DECIDE: never inline a production hostname or key. Reference the config
+     mechanism instead. -->
+
+| Environment | Base URL | Notes |
+|---|---|---|
+| Local | | |
+| Staging | | |
+| Production | `<!-- from config, not hardcoded -->` | |
+
+## 3. Auth
+
+<!-- DECIDE: the scheme, where the token is stored, how refresh works, and what
+     the client does on 401. The last one is the part most often left undefined
+     and most often gets it wrong. -->
+
+## 4. Endpoints
+
+One row per endpoint the client actually calls. An endpoint the backend offers but
+this client never uses does not belong here.
+
+<!-- DERIVED: the mock-API tooling can enumerate wired endpoints; confirm each. -->
+
+| Method | Path | Purpose | Model | Mockable |
+|---|---|---|---|---|
+| | | | | |
+
+**Mockable** matters: a GET can be served from a static fixture, a mutation cannot.
+Giving a mutation a fake success response produces a client that appears to work and
+silently discards data.
+
+## 5. Error contract
+
+<!-- DECIDE: the error envelope, and the mapping from status code to user-facing
+     behaviour. Without this each screen invents its own and the app is
+     inconsistent under failure — which is when users are least forgiving. -->
+
+| Status | Means | Client behaviour |
+|---|---|---|
+| | | |
+
+## 6. Known divergences
+
+Where the implementation and the spec disagree today.
+
+<!-- DECIDE: each entry needs an owner and a resolution, or it is just a complaint. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

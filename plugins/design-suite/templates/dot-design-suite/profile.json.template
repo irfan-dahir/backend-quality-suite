@@ -1,0 +1,49 @@
+{
+  "$schema": "../plugins/design-suite/templates/profile.schema.json",
+  "_readme": "The only place project-specific facts live. Every field here is explained in profile.schema.json (canonical) — read that file alongside this one. Fill in every TODO, delete sections you genuinely do not have (only 'project', 'adapters', 'source', 'tokens' and 'docs' are required), then run `python3 \"${CLAUDE_PLUGIN_ROOT}/bin/doctor.py\"` before trusting anything else. Never put an absolute path, a client name, or a hostname in this file.",
+  "profileVersion": 1,
+  "project": {
+    "name": "TODO_PROJECT_NAME",
+    "audience": "TODO: who uses this product? Feeds copy and accessibility judgement — e.g. 'general consumer, adults 18+' or 'internal ops tool, technical users'.",
+    "framework": "TODO: free text read by prompts, e.g. 'Flutter, Material 3' or 'React + Tailwind'. Include deliberate non-features (e.g. 'light-only') so audits do not report them as gaps.",
+    "singleLocale": "TODO or delete: set only if this project is deliberately single-locale, e.g. 'en-US'. Prevents a skill from proposing i18n scaffolding."
+  },
+  "adapters": {
+    "lang": "TODO: which language adapter audits this project's source. Known values today: 'dart' (tokens, accessibility, copy), 'tsx' (tokens only; React/TS/JS), or 'web' (tokens only; .vue/.svelte single-file components, .css/.scss/.sass/.less stylesheets, and scripts), 'swift' (tokens, reduced motion; SwiftUI/UIKit .swift — unverified), or 'kotlin' (tokens, reduced motion; Jetpack Compose .kt — unverified). Leave unset and rely on the documentation skills only if neither fits."
+  },
+  "source": {
+    "root": "TODO: repo-relative source root, e.g. 'lib' or 'src'",
+    "fileGlob": "TODO: glob for source files under root, e.g. '**/*.dart' or '**/*.tsx'",
+    "screensGlob": "TODO or delete: glob that matches screen/page files specifically",
+    "featureWidgetsGlob": "TODO or delete: glob for feature-level (non-shared) components",
+    "sharedComponentDir": "TODO or delete: repo-relative dir holding shared/reusable components",
+    "otherSharedDirs": [],
+    "testRoot": "TODO or delete: repo-relative root of the test suite"
+  },
+  "tokens": {
+    "_comment": "Deliberately not just a path — some projects extract tokens into a separate package. Use the 'file' shape below when tokens live in this repo, or the 'package' shape when another package owns them.",
+    "source": {
+      "kind": "file",
+      "path": "TODO: repo-relative path to the token source, e.g. 'lib/theme/app_theme.dart'"
+    },
+    "accessor": "TODO: how code references a token, e.g. 'AppTokens'",
+    "themeAccessor": "TODO or delete: how code references the active theme, if distinct from tokens",
+    "generated": false,
+    "ownedBy": "TODO or delete: set to a URL only when another repo owns these tokens, so no skill proposes editing them here"
+  },
+  "audits": {
+    "configFile": ".design-suite/design-audit-config.json",
+    "exceptionsFile": ".design-suite/exceptions.json",
+    "archRulesFile": ".design-suite/arch-rules.json",
+    "baselineDir": ".design-suite/baselines"
+  },
+  "docs": {
+    "manifest": ".design-suite/docs.manifest.json"
+  },
+  "provenance": {
+    "_readme": "How each field above got its value: 'inferred' (a survey or a skill proposed it — authoritative for nothing), 'declared' (a human wrote it), 'approved' (a human reviewed an inferred value and ratified it). Optional, and starting empty is honest: doctor.py reports every field with no entry here as UNTRUSTED and prints the ratified-of-total count on every run, so an empty block reads as '0 of N ratified' rather than as approval. There is no 'contradicted' state to write — doctor computes it when an approved or declared field stops matching the tree. Add `verifiedAgainst.commit` (a git SHA) when you ratify a field: staleness is measured in diffs, not days, and there is deliberately no expiry date.",
+    "fields": {
+      "_example": "Delete this key and add real entries as you ratify fields, e.g. \"source.root\": { \"state\": \"approved\", \"by\": \"TODO\", \"on\": \"TODO-YYYY-MM-DD\", \"value\": \"lib\", \"evidence\": \"TODO: why this is right\", \"verifiedAgainst\": { \"commit\": \"TODO-git-sha\" } }"
+    }
+  }
+}

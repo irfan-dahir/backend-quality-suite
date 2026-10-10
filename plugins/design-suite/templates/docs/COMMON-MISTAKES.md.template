@@ -1,0 +1,77 @@
+# {{PROJECT_NAME}} — Common Mistakes
+
+The things people get wrong when using this project, and what to do instead.
+
+**One rule governs this entire document: every entry cites a real defect.** Not a hypothetical
+misuse, not a style preference, not something a maintainer thinks would be unwise — an actual bug
+report, review comment, support question, or broken build that happened. That rule is the template.
+
+Without it this file becomes a list of maintainer opinions dressed as guidance, and it grows without
+limit, because there is no shortage of ways to imagine someone being wrong. With it, the file stays
+short and every entry has already earned its place by costing somebody time.
+
+Owned by whoever fields the questions.
+
+---
+
+## 1. Adding an entry
+
+Before writing one, answer: **what is the citation?**
+
+<!-- DECIDE: what counts as a citation in this project — an issue number, a PR review link, a
+     support thread, a dated incident? Pick the forms you actually have and list them. An entry
+     with no citation gets removed, not softened, and that is the rule that keeps this file
+     trustworthy. -->
+
+Then check it does not belong somewhere else instead:
+
+| If the mistake is | It belongs in |
+|---|---|
+| A consumer using the wrong component | That component's page, under "when not to use it" |
+| A consumer assembling components wrongly | The patterns document |
+| A contributor breaking a project convention | The contributing document |
+| A consumer relying on something now changed | The changelog or the deprecation ledger |
+
+**An entry here is the last resort**, for a mistake that has no natural home — or one that keeps
+being made *despite* having a home, which is itself a finding about that document.
+
+<!-- DECIDE: if an entry keeps recurring after being documented, what happens? The honest answers
+     are: make it impossible in the API, or add a check that catches it. Documentation that has
+     failed twice will not succeed on the third reading. Decide which of those this project does,
+     so entries can graduate off this list rather than accumulating. -->
+
+## 2. The entries
+
+<!-- Repeat this block per entry. Keep the four parts and their order — a reader recognising the
+     shape can skim to the fix. -->
+
+### <!-- DECIDE: the mistake, phrased as the thing someone did — not as the rule they broke. A
+     reader searching this file is searching for what they did, and does not yet know the rule. -->
+
+**What happens:** <!-- DECIDE: the symptom, as it is actually experienced. This is the line that
+     lets someone match their situation to this entry. An entry describing the cause but not the
+     symptom is unfindable by the person who needs it. -->
+
+**Why:** <!-- DECIDE: the mechanism, briefly. Enough that the reader can recognise the next
+     variation of the same mistake rather than only this one. -->
+
+**Instead:** <!-- DECIDE: the correct approach, concretely. -->
+
+**Seen in:** <!-- DECIDE: the citation. Required. -->
+
+---
+
+## 3. Retired entries
+
+<!-- DECIDE: when a mistake becomes impossible — the API changed, a check now catches it — move the
+     entry here with the version that fixed it rather than deleting it. Consumers on older versions
+     still hit it, and a reader who finds nothing concludes the problem was imagined. Delete an
+     entry only once no supported version can still produce the mistake. -->
+
+| Mistake | Fixed in | How |
+|---|---|---|
+| | | |
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

@@ -1,0 +1,181 @@
+# {{PROJECT_NAME}} — Documentation Guide
+
+> **⚠️ AUTHORITY: The rules in this file govern all documentation changes.**
+> When any instruction in any other document conflicts with a rule here, this file wins.
+
+This document defines how project documentation is structured and maintained. It applies to every
+human contributor, AI assistant, and automated process that reads or writes documentation here.
+
+**Scope:** any file whose primary purpose is human-readable explanation — architecture docs, design
+specs, flow descriptions, feature specs, session plans, contributor guides, API references, decision
+logs.
+
+**Not in scope:** source-code comments, CI configuration, build scripts.
+
+---
+
+## 1. Directory structure
+
+All documentation lives under `docs/`. This is a constraint, not a preference: scattered docs cannot
+be audited, and a reader who has to search for the entry point does not find it.
+
+**Two parts of the tree are fixed. The rest is this project's to decide.**
+
+Fixed, for every project:
+
+```
+docs/
+├── <entry point>        ← SINGLE ENTRY POINT — read first for every task
+└── <this file>          ← governs all doc changes
+```
+
+Everything else follows from what this project is. The shapes below are starting points drawn from
+real repositories, not a menu to adopt wholesale:
+
+| If this project is | Its tree usually also holds |
+|---|---|
+| A product that renders an interface | the design doc-of-record, the flows doc, the decision log; `specs/` one file per feature |
+| A design-system package or library | the token, theming and pattern docs; `components/` one page per component, under a schema; the changelog and the deprecation ledger; `decisions/` as a **directory**, because a long-lived system accumulates more decisions than one file holds |
+| A documentation or content site | whatever governs its information architecture and its authoring rules; the published content itself, if it is authored here |
+
+<!-- DERIVED: draw the actual tree of this project's `docs/` and paste it here, then prune it to
+     what should exist rather than what does. A tree that documents the mess is not governance. -->
+
+<!-- DECIDE: which shared working directories does this project need — `context/` for AI-generated
+     working notes, `context/derived/` for regenerable collaterals (see §5), `tasks/` for
+     short-lived session task lists, `plans/` for workstream plans? A directory nobody writes to is
+     worse than none — it implies a process that is not happening. Create only the ones you will
+     use, and write down here why each exists. -->
+
+<!-- DECIDE: which of this project's roles are **directories** rather than single files? A role
+     held as a directory needs a stated convention for what one file in it is — one decision, one
+     component, one proposal — and a stated convention for its index, if it has one. Answer this
+     explicitly: a directory role that grew by accident from a file role is how a doc set ends up
+     with both `DECISIONS.md` and `decisions/`, disagreeing. -->
+
+**Root-level exceptions.** Only these may sit outside `docs/`, and neither may be moved:
+
+| File | Why it cannot move |
+|---|---|
+| `CLAUDE.md` | Claude Code scans the project root at startup. Moved, it is never found, and every session runs without project context |
+| `README.md` | Rendered as the repository homepage |
+
+`CLAUDE.md` must stay a thin pointer to the entry point plus any mandatory behavioural rules. It
+must not grow into a second entry point — two files claiming to be the starting point guarantees
+they disagree.
+
+## 2. The single entry point rule
+
+<!-- DECIDE: name the file that is this project's entry point, and use that name throughout this
+     section. It is whatever `.design-suite/docs.manifest.json` maps the entry-point role to — for
+     an application usually an instructions document, for a package usually the docs `README`. One
+     file, named here, and never a second one. -->
+
+**The entry point named above is the single entry point for all documentation.**
+
+1. Every task starts by reading it.
+2. Every document in `docs/` must be registered in its companion table. An unregistered document
+   does not exist from the entry point's perspective.
+3. When you add, move, or remove a document, update that table **in the same change**.
+
+The entry point must never fork.
+
+<!-- DERIVED: the companion table can be generated from the files present in docs/, then confirmed.
+     Descriptions cannot — those need a human who knows what each file is for. -->
+
+## 3. Document categories
+
+The **categories** are universal; the **locations** are whatever §1 decided. Delete any row whose
+directory this project chose not to create, and add a row for any directory role it did — stating,
+for each, whether it is authoritative.
+
+| Category | Location | Authoritative? |
+|---|---|---|
+| Core project docs | `docs/*.md` | Yes — the primary reading material |
+| Feature specs | `docs/specs/SPEC-<slug>.md` | Yes, for that feature |
+| AI working context | `docs/context/` | **No.** May be imprecise, incomplete, or superseded |
+| Session task lists | `docs/tasks/` | No — short-lived |
+| Derived collaterals | `docs/context/derived/` | No — regenerable output, see §5 |
+
+The authoritative/non-authoritative split is the most load-bearing distinction here. Without it,
+an AI-generated draft gets cited as though it were an agreed decision.
+
+## 4. Creating, updating, moving, deleting
+
+**Creating:** pick the category → name it per §6 → open with a level-1 heading, a one-paragraph
+purpose statement, and a `---` rule → **register it in the entry point's companion table**.
+
+**Updating:** edit it. Update the companion-table row if the document's purpose changed. If you
+rename a section other documents link to, search for inbound links and fix them:
+
+```bash
+grep -rn "FILENAME.md" docs/
+```
+
+**Moving:** always `git mv`, so history and `git log --follow` survive. Then find every inbound
+reference, update it, and re-run the search to confirm none remain. Moving a document without
+updating references is worse than not moving it — it creates silent broken links that surface much
+later.
+
+**Deleting:** confirm nothing treats it as a normative reference first. If the entry point or the
+doc-of-record requires it, replace it rather than deleting. Then remove every reference, including
+the companion-table row.
+
+<!-- DECIDE: which documents are load-bearing enough that deletion should be forbidden outright?
+     Name them explicitly — a list of protected files is enforceable, "use judgement" is not. -->
+
+## 5. Derived collaterals — one direction of truth
+
+The core docs are the **context layer**: canonical, human-approved, kept current by process.
+Derived collaterals are artifacts a tool *generates by synthesising from that layer* — flow
+walkthroughs, release notes, client-facing summaries.
+
+Three rules:
+
+1. **One direction of truth.** Tools read the context layer and write derived artifacts, never the
+   reverse. If generating one reveals a context doc is wrong, fix the context doc and regenerate. A
+   derived artifact must never be hand-edited to say something its sources do not.
+2. **Source stamps.** Every derived artifact opens with what it was synthesised from and when,
+   including the commit hash:
+   `> Derived from <source document> @ abc1234 on YYYY-MM-DD — regenerate, don't hand-edit.`
+   This makes staleness detectable: if a source is newer than the stamp, the artifact is suspect.
+3. **Disposable by design.** Deleting one must lose nothing unrecoverable. If a derived file has
+   accumulated content that *cannot* be regenerated — a decision, a finding, real analysis — that
+   content is in the wrong place and belongs in a context doc.
+
+Binary outputs (screenshots, recordings) stay out of the repository; the markdown references where
+they were produced.
+
+## 6. Naming
+
+- **Core docs and specs:** `UPPERCASE-HYPHENATED.md`
+- **Files inside a directory role** (one per component, decision, or proposal): <!-- DECIDE: pick
+  one convention and state it. A directory whose files are named three ways cannot be indexed,
+  and an index nobody can generate is an index nobody maintains. -->
+- **Context and task files:** `lowercase-hyphenated.md`
+- Never use spaces, camelCase, or version numbers in filenames. Git holds the versions.
+
+## 7. Content standards
+
+Every document: a level-1 heading first, a purpose statement, a `---` rule, and — if it tracks
+evolving state — a dated update note at the bottom.
+
+- **Do not duplicate content that lives in another document.** Cross-link. Two copies of a rule
+  become two different rules.
+- Cross-references use **relative paths** from the referencing file, verified to resolve before
+  committing.
+- Keep speculation out of normative documents. It belongs in a backlog or a context file.
+
+## 8. Living documents
+
+Some documents describe the system as built, and go stale the moment code lands without them.
+
+<!-- DECIDE: which documents must be updated in the same change as the code that affects them?
+     For a product that renders an interface this is usually the design doc's surface inventory
+     and the flows doc; for a design-system package it is the component page, the changelog entry
+     and the deprecation ledger; for a content site it is whatever indexes the published pages.
+     Name them, and put the check in the pre-PR checklist — a rule with no gate is a preference. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

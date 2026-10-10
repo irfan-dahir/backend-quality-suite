@@ -1,0 +1,21 @@
+schema_version: "1.1"
+name: design-auditor-finds-planted-violation
+description: >-
+  The negative control for the auditor pair. A 0-finding result proves nothing
+  unless a planted defect is caught, and an agent that refuses everywhere is
+  just as useless as one that passes everywhere. The `app` fixture carries a
+  literal colour constant in its theme file, placed there so a token audit
+  pointed at it has something real to find. Assert it is found, by file, and
+  that no PASS verdict is issued.
+tags: [design-auditor, control, phase3]
+runs: 3
+execution:
+  prompt: |
+    Use the design auditor to check this project's UI for design-system compliance,
+    especially whether anything hardcodes a value that should come from a token.
+    Give me its report.
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Agent, TodoWrite]
+context:
+  scaffold_script: scaffold.sh

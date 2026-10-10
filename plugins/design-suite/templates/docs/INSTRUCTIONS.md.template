@@ -1,0 +1,116 @@
+# {{PROJECT_NAME}} — Instructions
+
+**The single entry point.** Every other document is reached from here, and this file
+decides what must be read before a given task. If you are an agent or a new
+contributor, start here and nowhere else.
+
+Owned by whoever owns the codebase. Must change whenever a document is added,
+renamed, or retired — a router that points at a moved file is worse than no router,
+because it is still trusted.
+
+---
+
+## 1. Mandatory rules
+
+<!-- DECIDE: these are the rules that override everything else. Keep the list
+     short enough that people actually remember it. Four to eight is realistic. -->
+
+1. Read this file before writing any code.
+2. Before any documentation change, read the documentation-rules document — its
+   rules override all other instructions.
+3. Before any PR action, read the PR document and follow it exactly.
+4. If a request conflicts with a project document, **flag the conflict** and ask.
+   Never silently ignore a documented rule.
+5. When an architectural or design decision is made, update the relevant document
+   as part of the same change — not as a follow-up.
+
+## 2. Reading order
+
+The rules above are universal. **What to read next is not** — it depends on what this
+project is. Fill in the row that applies and delete the others, then keep the result
+as this project's actual reading order.
+
+<!-- DECIDE: which of these describes this project? The answer should match
+     `project.kind` in `.design-suite/profile.json`. If they disagree, one of them is
+     wrong and a skill is already resolving against the wrong assumption. -->
+
+| If this project is | Read in this order, after the rules above |
+|---|---|
+| A product that renders an interface | Brief → Design → Flows → Contributing |
+| A design-system package or library | Contributing → Tokens → Components → Theming |
+| A documentation or content site | Documentation-rules → Contributing → whatever governs its content |
+| Something else | <!-- DECIDE: name the two or three documents someone must read before their first change, in order. If you cannot name them, the gap is the reading order, not this table. --> |
+
+The test for whether this is right: hand it to someone who has never seen the repo,
+and see whether they can make a correct first change without asking a question the
+list should have answered.
+
+## 3. Companion documents
+
+<!-- DERIVED: fill from .design-suite/docs.manifest.json — every mapped role
+     belongs in this table. Roles the project has not mapped should be omitted
+     rather than listed as missing. The descriptions below are the roles' general
+     purpose; replace each with what the document actually is here. -->
+
+| Document | What it is for | Read it when |
+|---|---|---|
+| Brief | What this project is and who it is for | Starting anything new |
+| Design | The visual and behavioural doc-of-record | Changing anything a consumer sees |
+| Decisions | Why things are the way they are | The code surprises you |
+| Backlog | What is in progress, shipped, deferred | Picking up work |
+| Contributing | How to work in this repo | Your first session |
+| PR | PR process and template | Opening a PR |
+
+<!-- DECIDE: add the rows for the roles this project maps that are not listed above —
+     for an interface product usually Flows and Copy; for a design system usually
+     Tokens, Components, Theming, Patterns, Changelog and Deprecations; for a content
+     site usually whatever owns its information architecture. A mapped role missing
+     from this table is invisible from the entry point, which is the same as not
+     existing. -->
+
+## 4. The task router
+
+The point of this table is that nobody has to guess which document applies.
+
+<!-- DECIDE: one row per kind of task this project actually sees. The rows below are
+     examples of the *shape* — a task, the document that governs it, and the skill
+     that does it. Replace them with this project's real tasks; a task that is not
+     listed is a gap worth closing, and a listed task nobody ever does is noise. -->
+
+| Task | Read first | Skill |
+|---|---|---|
+| Adding a new unit of work — a surface, a component, a page | the doc that governs that unit | <!-- DECIDE --> |
+| Changing visual design | Design | `/audit-tokens` |
+| Writing or changing user-facing text | Brand voice, Copy | `/audit-copy` |
+| Making a change consumers will see break | the release and deprecation documents | — |
+| Checking docs are current | — | `/review-docs` |
+| Opening a PR | PR | `/draft-pr-description` |
+| Anything else | the companion table above | — |
+
+## 5. Autonomous vs. explicit skill invocation
+
+Nobody should have to memorise skill names. Recognise intent from plain language
+and act — do not wait for an exact `/command`.
+
+**Do not restate the per-skill tiers here.** Skills that ship from a plugin declare
+their own `invocation:` tier, and the plugin's generated catalogue is the source of
+truth. A hand-written copy in this file cannot learn that a tier changed upstream.
+
+<!-- DECIDE: list ONLY the skills local to this repo, which the plugins do not
+     carry, and their tier. The rule for assigning one: blast radius, not
+     difficulty. Read-only or confirms-before-writing is auto; sets a precedent or
+     ships something outward is explicit. -->
+
+| Local skill | Tier | Why |
+|---|---|---|
+| | | |
+
+## 6. Conventions that are not obvious
+
+<!-- DECIDE: the things a competent newcomer gets wrong on day one. Every entry
+     should be something that has actually been got wrong, not a style preference.
+     This section earns its keep or it should be deleted. -->
+
+---
+
+_Last updated: <!-- DERIVED: the date of the last commit that touched this file -->_

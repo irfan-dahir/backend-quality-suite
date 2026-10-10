@@ -1,0 +1,115 @@
+# {{PROJECT_NAME}} — Postmortem: <!-- DECIDE: short, specific title for the regression -->
+
+A structured record of one regression — human-caused or agent-caused — written after the fact so the
+next person (or the next dispatched agent) does not have to reconstruct what happened from `git log`
+and guesswork.
+
+**Note on scope.** Unlike every other template this suite ships, this one names no design-system
+concept — it is generic engineering-process content, kept here because the delivery mechanism
+(`{{doc:postmortem}}`, resolved the same way every other role is) already exists and fits. If this
+project has an existing incident-review process, use that format instead and do not install this
+one merely because it is available.
+
+**This document is append-only, like the decision log.** One file per regression, or one section per
+regression in a shared log — <!-- DECIDE: which, and where new entries go -->. Never rewrite a past
+entry's account of what happened; add a correction the way `{{doc:decisions}}` does.
+
+---
+
+## 1. What happened
+
+<!-- DECIDE: one paragraph, plain language, no blame. What broke, for whom, and how it was
+     noticed — a user report, a failed gate, an audit, a human catching it in review. -->
+
+**Severity / blast radius:**
+**Detected by:**
+**Detected on:** <!-- date -->
+
+## 2. Timeline
+
+Absolute timestamps, not relative ones — this is read long after "2 hours ago" means anything.
+
+| When | What |
+|---|---|
+| | The change that introduced the regression merged |
+| | It was detected |
+| | It was diagnosed |
+| | It was fixed / reverted |
+
+## 3. Root cause
+
+<!-- DECIDE: the actual mechanism, not just "a bug was introduced." What was true about the code,
+     the process, or the gate that let this happen? A root cause that only restates the symptom
+     ("the function returned the wrong value") is not yet a root cause. -->
+
+## 4. Dispatch provenance
+
+**Only applicable when the change originated from a dispatched agent** — a Task/Agent call, a
+scheduled run, a chain step. If the change was authored directly by a person, say so and skip to §5.
+
+**Original prompt / task spec:** <!-- link the exact prompt, issue, or spec text the agent was
+     given. Quote it if it is short; link it if it is long. The point is reviewability: was the ask
+     itself underspecified, ambiguous, or missing a constraint the agent had no way to infer? -->
+
+**Dispatching context:** <!-- who or what dispatched it — a person, an orchestrating session, a
+     scheduled task — and under what session/agent configuration (model, tools available, isolation
+     mode) if known. -->
+
+**Was the task spec adequate?** <!-- yes/no plus reasoning. If no, the fix belongs in how tasks are
+     written, not only in the code. -->
+
+## 5. Claimed vs. shipped
+
+What the agent's final report said it did, next to what actually landed. Two parts:
+
+**Mechanizable slice** — diff the report's claims against `git diff` / the actual merged commit:
+did every file, command, or test the report claimed to touch actually get touched, and does
+anything land that the report never mentioned?
+
+| Report claimed | Actually shipped (per `git diff`) | Match? |
+|---|---|---|
+| | | |
+
+**Judgment slice** — the part a diff cannot catch: confident-tense language about work that was not
+actually done ("tests pass" with no test run shown, "handles the edge case" with no edge-case
+evidence), a claim technically true but misleading about scope, or a caveat the report buried or
+omitted. <!-- DECIDE: quote the specific claim and say plainly whether it held up. This is
+     retrospective human judgment — it is exactly the half a live gate cannot mechanize. -->
+
+## 6. Verification tier at merge
+
+What tier this change actually carried when it merged, using the vocabulary in
+`verification-tier.schema.json` (`unverified` / `self-tested` / `cross-verified` / `human-reviewed`)
+— and, where the PR carries the `Verification-Tier:` / `Verified-By:` trailer convention, quote it
+directly rather than re-deriving it.
+
+**Verification-Tier (from the PR trailer):** <!-- e.g. `self-tested` — or `TODO: this project's PRs
+     do not yet carry the trailer; see the PR-verification-provenance convention once adopted --->
+**Verified-By:**
+
+**Was that tier adequate for what merged?** <!-- The question that turns this from a generic
+     "what went wrong" into an agent-specific one: did the process's own gate say this was fine, and
+     was the gate lying (claimed a tier it didn't earn) or just too weak for a change of this blast
+     radius? A `self-tested` claim on a one-line typo fix and a `self-tested` claim on a data-migration
+     script are not the same risk, even though the tag is identical. -->
+
+## 7. What should have caught this sooner
+
+<!-- DECIDE: name the actual gate, audit, review step, or process that either didn't exist, existed
+     but didn't run, or ran and passed when it shouldn't have. "Better testing" is not an answer;
+     "the contract-header audit doesn't check X" or "no gate reruns after a rebase" is. -->
+
+## 8. Follow-up actions
+
+| Action | Owner | Tracked in |
+|---|---|---|
+| | | |
+
+<!-- DECIDE: does this project require follow-ups to land in the backlog ({{doc:backlog}}) or
+     decision log ({{doc:decisions}}) before this postmortem is considered closed? State it, because
+     a postmortem whose actions are never tracked anywhere is indistinguishable from one that had
+     none. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

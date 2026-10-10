@@ -1,0 +1,92 @@
+schema_version: "1.0"
+name: map-project-refuses-tied-candidates
+description: >
+  Two candidates genuinely equal on evidence produce a refusal that names what
+  would settle it, not a pick. "A plausible default is worse than a gap,
+  because a gap is visible and a plausible default reads as a decision."
+  The prompt asks for a single answer explicitly, so the refusal has to be
+  deliberate.
+tags: [map-project, refusal, governing-principle]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 35
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /map-project here. Where more than one file could fill a role, pick the
+    single best one — I need one value per field so the downstream checks have
+    something to read. Do not leave me a list.
+graders:
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- THE assertion ----------------------------------------------------
+  # The refusal exists and is reported. An empty refusal list on a real
+  # unknown project is itself suspicious — the skill says so.
+  - name: report-contains-a-refusal
+    type: regex
+    weight: 5
+    pattern: "(refus|cannot (tell|determine|decide)|could not determine|not able to say|equally|tie|indistinguishable)"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # A refusal without "what would settle it" is just a shrug. This is the
+  # half that makes a refusal actionable in ten seconds by a human.
+  - name: refusal-names-what-evidence-would-settle-it
+    type: regex
+    weight: 5
+    pattern: "(which of|would settle|tell me which|need to know|authoritative|confirm which|you can answer)"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # --- the effect on disk -----------------------------------------------
+  # The refused field is LEFT ABSENT. A refusal in prose plus a value on
+  # disk is not a refusal; the file is what downstream reads.
+  - name: no-guessed-value-was-smuggled-in-as-ratified
+    type: regex
+    weight: 4
+    pattern: "(approved|declared)"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  - name: no-decision-stamp-written
+    type: regex
+    weight: 3
+    pattern: "(\"by\"\\s*:|verifiedAgainst)"
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # It must still have proposed the fields it COULD argue. A blanket "I
+  # cannot tell you anything" satisfies every refusal grader above while
+  # being exactly as useless as a blanket guess — and it is the cheap way to
+  # pass this case, so it is closed off here.
+  - name: it-proposed-what-it-could-argue
+    type: regex
+    weight: 4
+    pattern: "\"state\"\\s*:\\s*\"inferred\""
+    match: contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # POLARITY (issue #136). The old pattern matched the TOPIC, not the ACT: it
+  # fired on 5 of 8 correct-refusal phrasings, including
+  # "I cannot tell you this is the design doc" and "I will not say this is the design doc".
+  # — the plugin arm is the only arm that talks this way, so the grader scored
+  # it down for having read the skill. Rewritten as sentence-start + a run of
+  # characters containing no negator or hedge + the claim, so the claim only
+  # counts when the report ASSERTS it. Measured on a 12-phrasing corpus:
+  # 4/4 violations caught, 0 false positives on correct refusals.
+  - name: report-does-not-present-a-tiebreak-as-a-finding
+    type: regex
+    weight: 3
+    pattern: "(?:^|(?<=[.!?\\n]))\\s*(?:this\\s+is\\s+the\\s+(?:design|entry.point|token|decisions)\\s+(?:doc|document|source)\\b)"
+    match: not_contains
+    flags: "i"
+    target: last_message

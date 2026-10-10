@@ -1,0 +1,55 @@
+# {{PROJECT_NAME}} — Deployment
+
+Where each environment lives, what deploys to it, and who is allowed to do it.
+
+<!-- DECIDE: if this project deploys nothing (a client app shipped through stores),
+     say so in one line and point at the release document instead of keeping an
+     empty file. A document that exists but says nothing gets trusted for longer
+     than a missing one. -->
+
+---
+
+## 1. Environments
+
+| Environment | URL | Deploys from | Auto or manual |
+|---|---|---|---|
+| | | | |
+
+**Never put credentials, connection strings, or internal hostnames in this
+document.** Name the secret store and the key; do not paste the value.
+
+## 2. Who can deploy
+
+<!-- DECIDE: per environment. If everyone can deploy to production, that is a
+     decision — write it down as one so it can be revisited deliberately. -->
+
+## 3. How to deploy
+
+<!-- DERIVED: the real commands or the pipeline that runs them. -->
+
+```bash
+```
+
+## 4. Rollback
+
+The section that matters at 2am.
+
+<!-- DECIDE: how to get back to the previous state, how long it takes, and what is
+     NOT reversible — migrations, in-flight jobs, anything already sent to a third
+     party. A rollback plan that omits the irreversible parts is not a plan. -->
+
+## 5. Ownership boundary
+
+<!-- DECIDE: what this team owns versus what the client or another team owns. Be
+     explicit: deploying into infrastructure someone else owns needs their consent
+     every time, not once. -->
+
+## 6. Pre-deploy checks
+
+- [ ] Build is green on the deploying commit
+- [ ] Migrations reviewed, and their rollback understood
+- [ ] Someone other than the deployer knows it is happening
+
+---
+
+_Last updated: <!-- DERIVED --> _

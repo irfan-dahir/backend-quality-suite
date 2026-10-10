@@ -1,0 +1,20 @@
+schema_version: "1.1"
+name: review-docs-no-false-drift
+description: >-
+  The negative control for the whole /review-docs group. The fixture is freshly
+  built: its authored document is current, and one profile field carries an
+  approved human ratification. A skill that always finds drift is as useless as
+  one that never does, so this case asserts the authored document is NOT
+  reported stale and the ratified field is NOT overwritten or downgraded —
+  while still requiring the stub and decline to surface, which proves the run
+  was not simply inert.
+tags: [review-docs, control, phase3]
+runs: 3
+execution:
+  prompt: |
+    Review this project's documentation and tell me what is stale or out of sync.
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, TodoWrite]
+context:
+  scaffold_script: scaffold.sh

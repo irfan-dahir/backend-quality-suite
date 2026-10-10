@@ -1,0 +1,134 @@
+# {{PROJECT_NAME}} — Accessibility
+
+What this project guarantees about accessibility, what it mechanically checks, and — the section
+that makes the rest trustworthy — **what it does not check at all**.
+
+Read by `/audit-accessibility`, which takes its enforced minimums from here and from the audit
+config. Those two must agree; the config is what the scanner reads, this document is what a human
+reads, and a mismatch is a defect rather than a formatting nit.
+
+Owned by whoever owns the presentation layer. Must change whenever a check is added, removed, or
+turned off.
+
+---
+
+## 1. The three-way split
+
+Everything below is filed under exactly one of three headings, and the split is the whole point of
+this document:
+
+| | Means | A reader may conclude |
+|---|---|---|
+| **Guaranteed** | Structurally true — the code cannot easily produce a violation, because the shared layer enforces it | It holds without checking each case |
+| **Checked** | Not structurally guaranteed, but a check runs and fails on violation | It holds where the check reaches |
+| **Not checked** | Nobody verifies this, by tooling or by process | **Nothing.** It may be fine; it has not been established |
+
+A document listing only guarantees manufactures exactly the false confidence this split exists to
+prevent: silence about a criterion reads as compliance with it. **If a criterion is not in the first
+two lists, it belongs in the third by name.** An empty "not checked" section is a claim that this
+project verifies everything, which is not true of any project.
+
+## 2. The enforced minimums
+
+The two numbers the accessibility audit reads. It **refuses to run** without them rather than
+guessing, so leaving these blank disables the check rather than relaxing it.
+
+<!-- DECIDE: the minimum text size and the minimum interactive target size, each with the reason.
+     "Because the platform guideline says so" is a fine reason; so is an audience-derived one — an
+     audience of adults over 50 raises the text floor, a desktop-only tool changes the target size
+     argument. Record the reason, because the number gets challenged and the reason is what settles
+     it. Then set the same values in the audit config's accessibility_minimums. -->
+
+| Minimum | Value | Why this value |
+|---|---|---|
+| Text size | | |
+| Interactive target | | |
+
+## 3. Guaranteed
+
+<!-- DECIDE: each guarantee, and — required — the mechanism that makes it structural. A guarantee
+     with no named mechanism is an intention, and belongs under §5 instead. The test: could a
+     contributor produce a violation without noticing? If yes, it is not guaranteed. -->
+
+| Guarantee | What makes it structural |
+|---|---|
+| | |
+
+## 4. Checked
+
+<!-- DECIDE: each check, what runs it, where it runs, and — the field people skip — what it does
+     NOT reach. A check that runs only on one directory, or only on components and not on the
+     surfaces that compose them, guarantees nothing about what it never read. State the boundary as
+     precisely as you can. -->
+
+| Criterion | Checked by | Runs where | What it does not reach |
+|---|---|---|---|
+| | | | |
+
+**Before trusting any row here, confirm the check can fail.** Introduce a deliberate violation and
+watch it get caught, then revert. A check reporting zero findings and a check that never ran produce
+the same output.
+
+## 5. Not checked
+
+The honest list. Each entry: what is unverified, and either what would be needed to verify it or why
+this project has decided not to.
+
+<!-- DECIDE: work through the criteria this project's applicable standard names, and put every one
+     that is not in §3 or §4 here. Known-hard-to-automate ones belong here almost always — reading
+     order, whether an accessible name is *meaningful* rather than merely present, whether an
+     announcement makes sense in sequence, colour as the sole carrier of meaning, keyboard or
+     switch traversal order, timing, motion sensitivity. A machine can check that a label exists; it
+     cannot check that the label is right.
+
+     For each, one of: "needs manual testing, not yet done", "needs manual testing, done on
+     <date> by <who>", or "deliberately out of scope, because <reason>". The third is a legitimate
+     answer. The one unacceptable answer is leaving the criterion off the page. -->
+
+| Not verified | Status |
+|---|---|
+| | |
+
+## 6. Manual testing
+
+Some of §5 only ever moves by a person testing it. Say who, how, and how often.
+
+<!-- DECIDE: which assistive technologies are in scope, on which platforms, and what the pass
+     condition is. Then: when was the last pass, and what triggers the next one? A manual test with
+     no trigger happens once, before the first release, and never again — at which point §5's
+     "done on <date>" entries quietly become false. -->
+
+| What | How it is tested | Last done | Trigger for the next pass |
+|---|---|---|---|
+| | | | |
+
+## 7. Known violations
+
+Places this project currently fails its own bar, with an owner. Distinct from §5 — these are known
+to be wrong, not merely unverified.
+
+<!-- DECIDE: each one, why it has not been fixed, and what it is waiting on. An accessibility
+     violation with no owner and no date is a permanent one; recording it here at least makes it
+     countable. Keep this in step with the audit's exceptions file — that file is what silences the
+     scanner, this table is what a human reads, and if they disagree the reader is the one being
+     misled. -->
+
+| Where | What fails | Owner | Waiting on |
+|---|---|---|---|
+| | | | |
+
+## 8. What a consumer must supply
+
+<!-- DECIDE: if anything outside this project composes what it produces — another team, another
+     repository, an integrating application — name what accessibility work is theirs rather than
+     this project's. A shared layer can enforce a target size; it cannot know what a given instance
+     should be announced as. Left unstated, both sides assume the other did it. If nothing consumes
+     this project, say so in one line and delete the table. -->
+
+| This project provides | The consumer must supply |
+|---|---|
+| | |
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

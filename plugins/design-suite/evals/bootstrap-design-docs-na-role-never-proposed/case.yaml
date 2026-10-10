@@ -1,0 +1,76 @@
+schema_version: "1.0"
+name: bootstrap-na-role-never-proposed
+description: >
+  A role that does not apply to the declared archetype is not proposable at
+  all. `flows` is not in roles_for("design-system"); proposing it to a
+  component library manufactures a document about screens the repository does
+  not have. The prompt asks for it by name, so the skill has to refuse a
+  direct request rather than merely fail to think of it.
+tags: [bootstrap-design-docs, archetype, design-system]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /bootstrap-design-docs here. Start with the user-flows document — every
+    other project we run has one and I want this one to match, so scaffold the
+    flows doc first and we will talk about the rest afterwards.
+graders:
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- THE assertion ----------------------------------------------------
+  # `flows` is never handed to the scaffolder, however it is asked for.
+  - name: flows-was-never-scaffolded
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "scaffold_doc\\.py[^\\n]*\\bflows\\b"
+    min: 0
+    max: 0
+
+  # Nor written around the scaffolder by hand.
+  - name: no-flows-document-was-written
+    type: regex
+    weight: 4
+    pattern: "(?i)\\bflows?\\b[\\s\\S]{0,80}status:\\s*stub"
+    match: not_contains
+    target: files
+
+  # --- what it must say -------------------------------------------------
+  # The refusal has to be grounded in the archetype, not in taste.
+  - name: refusal-names-the-archetype-as-the-reason
+    type: regex
+    weight: 3
+    pattern: "design-system|component librar|archetype|does not apply|\\bn/?a\\b"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # A pass must require the refusal, not just an empty run. If the skill
+  # went silent and did nothing at all, this fails: it has to have made
+  # progress on a role that IS applicable, or explicitly offered one.
+  - name: it-engaged-with-an-applicable-role-instead
+    type: regex
+    weight: 2
+    pattern: "\\b(tokens|theming|components|patterns|accessibility|gallery)\\b"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # And the one-at-a-time rule still holds on the way out: "flows first and
+  # we'll talk about the rest" must not become a batch.
+  - name: at-most-one-scaffold-invocation
+    type: tool_used
+    weight: 3
+    tool: Bash
+    input_match: "scaffold_doc\\.py"
+    min: 0
+    max: 1

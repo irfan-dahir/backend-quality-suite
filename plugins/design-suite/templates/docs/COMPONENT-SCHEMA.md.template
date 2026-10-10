@@ -1,0 +1,96 @@
+# {{PROJECT_NAME}} — Component Page Schema
+
+The required shape of a component page. Every page under the components role is checked against
+this document, and a page that does not conform is a failure rather than a style difference.
+
+This exists because **a component page that is merely present cannot be told apart from one that is
+complete.** Once there are dozens of them, nobody reads them all; a schema plus a check is what
+keeps "100 documented components" from meaning "100 files".
+
+Owned by whoever owns the components role. Changing it means changing every existing page in the
+same change — see §5.
+
+---
+
+## 1. The required sections
+
+Fixed names, fixed order. A page is conformant when every required section is present, in this
+order, with content.
+
+<!-- DECIDE: the section list. It must match `COMPONENT-PAGE.md.template` exactly — that template
+     is the human-facing form of this schema, and if the two disagree, every page written from the
+     template fails the check. Treat a mismatch as a defect in one of the two, never as tolerance. -->
+
+| # | Section | Required | Empty is allowed | Why it is required |
+|---|---|---|---|---|
+| 1 | | | | |
+
+**"Empty is allowed" is the column that matters.** A section that may be empty gives a page a legal
+way to say nothing, and a page saying nothing about accessibility reads exactly like a page saying
+there is nothing to worry about. Default to no.
+
+<!-- DECIDE: which sections, if any, may be empty — and for each, what a reader is entitled to
+     conclude from the emptiness. If you cannot state that, the answer is no. -->
+
+## 2. Frontmatter
+
+Machine-readable facts belong in frontmatter, not in prose, so that the index and any tooling read
+them rather than parsing sentences.
+
+<!-- DECIDE: the frontmatter keys, their types, and which are required. At minimum you need what
+     the components index needs to build itself — the name, the status, the grouping. Add a key
+     only when something reads it; an unread key is a field that goes stale silently. -->
+
+```yaml
+# The required keys, with their types
+```
+
+<!-- DECIDE: is there a machine-readable schema file for this frontmatter, and where does it live?
+     A schema stated only in prose is checked only by people. -->
+
+## 3. How conformance is checked
+
+<!-- DECIDE: name the actual command that checks pages against this schema, and where it runs —
+     locally, in a pre-commit hook, in CI, or all three. -->
+
+```bash
+# The check command
+```
+
+Three rules for that check, learned the expensive way:
+
+1. **A check that finds nothing must be distinguishable from a check that did not run.** If it
+   cannot find the component pages — wrong path, renamed directory, empty glob — it must fail
+   loudly, not report every page conformant.
+2. **It must be run against a deliberately broken page before it is trusted.** Introduce a page
+   missing a required section, confirm the check catches it, then revert. A green run over a corpus
+   the checker never read looks identical to a green run over a clean one.
+3. **A page that fails is a failure of that change**, not a backlog item. Conformance that is
+   optional for long enough stops being conformance.
+
+## 4. Exceptions
+
+<!-- DECIDE: may a page be exempted from a section, and if so how is the exemption recorded — a
+     frontmatter key, an entry in the exceptions file, something else? Every exemption needs a
+     reason and someone's name against it. An exception list with no reasons becomes the place
+     checks go to be permanently silenced. -->
+
+## 5. Changing this schema
+
+Adding a required section makes every existing page non-conformant the moment it lands. That is
+correct behaviour, and it is also why the change is not finished when this file is edited.
+
+Order of operations:
+
+1. Decide the change and write down what a reader gains from the new section.
+2. Update this schema and `COMPONENT-PAGE.md.template` together, in one change.
+3. Migrate every existing page, or record an explicit exception per §4 for each that is not
+   migrated, with an owner and a date.
+4. Only then turn the check on for the new section.
+
+<!-- DECIDE: who may approve a schema change? With dozens of pages downstream this is a decision
+     with a real cost, and "anyone with commit access" is how a schema acquires eleven sections. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

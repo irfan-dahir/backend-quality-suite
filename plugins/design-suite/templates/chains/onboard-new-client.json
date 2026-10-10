@@ -1,0 +1,51 @@
+{
+  "$schema": "../chain.schema.json",
+  "_readme": "The /onboard-new-client playbook as a chain definition, so the sequence survives a session ending halfway through it. The prose playbook remains the authority on what each step means and why it is ordered this way — this file only carries the sequence, the decision points, and which steps must not be advanced past silently.",
+  "schemaVersion": 1,
+  "name": "onboard-new-client",
+  "description": "Stand up the design-system foundation of a new client project or greenfield area.",
+  "steps": [
+    {
+      "id": "brand-voice",
+      "skill": "establish-brand-voice",
+      "purpose": "Produce the brand-voice document, ingesting an existing brand book if the client has one.",
+      "decisionPoint": "Does a brand document already exist, or does the voice need reverse-engineering from existing copy (or drafting fresh)?",
+      "checkpoint": true,
+      "checkpointReason": "The skill requires attribute-by-attribute sign-off and never accepts a draft wholesale. Advancing past it automatically would break the contract of the skill being composed.",
+      "onFail": "halt"
+    },
+    {
+      "id": "design-docs",
+      "skill": "bootstrap-design-docs",
+      "purpose": "Reverse-engineer the design and flows documents from the existing codebase, or scaffold them if the codebase is new too.",
+      "decisionPoint": "Is this a zero-docs project? A project that already has a design-system doc suite skips this entirely.",
+      "skipIf": "The project already has design and flows documents.",
+      "checkpoint": true,
+      "checkpointReason": "Generating a doc suite over one that already exists is destructive in a way nothing downstream would notice.",
+      "onFail": "halt"
+    },
+    {
+      "id": "interaction-spec",
+      "skill": "establish-interaction-spec",
+      "purpose": "Establish motion conventions from existing tokens and usage, and haptic/sound conventions from scratch.",
+      "decisionPoint": "Haptics and sound are greenfield on most projects — ask rather than assuming the defaults.",
+      "checkpoint": true,
+      "checkpointReason": "Same per-attribute sign-off requirement as brand voice.",
+      "onFail": "halt"
+    },
+    {
+      "id": "first-screen",
+      "skill": "scaffold-screen",
+      "purpose": "Scaffold the first real screen, now that voice and motion specs exist to draft against.",
+      "checkpoint": false,
+      "onFail": "halt"
+    },
+    {
+      "id": "baseline-debt",
+      "skill": "design-debt",
+      "purpose": "Record where the project starts, so later runs show direction of travel rather than a number with nothing to compare against.",
+      "checkpoint": false,
+      "onFail": "skip"
+    }
+  ]
+}

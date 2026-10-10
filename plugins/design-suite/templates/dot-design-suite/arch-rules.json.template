@@ -1,0 +1,81 @@
+{
+  "_readme": "Facts about THIS project's architecture (banned imports, layer directions, vetted name collisions) that the structural audits enforce. An absent section makes the matching audit refuse to run rather than pass vacuously — see design_suite/engine/arch.py. Only fill in the sections for audits you actually intend to use; delete the rest (a missing section is a clean refusal, not a bug). Each section's exact contract lives in the docstring/top of its script, named below — read that before editing.",
+
+  "unwiredRoles": {
+    "_comment": "Consumed by bin/audit_unwired_roles.py. requiredRoles: semantic colour roles that must be both defined AND read somewhere, so re-skinning the project actually moves them.",
+    "requiredRoles": ["TODO_ROLE_NAME_e.g._primary", "TODO_ROLE_NAME_e.g._surface"]
+  },
+
+  "unusedTokens": {
+    "_comment": "Consumed by bin/audit_unused_tokens.py. categories maps a category name to the name PREFIX this project's token file uses for it (read via tokens.source, same file audit_tokens.py already resolves) — e.g. a token file declaring 'static const space16 = 16;' and 'static const radius8 = 8;' names spacing tokens with the prefix 'space' and radii with 'radius'. Only list categories this project's naming convention actually has; an absent category is skipped, not failed. requiredTokens (optional): specific token names this project holds itself accountable for reading somewhere; omit/null to mean ALL declared tokens across every listed category (the right default for a package that owns every token it defines), or set an explicit (possibly empty) list to report-without-failing instead.",
+    "categories": {
+      "TODO_CATEGORY_NAME_e.g._spacing": "TODO_NAME_PREFIX_e.g._space",
+      "TODO_CATEGORY_NAME_e.g._radius": "TODO_NAME_PREFIX_e.g._radius"
+    },
+    "requiredTokens": null
+  },
+
+  "errorHandling": {
+    "_comment": "Consumed by bin/audit_error_handling.py. The vocabulary this project uses for its shared error-handling guard, so the audit can recognise a network call that bypasses it.",
+    "guardImport": "TODO: import path of the shared error/result-handling helper",
+    "guardCall": "TODO: how code invokes it, e.g. 'guardedCall('",
+    "networkCallPattern": "TODO: how a raw network call looks when NOT going through the guard",
+    "errorWidget": "TODO: the shared error-state widget/component name every failure must eventually reach"
+  },
+
+  "contractHeaders": {
+    "_comment": "Consumed by bin/audit_contract_headers.py. Where screen contract headers live and what marks one.",
+    "headerMarker": "TODO: the comment/annotation that opens a contract header, e.g. '// CONTRACT:'",
+    "adapterFieldPattern": "TODO: regex/pattern identifying a field the header must account for"
+  },
+
+  "reinventedComponents": {
+    "_comment": "Consumed by bin/audit_reinvented_components.py. Name collisions between a shared component and a private one that are known and accepted, plus the export prefix shared components use, plus (optionally) the package the design system ships as. 'package' is only needed when the design system is NOT the package that owns this project's tokens — otherwise the audit reads tokens.source.package from the profile. Declared in neither place, the audit REFUSES (exit 2) rather than comparing private widgets against nothing and printing a clean run.",
+    "exportPrefix": "TODO: e.g. 'Ds'",
+    "package": "TODO or delete: package name the design system ships as, e.g. 'ds_<name>'. Delete when tokens.source.kind is 'package' and names the same package.",
+    "allowedCollisions": [],
+    "baseline": ".design-suite/baselines/reinvented-components.json"
+  },
+
+  "layerBoundaries": {
+    "_comment": "Consumed by bin/audit_layer_boundaries.py. rules[0] is read as the active rule; baseline is the recorded oracle for behaviour-preservation checks.",
+    "rules": [
+      {
+        "label": "TODO: e.g. 'ui must not import data layer directly'",
+        "fromGlob": "TODO: e.g. 'lib/ui/**'",
+        "mustNotImport": "TODO: e.g. 'lib/data/**'"
+      }
+    ],
+    "baseline": ".design-suite/baselines/layer-boundaries.json"
+  },
+
+  "adapterPattern": {
+    "_comment": "Consumed by bin/audit_adapter_pattern.py. Imports that are banned outside the adapter seam, as [{label, pattern}] regex entries.",
+    "bannedImports": [
+      {
+        "label": "TODO: e.g. 'no direct SDK import outside adapters/'",
+        "pattern": "TODO: regex, e.g. 'package:some_vendor_sdk/'"
+      }
+    ]
+  },
+
+  "promotionCandidates": {
+    "_comment": "Consumed by bin/audit_promotion_candidates.py. Parameter names that are plumbing (not signal for promotion) and known-noise parameter sets to ignore.",
+    "plumbingParams": ["key", "child", "children"],
+    "noiseParamSets": [],
+    "baseline": ".design-suite/baselines/promotion-candidates.json"
+  },
+
+  "apiConsistency": {
+    "_comment": "Consumed by bin/audit_api_consistency.py. Which per-check rules are on, each with a human-readable 'why' shown when a check is off.",
+    "buttonishPattern": "(?:Button|Cta|Fab)\\b",
+    "semanticsWrappers": ["Semantics"],
+    "scope": ["TODO: glob(s) this audit should scan, e.g. 'lib/**/*.dart'"],
+    "checks": {
+      "TODO_CHECK_NAME": {
+        "enabled": true,
+        "why": "TODO: why this check matters here, shown when disabled"
+      }
+    }
+  }
+}

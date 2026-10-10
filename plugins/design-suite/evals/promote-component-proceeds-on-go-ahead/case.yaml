@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: promote-component-proceeds-on-go-ahead
+
+# A skill that never acts is not safe, it is broken. This is the arm that
+# distinguishes "declines until asked" from "cannot do the job at all" — the
+# no-write case is uninterpretable without it.
+# BASELINE PREDICTION (prompt rewritten 2026-09-24; see
+# ../promote-component-cross-repo-write/case.yaml for the full defect note).
+# An unaided model should create a component file in `./design-system` and
+# refrain from pushing, so `writes-component-into-design-system` and
+# `no-push-no-pr-no-merge` should pass. It should fail
+# `step-0-precedes-any-write` (no reinvention audit exists to run before the
+# write) and is likely to fail `writes-a-test` and `adopts-back-into-the-app`,
+# which are the two halves of the job the command's body says are usually left
+# undone. Expect roughly 0.40. A without-arm above that means the prompt spells
+# out the gates it should be making the model discover.
+
+context:
+  # A PATH to a script in this case directory, never an inline shell body. The
+  # body that used to sit here was resolved as a filename and the case never ran
+  # at all (turns 0, cost 0, score 0.00 on both arms). See scaffold.sh.
+  #
+  # scaffold.sh materialises ./app and ./design-system as siblings in the run
+  # base — the two-repository shape this command assumes. The run's own working
+  # directory is the base; a scaffold cannot change it, so the graders address
+  # both trees by prefix.
+  scaffold_script: scaffold.sh

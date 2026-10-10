@@ -1,0 +1,172 @@
+# {{PROJECT_NAME}} — Brand Onboarding Interview
+
+A structured, reusable set of questions for a client/stakeholder interview when
+standing up brand voice for a new project. This is a fragment, not a document
+role of its own: it feeds `/establish-brand-voice`, it does not replace any
+step of it.
+
+**Read `/establish-brand-voice` first.** That skill still owns the drafting,
+the attribute-by-attribute sign-off, and the doc it produces
+(`{{doc:brand-voice}}`). This fragment only structures the *elicitation* that
+happens before or during that skill's Step 1/Step 2 — the actual conversation
+with a client who has opinions about tone but no brand document to hand over.
+Nothing here is a substitute for reading real copy (Step 2) or an existing
+brand book (Step 2b); it is what to ask when neither answers a question by
+itself, and a place to capture the answer so it does not have to be asked
+twice.
+
+Use it two ways:
+
+- **Live, in conversation** — work through the sections below with whoever
+  owns the client relationship, before or alongside `/establish-brand-voice`
+  Step 1.
+- **Recorded** — paste the filled-in answers into `{{doc:brand-voice}}` as an
+  appendix ("Onboarding interview notes"), or into `{{doc:decisions}}` under
+  the "Copywriting & Brand Voice" section `/establish-brand-voice` Step 4
+  already creates, so the reasoning behind an attribute survives past the
+  conversation that produced it.
+
+This is a question list, not brand-sensitive output — asking these questions
+commits the project to nothing. Answering them and drafting `{{doc:brand-voice}}`
+from the answers is the brand-sensitive step, and that step still belongs to
+`/establish-brand-voice`, which is explicit-invocation for exactly that reason.
+
+---
+
+## 0. Before asking anything
+
+Confirm which situation this is — it changes which sections below matter:
+
+| Situation | What to do |
+|---|---|
+| Client has a brand book / style guide | Skip most of this interview. Use `/establish-brand-voice` Step 2b (ingest) instead, and only ask §4 (examples) and §5 (audience) to fill gaps a brand book usually leaves — those, not tone, are what a written brand book most often omits. |
+| Client has shipping copy but no brand document | Run `/establish-brand-voice` Step 2 (extract real copy) first, then use this interview to confirm what the extraction implied rather than to invent from nothing. |
+| Genuinely greenfield — no copy, no brand book | This interview is the primary evidence source. Say so plainly in `{{doc:brand-voice}}` when it is drafted: attributes here are stated preference, not observed usage, until real copy exists to check them against. |
+
+## 1. Brand personality / tone spectrum
+
+Ask as forced choices along a spectrum, not open-ended adjectives — "somewhere
+between X and Y, and why" produces an answer that can be checked later;
+"describe your brand's personality" produces marketing language that cannot.
+
+- On a line between **formal** and **casual**, where does this product sit —
+  and does that answer change for error states, legal/consent text, or
+  destructive-action confirmations?
+- Between **playful** and **serious**? Name one competitor or reference brand
+  on each end, if one exists, to anchor the answer.
+- Between **authoritative/expert** and **peer/approachable**? For a
+  regulated or clinical domain, this one usually has a floor that isn't
+  negotiable — ask what it is.
+- Between **concise** and **thorough**? Does this trade off differently for
+  onboarding copy versus in-product help text?
+- Between **plain, everyday language** and **technical/domain-precise
+  language**? If the audience spans both experts and newcomers (§5), ask
+  which surfaces get which register, not which register wins overall.
+- Exclamation points, emoji, contractions — encouraged, tolerated, or banned?
+  Answers here are often stricter than the tone spectrum above implies, and
+  the gap itself is worth recording.
+- Is there a **register split that is deliberate**, not an inconsistency to
+  resolve — e.g. reassuring status copy next to formal consent language? Ask
+  the client to name the split explicitly rather than letting it surface
+  later as an audit finding.
+
+## 2. Terminology preferences
+
+- What are the 5–10 domain terms this product cannot get wrong? For each:
+  the canonical term, and every synonym staff or users currently use for the
+  same thing.
+- Any term that must **never** appear in user-facing copy — a legal,
+  clinical, or commercial-sensitivity reason to avoid a word entirely rather
+  than just prefer an alternative? (This is stronger than a style preference
+  — flag it as a hard constraint, not a glossary row.)
+- Any language that must stay **separated** — e.g. billing/commercial
+  language kept out of clinical or safety-critical copy. Check
+  `{{doc:decisions}}` first (grep for "copy", "terminology", "tone"); a rule
+  like this is usually already logged there and should be confirmed, not
+  re-litigated.
+- Does the client use different terms internally (staff-facing) than they
+  want surfaced to end users? Capture both — the glossary needs the banned
+  synonym even when the "banned" version is what the client's own team says
+  in meetings.
+- Capitalization, punctuation, and spelling convention (e.g. US vs. UK
+  spelling, product-name casing, oxford comma) — these get skipped in a
+  tone conversation and then become the first thing an audit flags.
+
+## 3. Target audience characterization
+
+This is the section every tone attribute should trace back to — an attribute
+that doesn't connect to an answer here is decoration (see
+`BRAND_VOICE.md.template`'s "Audience & context" section, which this directly
+feeds).
+
+- Who is the primary reader, specifically — not a demographic label, but a
+  situation: what are they trying to do, and what do they already know
+  coming in?
+- What emotional state are they most often in when they read this copy? Be
+  concrete: anxious about a result, frustrated after a failed action, idly
+  browsing, under time pressure. This changes copy more than any adjective
+  on the tone spectrum.
+- Does the audience split into groups that need different registers —
+  expert vs. novice, internal staff vs. external client, a regulator or
+  auditor who reads only the consent/legal surfaces?
+- Any accessibility or reading-level constraint that is non-negotiable for
+  this audience? Check `{{doc:design}}` for a stated bar first — this
+  question confirms it applies to copy, not only to type size and contrast.
+- Is there a secondary audience (press, investors, an app-store listing)
+  that reads differently from the primary in-product audience? If so, is
+  that in scope for `{{doc:brand-voice}}` at all, or explicitly out of scope?
+
+## 4. Examples of good and bad copy from the client's own materials
+
+Always prefer the client's own words over invented examples — a Do/Don't
+pair pulled from their actual materials is far more persuasive and far more
+checkable than an illustration.
+
+- Ask the client to point at **one piece of existing copy they're proud
+  of** — anywhere: an email, a screen, an app-store description, a support
+  macro. Ask what makes it work, in their words.
+- Ask for **one piece of existing copy they'd rewrite if they could** — copy
+  they inherited, copy a competitor or predecessor wrote, copy that reads
+  wrong even if no one has fixed it. Ask what's wrong with it, specifically.
+- Ask for **a competitor's copy they admire or want to avoid sounding
+  like** — a positioning question as much as a tone question, and often
+  surfaces a tone attribute (§1) the client hadn't named directly.
+- If real in-product copy already exists, don't stop at what the client
+  hands over unprompted — run `/establish-brand-voice` Step 2's extraction
+  and sample across feature areas (home, onboarding, error/empty states,
+  anything with consent or legal text). A client's own sense of their best
+  and worst copy is a starting point, not the full evidence base.
+- Record each example as a Do/Don't pair with a one-line reason, in the
+  shape `BRAND_VOICE.md.template`'s Do's/Don'ts table already expects —
+  answers gathered in that shape drop straight in rather than needing
+  translation later.
+
+## 5. AI-tell and banned phrases
+
+- Does the client already avoid specific phrases as a matter of house style
+  ("seamless", "elevate", "unlock", "leverage", "delve", "navigate the
+  complexities of") — or is this a fresh list to draft?
+- Any phrase that is fine in general marketing but wrong for this product's
+  domain specifically (e.g. "cutting-edge" in a clinical-safety context)?
+- Does the client have a stance on stacked em-dashes, rule-of-three
+  cliché lists, "Let's dive in," or exclamation-point stacking — the
+  specific AI-tell patterns `BRAND_VOICE.md.template` calls out — or should
+  the starting list in that template stand until `/audit-copy` produces
+  real findings to refine it against?
+
+## 6. What this interview does not cover
+
+- **It does not draft `{{doc:brand-voice}}`.** Answers here are raw
+  material `/establish-brand-voice` Step 3 still turns into the six-attribute
+  document, attribute by attribute, with the client's explicit sign-off on
+  each — this interview does not shortcut that confirmation step.
+- **It does not rewrite any existing copy.** That is `/rewrite-copy`'s job,
+  and it happens after `{{doc:brand-voice}}` exists, never during onboarding.
+- **It does not replace reading real copy or a real brand document.**
+  Stated preference in an interview and observed usage in shipping copy
+  disagree more often than either side expects; where they conflict, say so
+  in `{{doc:brand-voice}}` rather than silently picking one.
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

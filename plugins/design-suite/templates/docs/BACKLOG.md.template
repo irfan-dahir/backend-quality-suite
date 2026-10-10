@@ -1,0 +1,51 @@
+# {{PROJECT_NAME}} — Backlog
+
+What is in progress, what has shipped, and what has been deliberately deferred.
+
+Read by `/review-docs`, which cross-checks this document against real git
+branches — an item marked in-progress whose branch was merged weeks ago is a
+finding, not a detail. Keep the branch names exact.
+
+---
+
+## In progress
+
+One row per active branch. If a branch exists and is not here, that is a gap.
+
+| Item | Branch | Owner | Notes |
+|---|---|---|---|
+| | | | |
+
+## Next
+
+Ordered. The top item is what gets picked up next, so the order is a decision
+rather than a wish list.
+
+<!-- DECIDE: how this order is set, and by whom. An unowned ordering gets
+     re-litigated every week. -->
+
+| Priority | Item | Why this rank |
+|---|---|---|
+| 1 | | |
+
+## Shipped
+
+Newest first. Kept because "when did this land, and in what" is asked constantly.
+
+| Item | Merged | Where |
+|---|---|---|
+| | | |
+
+## Deferred / out of scope
+
+Every entry here needs a corresponding rationale in the decision log —
+`/review-docs` flags any that is unexplained, because an undocumented deferral is
+indistinguishable from something forgotten.
+
+| Item | Why deferred | Revisit when |
+|---|---|---|
+| | | |
+
+---
+
+_Last updated: <!-- DERIVED --> _

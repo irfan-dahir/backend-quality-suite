@@ -1,0 +1,85 @@
+# {{PROJECT_NAME}} — Release
+
+How a version reaches users: numbering, signing, store submission, and what has to
+be true first.
+
+**Releases are never autonomous.** Every skill touching this document stops for an
+explicit human decision, because a release is outward-facing and mostly
+irreversible once distributed.
+
+---
+
+## 1. Version scheme
+
+<!-- DECIDE: the scheme, and what increments each part. Also: where the number
+     actually lives, since a version set in two places will disagree. -->
+
+| Part | Increments when |
+|---|---|
+| | |
+
+## 2. Signing
+
+<!-- DECIDE: name the keystore or certificate and where it is stored. NEVER put a
+     key, password, or path to an unencrypted key in this document. If the signing
+     material is held by one person, that is a single point of failure worth
+     recording as a risk. -->
+
+| | |
+|---|---|
+| Signing material held in | |
+| Who has access | |
+| Rotation / expiry | |
+
+## 3. Release checklist
+
+- [ ] Version bumped, in every place it appears
+- [ ] Changelog written from the decision log, not from `git log`
+- [ ] Full test suite green on the release commit
+- [ ] Build produced from a clean checkout of that commit
+- [ ] Release notes reviewed by someone who did not write them
+- [ ] Tag pushed **after** the artifact is accepted, not before
+
+## 4. Store submission
+
+<!-- DECIDE: per platform — what gets uploaded, review expectations, and any
+     metadata that must be updated alongside the binary. -->
+
+## 5. What to do when a release is bad
+
+<!-- DECIDE: the actual mechanism per platform — staged rollout halt, phased
+     release pause, expedited review. Note plainly what cannot be undone: a build
+     already downloaded stays downloaded. -->
+
+**Convention: cut forward, never move a tag, attach a release note.** The fix
+is a new version, not a rewind or a retagged old one. See
+`fragments/ROLLBACK-CONVENTION.md.template` for the fixed statement of this
+convention plus the `<!-- DECIDE -->` markers this project fills in — who can
+declare a release bad, who has authority to cut the rollback, and where the
+incident gets recorded.
+
+## 6. Deprecating and breaking changes
+
+<!-- DECIDE: how this project tells consumers something is going away
+     (deprecation) versus how it tells them something already changed
+     underneath them (a breaking change). See
+     `fragments/DEPRECATION-AND-BREAKING-CHANGES.md.template` for the fixed
+     statement of that distinction plus the `<!-- DECIDE -->` markers this
+     project fills in — the deprecation calendar itself, minimum notice
+     periods, and what makes a change count as breaking. -->
+
+**The policy belongs here; the running list does not.** If this project has a
+`deprecations` role, the ledger of what is currently deprecated lives there and
+this section holds only the process. Keeping the list here buries the rows a
+consumer came for under policy they do not need — and produces two lists the
+moment anyone adds the ledger later.
+
+## 7. Dates and commitments
+
+<!-- DECIDE: how release dates get committed to, and by whom. Nobody should be
+     promising a date on this project's behalf without that being a deliberate
+     decision recorded in the decision log. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

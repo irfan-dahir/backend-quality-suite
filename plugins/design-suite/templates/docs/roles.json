@@ -1,0 +1,416 @@
+{
+  "_readme": "The role vocabulary, and role -> template mapping. Machine-readable so template coverage is a computed fact rather than a sentence in a README that goes stale. catalog.py reads this and fails CI if a declared template is missing, which is what stopped the previous 'the four written are the ones the tooling depends on' claim (there were seven) from happening again. A role whose template lives in another plugin declares that plugin in 'externalPlugin'. A role whose 'template' is null has NO scaffolding: that is reported as an uncovered role, never counted as coverage, because a role registered with nothing behind it reads exactly like a covered one unless something says otherwise.",
+  "_schemaNote": "Each entry under 'roles' is an object: {group, template, archetypes, workspace, why?}. It was a bare filename string until the archetype vocabulary landed (RFC-0002 \u00a73c/\u00a73d, issue #95); a string would have had nowhere to say which project kinds a role applies to, and 'applies to everything' is the assumption that made /bootstrap-design-docs emit an empty flows document for a package.",
+  "archetypes": {
+    "_readme": "The project kinds a role can apply to. This list is the vocabulary: a projectKind outside it is a refusal, never a default to 'app'. Guessing 'app' on a library is the clean-vs-could-not-look ambiguity the governing principle forbids.",
+    "app": "A product with screens, routes and users.",
+    "design-system": "A package consumed by other repositories \u2014 components, tokens, theming.",
+    "docs-site": "A repository whose product is a published documentation site.",
+    "_workspaceNote": "'workspace' is deliberately NOT a kind. A monorepo is a container OF archetypes; as a fourth kind it would force a repo holding an app and a package to pick one and be wrong either way. It is an orthogonal boolean on the profile, and each role's 'workspace' field says whether it resolves once at workspace root or once per member.",
+    "_docsSiteNote": "'docs-site' deliberately has no extension set: no docs-site repository has been measured (issue #95 \u00a73). It stays declarable so that declaring it refuses loudly rather than silently falling through to app. Writing a confident role set for an archetype nobody has seen is the taxonomy-calcification risk RFC-0002 \u00a75 names."
+  },
+  "groups": {
+    "_readme": "Which part of the vocabulary a role came from (issue #95 \u00a73), as distinct from which archetypes it applies to. 'group' is a fixed partition and answers 'how big is the design-system extension'; 'archetypes' can mark one role usable under several kinds and answers 'what should this repository have'. Collapsing the two would lose one of those questions.",
+    "core": "Universal: present in substance in every repository measured.",
+    "app": "Came from the app archetype. Three of them \u2014 brand-voice, motion and the release pair \u2014 are also expected of a design-system, which is why the design-system extension is 16 roles while only 13 are its own.",
+    "design-system": "Came from the design-system archetype; not applicable to an app.",
+    "any": "Applies to any archetype and belongs to none."
+  },
+  "applicability": {
+    "expected": "The archetype is incomplete without this document \u2014 its absence is a finding.",
+    "optional": "Applies, but its absence is a legitimate project choice, not a gap.",
+    "na": "Does not apply to this archetype. Never propose it, never report it missing."
+  },
+  "aliases": {
+    "_readme": "Old role name -> current role name. resolve.py resolves through this in both directions so a consumer manifest written before a rename keeps working, and a skill written after it keeps working against an un-migrated manifest. A rename with no alias is a silent unmapped role, which is exit 2 at best and a wrong file at worst.",
+    "instructions": "entry-point"
+  },
+  "roles": {
+    "entry-point": {
+      "group": "core",
+      "template": "INSTRUCTIONS.md.template",
+      "workspace": "root",
+      "why": "Every repository has a read-this-first. Without it a skill has no starting node. Renamed from 'instructions' (issue #95) because that name reads as agent-instructions, while a design-system repo's entry point is an index.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "expected"
+      }
+    },
+    "documentation-rules": {
+      "group": "core",
+      "template": "DOCUMENTATION.md.template",
+      "workspace": "root",
+      "why": "The role that keeps every other role honest. Every repo with docs has rules about docs.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "expected"
+      }
+    },
+    "decisions": {
+      "group": "core",
+      "template": "DECISIONS.md.template",
+      "workspace": "per-member",
+      "why": "Universal by the widest margin of any role measured.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "expected"
+      }
+    },
+    "backlog": {
+      "group": "core",
+      "template": "BACKLOG.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "expected"
+      }
+    },
+    "contributing": {
+      "group": "core",
+      "template": "CONTRIBUTING.md.template",
+      "workspace": "root",
+      "why": "Universal role, archetype-specific spine: add a screen versus add a component.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "expected"
+      }
+    },
+    "rfc": {
+      "group": "core",
+      "template": "RFC.md.template",
+      "workspace": "root",
+      "why": "In the core because the apps measured had the content without the format, which is the drift a role exists to fix.",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "design": {
+      "group": "app",
+      "template": "DESIGN.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "flows": {
+      "group": "app",
+      "template": "FLOWS.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "brief": {
+      "group": "app",
+      "template": "BRIEF.md.template",
+      "workspace": "root",
+      "why": "Not core: absent from the design-system repo measured, where it is two paragraphs of a README rather than an owned document. Two of three is not universal.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "optional",
+        "docs-site": "expected"
+      }
+    },
+    "copy": {
+      "group": "app",
+      "template": "COPY.md.template",
+      "workspace": "per-member",
+      "why": "A generated string inventory. A package's authoring rules for its own strings are 'brand-voice', not this.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "brand-voice": {
+      "group": "app",
+      "template": "BRAND_VOICE.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "optional",
+        "docs-site": "optional"
+      }
+    },
+    "api": {
+      "group": "app",
+      "template": "API.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "api-standard": {
+      "group": "app",
+      "template": "API-STANDARD.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "assets": {
+      "group": "app",
+      "template": "ASSETS.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "optional"
+      }
+    },
+    "builds": {
+      "group": "app",
+      "template": "BUILDS.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "deployment": {
+      "group": "app",
+      "template": "DEPLOYMENT.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "expected"
+      }
+    },
+    "production-readiness": {
+      "group": "app",
+      "template": "PRODUCTION-READINESS.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "optional",
+        "docs-site": "optional"
+      }
+    },
+    "promoting-components": {
+      "group": "app",
+      "template": "PROMOTING-COMPONENTS.md.template",
+      "workspace": "per-member",
+      "why": "Defined by direction: out of an app, into a design system. The design-system-side inverse is 'deprecations'.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "na",
+        "docs-site": "na"
+      }
+    },
+    "motion": {
+      "group": "app",
+      "template": "MOTION.md.template",
+      "workspace": "per-member",
+      "why": "Owned by whichever repo owns the tokens, which is why it is expected in both product kinds rather than assigned to one.",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "components": {
+      "group": "design-system",
+      "template": "COMPONENTS.md.template",
+      "workspace": "per-member",
+      "why": "The single largest gap measured: 112 of the 135 unmapped design-system documents are component pages.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      },
+      "pageTemplate": "COMPONENT-PAGE.md.template",
+      "pageTemplateReason": "The index lists components; the page template is instantiated once per component. One template emitting one file cannot express that, so the role declares both rather than leaving the page template unreachable (issue #95)."
+    },
+    "component-schema": {
+      "group": "design-system",
+      "template": "COMPONENT-SCHEMA.md.template",
+      "workspace": "per-member",
+      "why": "The machine-checkable contract every component page is held to, distinct from the pages themselves.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "tokens": {
+      "group": "design-system",
+      "template": "TOKENS.md.template",
+      "workspace": "per-member",
+      "why": "The prose counterpart to the profile's tokens.source pointer. Usually external in an app.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "theming": {
+      "group": "design-system",
+      "template": "THEMING.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "patterns": {
+      "group": "design-system",
+      "template": "PATTERNS.md.template",
+      "workspace": "per-member",
+      "why": "Component pages say what each piece is for; none says how they compose.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "responsive": {
+      "group": "design-system",
+      "template": "RESPONSIVE.md.template",
+      "workspace": "per-member",
+      "why": "Already hand-rolled as an external role by a production consumer manifest before it existed here.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "adaptive-patterns": {
+      "group": "design-system",
+      "template": null,
+      "noTemplateReason": "Planned as a fragment pasted into 'patterns' rather than a standalone template (issue #95 \u00a74).",
+      "workspace": "per-member",
+      "why": "Measured as explicitly not the same document as 'responsive', and likewise already hand-rolled by a consumer.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "optional",
+        "docs-site": "na"
+      }
+    },
+    "accessibility": {
+      "group": "design-system",
+      "template": "ACCESSIBILITY.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "changelog": {
+      "group": "design-system",
+      "template": "CHANGELOG.md.template",
+      "workspace": "per-member",
+      "why": "Not core: 1 of 3 repos. Load-bearing for a package whose consumers pin by tag; neither app measured keeps one.",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "deprecations": {
+      "group": "design-system",
+      "template": "DEPRECATIONS.md.template",
+      "workspace": "per-member",
+      "why": "The running ledger, deliberately separate from the release process that governs it.",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "common-mistakes": {
+      "group": "design-system",
+      "template": "COMMON-MISTAKES.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "gallery": {
+      "group": "design-system",
+      "template": "GALLERY.md.template",
+      "workspace": "per-member",
+      "archetypes": {
+        "app": "na",
+        "design-system": "expected",
+        "docs-site": "na"
+      }
+    },
+    "figma": {
+      "group": "design-system",
+      "template": null,
+      "noTemplateReason": "Deliberately unwritten: gated behind RFC-0002 \u00a73f's four preconditions. Not a backlog item to pick up unprompted.",
+      "workspace": "root",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "na"
+      }
+    },
+    "release": {
+      "group": "any",
+      "template": "RELEASE.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "expected",
+        "design-system": "expected",
+        "docs-site": "optional"
+      }
+    },
+    "public-roadmap": {
+      "group": "any",
+      "template": "PUBLIC-ROADMAP.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "expected"
+      }
+    },
+    "postmortem": {
+      "group": "any",
+      "template": "POSTMORTEM.md.template",
+      "workspace": "root",
+      "why": "Zero instances across the three repos measured, so optional everywhere rather than expected anywhere.",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "optional"
+      }
+    }
+  },
+  "externalPlugin": {
+    "pr": {
+      "group": "any",
+      "plugin": "house-style",
+      "template": "PR.md.template",
+      "workspace": "root",
+      "archetypes": {
+        "app": "optional",
+        "design-system": "optional",
+        "docs-site": "optional"
+      },
+      "why": "The PR process is org scope, not universal. It ships with the house-style plugin so a client-facing project installing design-suite alone does not inherit the org's PR conventions. This is also why it cannot be a universal-core role: putting it there would re-import into the universal plugin the org literal four CI rules forbid."
+    }
+  }
+}

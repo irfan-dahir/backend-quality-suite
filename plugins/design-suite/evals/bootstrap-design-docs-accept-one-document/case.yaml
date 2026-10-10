@@ -1,0 +1,76 @@
+schema_version: "1.0"
+name: bootstrap-accept-one-document
+description: >
+  One accepted proposal scaffolds exactly one document. The rule this skill
+  exists to hold is "one at a time", and the only mechanical expression of it
+  is that scaffold_doc.py is invoked exactly once for exactly one accept.
+tags: [bootstrap-design-docs, one-at-a-time]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    This repository has no documentation layer yet. Run /bootstrap-design-docs
+    on it.
+
+    Answering ahead of time so you do not have to stop and ask me: I accept the
+    first document you propose. After that one is scaffolded, stop and report —
+    I will decide about any further roles later, separately.
+graders:
+  # --- plugin-fired indicator -------------------------------------------
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- the rule ---------------------------------------------------------
+  # Exactly one scaffold. min:1 catches "proposed but never acted"; max:1 is
+  # the whole point of the case — two is the failure the skill exists to
+  # prevent, and it scores identically to zero.
+  - name: exactly-one-scaffold-invocation
+    type: tool_used
+    weight: 4
+    tool: Bash
+    input_match: "scaffold_doc\\.py"
+    min: 1
+    max: 1
+
+  # --- the effect on disk ----------------------------------------------
+  # scaffold_doc.py prepends `status: stub` to the document's frontmatter
+  # (doc_roles.stub_frontmatter); the manifest only gets a role -> path
+  # mapping, so the stub marker has to be graded on the document itself.
+  # count:1 over the created-files corpus is the "one at a time" rule seen
+  # from disk rather than from the tool trace: it fails on zero documents
+  # AND on two, which a `contains` would not.
+  - name: exactly-one-stub-document-created
+    type: regex
+    weight: 3
+    pattern: "status:\\s*stub"
+    match: "count:1"
+    target: files
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # A pass here must be impossible for the failure mode this case is aimed
+  # at. `--all` does not exist on scaffold_doc.py, so an agent reaching for
+  # bulk mode reaches for a flag or a loop; both are caught.
+  - name: no-bulk-flag-attempted
+    type: tool_used
+    weight: 2
+    tool: Bash
+    input_match: "scaffold_doc\\.py[^\\n]*--(all|force)"
+    min: 0
+    max: 0
+
+  # The report must not sell a stub as coverage. "N documents scaffolded as
+  # stubs (debt, not coverage)" is the skill's own required wording.
+  - name: stub-not-presented-as-coverage
+    type: regex
+    weight: 2
+    pattern: "\\b(stub|debt|outstanding|not (yet )?written)\\b"
+    match: contains
+    flags: "i"
+    target: last_message

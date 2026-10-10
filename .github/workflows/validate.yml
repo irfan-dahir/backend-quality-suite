@@ -1,0 +1,231 @@
+name: validate
+# The plugin's own CI. Deliberately does not run the design audits: those need a
+# consuming project to audit, and this repo has none. What it can prove here is
+# that the manifests parse, every Python file compiles, and the engine still runs
+# a non-Dart adapter with no engine changes.
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Manifests are valid JSON
+        run: |
+          python3 -c "import json;json.load(open('.claude-plugin/marketplace.json'))"
+          for f in plugins/*/.claude-plugin/plugin.json; do python3 -c "import json,sys;json.load(open('$f'))"; done
+      - name: Every plugin in the marketplace exists
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, sys
+          m = json.load(open('.claude-plugin/marketplace.json'))
+          root = m.get('metadata', {}).get('pluginRoot', '.')
+          missing = [p['name'] for p in m['plugins']
+                     if not (pathlib.Path(root) / p['source']).is_dir()]
+          if missing:
+              sys.exit(f"marketplace lists plugins with no directory: {missing}")
+          print(f"{len(m['plugins'])} plugin(s) resolve")
+          PY
+      - name: Every command has parseable frontmatter with a description
+        # Not cosmetic. A description is what lets Claude invoke a skill from
+        # context rather than only when named; and unparseable frontmatter is
+        # worse than none — the loader drops every field silently, so the skill
+        # looks present and behaves as if undocumented.
+        #
+        # This step used to open with `pip install --quiet pyyaml`, which made
+        # gates.py skip it outright on every local run — so the gate written to
+        # stop a silent drop was itself silently dropped, for its entire life.
+        # It now needs no third-party package: PyYAML is used when it happens to
+        # be importable (it is stricter, and closer to what the real loader
+        # does), and bin/catalog.py's existing flat `key: value` parser is the
+        # fallback. Which one ran is printed, because "parsed by the lenient
+        # parser" and "parsed by the strict one" are not the same claim.
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
+          sys.path.insert(0, 'plugins/design-suite/bin')
+          from catalog import frontmatter
+          try:
+              import yaml
+          except ImportError:
+              yaml = None
+          bad = []
+          files = sorted(pathlib.Path('plugins').rglob('commands/*.md'))
+          for f in files:
+              t = f.read_text()
+              if not t.startswith('---'):
+                  bad.append(f"{f}: no frontmatter"); continue
+              if chr(10) + '---' + chr(10) not in t[3:]:
+                  bad.append(f"{f}: unparseable (frontmatter block is never closed)")
+                  continue
+              if yaml is not None:
+                  try:
+                      meta = yaml.safe_load(t[3:t.index(chr(10) + '---' + chr(10), 3)])
+                  except Exception as e:
+                      bad.append(f"{f}: unparseable ({e})"); continue
+                  if not isinstance(meta, dict):
+                      bad.append(f"{f}: unparseable (frontmatter is not a mapping)")
+                      continue
+              else:
+                  meta = frontmatter(f)
+                  if meta is None:
+                      bad.append(f"{f}: unparseable (no key: value pairs read)")
+                      continue
+              if not (meta or {}).get('description'):
+                  bad.append(f"{f}: no description")
+          if bad:
+              sys.exit(chr(10).join(bad))
+          print(f"{len(files)} command(s) documented "
+                f"({'pyyaml' if yaml else 'stdlib fallback'})")
+          PY
+
+      - name: The catalogue is current, and every component declares its tier and maturity
+        # Two failures in one gate, both of which have really happened here:
+        #
+        #   1. A component added without `invocation`/`maturity` — it would appear
+        #      in no catalogue section, so the docs would describe a suite that is
+        #      missing a skill the plugin actually ships.
+        #   2. docs/CATALOG.md left unregenerated — the docs then claim contents the
+        #      plugin no longer has. This repo produced three separate wrong
+        #      hand-written claims about its own contents before the catalogue was
+        #      generated, which is why this is a gate and not a convention.
+        run: python3 plugins/design-suite/bin/catalog.py --check
+
+      - name: The user-facing catalogue is current
+        # docs/SKILLS.md is the same class of document as docs/CATALOG.md — a list
+        # of facts about this repo's own contents — so it gets the same treatment.
+        # Without this gate it would be a hand-written file with extra steps: it
+        # would look generated, nobody would check it, and it would drift the first
+        # time a command, audit or hook was added. It also refuses to render at all
+        # if the audit discovery comes back empty, if the disabled registry cannot
+        # be read, or if an agent has gained a writing tool — cases where the
+        # honest output is an error, not a confident-looking blank table.
+        run: python3 plugins/design-suite/bin/skills_catalog.py --check
+
+      - name: The field guide's generated regions are current
+        # docs/design-suite-guide.html carries the same facts as docs/SKILLS.md in
+        # a browsable form, so it drifts the same way — and worse, because the page
+        # LOOKS authored, nobody would think to regenerate it. Only the marked
+        # regions are compared; the authored prose around them is the template and
+        # is carried through byte-for-byte, so editing the writing never trips this.
+        run: python3 plugins/design-suite/bin/skills_catalog.py --html --check
+
+      - name: Every script a skill tells Claude to run actually exists
+        # Added after every skill in the plugin was found citing its old
+        # pre-extraction path. The scripts were fine; all 21 documented ways to
+        # invoke them were dead — and nothing above caught it. Manifests parsed,
+        # Python compiled, the seam check passed, `claude plugin validate` was
+        # clean. A plugin can be perfectly valid and completely unusable.
+        run: python3 plugins/design-suite/bin/audit_skill_paths.py
+
+      - name: Every repair recommended anywhere in the plugin is vetted safe
+        # Added after a repair recommendation cost real data TWICE: audit_copy's
+        # title_case fix corrupted proper nouns (issue #109), and an
+        # audit_mock_api finding's "run sync_mock_api.py <contract>" deleted
+        # correct fixture data on a real consumer (issue #116). A script existing
+        # (the gate above) says nothing about whether running it is safe — this
+        # gate requires every "run <script>", "Fix with: <script>", or
+        # "run /<skill>" sentence under bin/, design_suite/engine/, hooks/,
+        # commands/, or agents/ to name something on templates/safe-repairers.json,
+        # attested to not write destructively and to have a demonstrated refusal
+        # on a data-loss case — or to be exempted here with a stated reason.
+        run: python3 plugins/design-suite/bin/audit_safe_repairers.py
+
+      - name: preflight can actually report a blocker
+        # preflight tells an adopter which skills can run against their project.
+        # A checker that only ever says PASS is indistinguishable from one whose
+        # detection is broken, so this asserts it BLOCKS on a synthetic project
+        # mapping 2 of 20 doc roles. Without it, every PASS is worthless.
+        run: python3 plugins/design-suite/bin/preflight.py --selftest
+
+      - name: Tailwind token enumeration works, and refuses on code-built configs
+        # The refusal cases matter more than the happy path. A dynamic config that
+        # quietly returned a partial set instead of None would make the token-drift
+        # check report every token the spread contributed as nonexistent — a
+        # confident wrong answer, which is worse than "cannot tell".
+        run: python3 plugins/design-suite/design_suite/adapters/tailwind_theme.py
+
+      - name: Every bin/*_test.py runs, and none of them is silently absent
+        # The repo had 13 test files and nothing ran any of them — not this
+        # workflow, not gates.py, not the pre-commit hook. They all passed by
+        # hand, which meant gates.py would have reported every gate green on a
+        # tree where every test was broken. "Tested" bought no gate at all.
+        #
+        # The runner refuses the silent cases rather than exiting 0 through them:
+        # zero files discovered is exit 2, a file that will not parse is a
+        # failure rather than a file that quietly stops contributing, a unittest
+        # run that skipped everything is a failure, and the file and case counts
+        # are printed so a reader can tell 13-ran-all-passed from 0-ran-nothing.
+        run: python3 plugins/design-suite/bin/run_tests.py
+
+      - name: Every eval fixture really produces the state its cases branch on
+        # The eval suite's cases branch on exit 4 (declined), exit 5 (stub),
+        # exit 2 (no project), and an `approved` provenance field. If a fixture
+        # stops producing its state, NO case fails — the skill behaves fine on
+        # the state it was accidentally handed, and the suite goes green while
+        # measuring nothing. That is this repo's governing failure relocated
+        # into the test harness, so the fixtures are asserted for free, here,
+        # before any model is paid to look at them.
+        run: python3 plugins/design-suite/bin/eval_fixture_selftest.py
+
+      - name: Every eval case for a writing skill carries its mandatory guards
+        # A suite that can pass by omission is the exact failure this repo
+        # exists to prevent. A case for a skill that WRITES must guard against
+        # the write it must never make (`approved`), must assert a tool it must
+        # never call (a `min: 0, max: 0` tool_used), and must grade both the
+        # result and the process — a result-only case passes on a right answer
+        # reached by a forbidden route.
+        run: python3 plugins/design-suite/bin/eval_suite_lint.py
+
+      - name: Every --flag a skill's prose names really exists in that script
+        # audit_skill_paths.py proves the script exists; nothing proved the
+        # invocation works. A renamed or never-built flag leaves a documented
+        # recipe that dies at argparse, and the path gate passes on it because
+        # the path is fine.
+        run: python3 plugins/design-suite/bin/audit_prose_flags.py
+
+      - name: No unacknowledged consumer-breaking change since the last release
+        # Every gate above asks whether this repository is internally consistent.
+        # None of them asks what a merge does to somebody who already installed
+        # it — and two live client repos run these audits from their own CI.
+        #
+        # PR #127 merged carrying ELEVEN critical consumer-visible breaks and
+        # nothing flagged it: among them two audits that newly exit 2 while a
+        # client's CI invokes them by path (exit 2 is a refusal, not a pass, and
+        # their CI grades it as a failure), and audit_reinvented_components
+        # losing --require-resolution, which argparse turns into an exit-2
+        # refusal the client never made. The manifests parsed, Python compiled,
+        # the tests passed. The capability to see this existed that same day in
+        # `suite_upgrade.py compat`; nobody ran it. That is the whole difference
+        # between a capability and a gate.
+        #
+        # It compares the latest `design-suite--v*` tag — the release consumers
+        # are actually pinned to — against HEAD. No such tag is exit 2, "cannot
+        # determine", never a pass: a gate that goes green because it could not
+        # find its baseline is this repo's governing failure mode exactly.
+        #
+        # It is deliberately escapable, because the pinning contract in
+        # docs/ADOPTING.md says a breaking change ships in a version bump. An
+        # un-escapable gate would contradict the contract it protects and would
+        # be deleted the first time it was inconvenient — and a deleted gate
+        # still reads as a pass. The escape is an entry in
+        # consumer-compat-acks.json stating what the break is, which consumer
+        # invocation it hits, and what a consumer must DO about it. The
+        # migration note is mandatory and checked at load, so an entry saying
+        # only "accepted" is refused rather than counted — otherwise this
+        # becomes a rubber stamp, which is an audit that reports nothing.
+        run: python3 plugins/design-suite/bin/gate_consumer_compat.py
+
+      - name: Python compiles
+        run: python3 -m compileall -q plugins
+      - name: The engine still runs a non-Dart adapter
+        run: python3 plugins/design-suite/design_suite/adapters/verify_seam.py
+      - name: The asset and scaffold seams hold, including their refusals
+        # Asserts the implementations answer correctly AND that a stack with no
+        # asset registry raises instead of returning a boolean it invented. The
+        # second half is the point: False would be a permanent false finding on
+        # every asset, True would hide every real one.
+        run: python3 plugins/design-suite/design_suite/adapters/verify_seams_asset_scaffold.py

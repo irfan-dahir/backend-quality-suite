@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/irfan-dahir/ai-design-suite/schemas/component-maturity.schema.json",
+  "title": "AI Design Suite — per-project component maturity tags",
+  "description": "Schema for a consuming project's own component-maturity file (conventionally .design-suite/component-maturity.json, pointed to by profile.json's componentMaturity.file). This is deliberately NOT the same vocabulary as this suite's own proven/unverified/experimental/pointer tier in CLAUDE.md and catalog.py: that one is gated on an evidence file naming what ran, when, and against which project (docs/ROADMAP.md Workstream A2) because it grades THIS SUITE'S OWN audits and skills against a mechanised check. A consuming project's UI components (a Flutter DsButton, a React Table) have no such check to gate against, and forcing the same evidence requirement onto them would just move the 'proven is a word someone typed' problem down one level. This schema instead uses a stability vocabulary a design system already reasons in day to day, and leaves evidence optional and free-text rather than gated. `status` is required precisely so a project cannot half-populate this file: an entry that exists but forgot to say how mature it is is exactly the ambiguity this schema exists to remove.",
+  "type": "object",
+  "required": [
+    "maturityVersion",
+    "components"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "status": {
+      "description": "Stability of a component's public API, from the consuming project's own judgement. Not the suite's proven/unverified/experimental/pointer tier — see the file-level description. `stable`: safe to build on, breaking changes are deliberate and communicated. `experimental`: API may change without notice; callers should expect churn. `deprecated`: still present but scheduled for removal — `supersededBy` should usually be set. `unverified`: exists and is used, but nobody has reviewed its API surface. Treat an UNTAGGED component (absent from this file entirely) as unverified too, never as stable by default — an audit that cannot find an entry must say so, not assume the best case.",
+      "type": "string",
+      "enum": [
+        "stable",
+        "experimental",
+        "deprecated",
+        "unverified"
+      ]
+    },
+    "componentEntry": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "path": {
+          "type": "string",
+          "description": "Repo-relative path to the component's source file, for tooling that wants to resolve the tag to a file without re-deriving it from the key."
+        },
+        "since": {
+          "type": "string",
+          "description": "Free text: a version, a date, or a release name — whatever the project already uses to mark 'introduced in'."
+        },
+        "owner": {
+          "type": "string",
+          "description": "Team or individual who can answer questions about this component. Free text, not an email address — keep real identities out of a file that gets committed and read by tooling."
+        },
+        "supersededBy": {
+          "type": "string",
+          "description": "The component key that replaces this one. Meaningful mainly on a `deprecated` entry."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Why this status, in one sentence. Optional, but a status with no reasoning is exactly the assertion-not-evidence problem this file exists to avoid repeating."
+        },
+        "evidence": {
+          "type": "array",
+          "description": "Optional pointers to what backs this status — a test file, a design review doc, a usage audit output. Free-text paths or URLs, deliberately not gated the way the suite's own `proven` tier is: see the file-level description for why.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "_readme": {
+      "type": "string"
+    },
+    "maturityVersion": {
+      "const": 1
+    },
+    "components": {
+      "type": "object",
+      "description": "Keyed by however the project names its own components — a Flutter class name (`DsButton`), a React export (`Table`), a path-qualified name if the project has collisions (`forms/Button`). The key is opaque to this schema; whatever a project's tooling already uses to identify a component is fine as long as it is used consistently, because that key is what other tooling (an audit annotating promotion candidates, a doc generator) will look up.",
+      "additionalProperties": {
+        "$ref": "#/$defs/componentEntry"
+      }
+    }
+  },
+  "_readme": "CANONICAL. This is the schema for a per-project component-maturity file — see docs/CONCEPTS.md and docs/ROADMAP.md item 20 of the master backlog (issue #38) for how this differs from the suite's own internal component maturity tier. profile.json's optional componentMaturity.file field points at the populated instance; nothing in the universal plugin hardcodes its path or its project's component names."
+}

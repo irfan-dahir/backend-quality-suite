@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/irfan-dahir/ai-design-suite/known-traps.schema.json",
+  "title": "known-traps.json",
+  "description": "A project's own registry of known traps — situations that look safe, are not, and have already cost someone real time. Lives at .design-suite/known-traps.json in the project the traps belong to, because a trap is a property of that project's history (its build quirks, its generated files, its branch rules), not of the suite. Read-only reference data: nothing in this repo enforces these entries automatically — an agent (or a human) is expected to read the registry at the start of a session, the way it would read CLAUDE.md. Where a trap IS mechanically enforced, `enforcedBy` names the mechanism so the two don't drift apart unnoticed.",
+  "type": "object",
+  "required": ["entries"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_readme": { "type": "string" },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["id", "trigger", "trap", "correctAction", "severity"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable slug for this trap, e.g. 'dirty-main-clone'. Used to reference an entry from elsewhere (a commit message, another doc, --id filtering) without repeating its prose.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short human-readable name, e.g. 'Main clone often dirty with another session's work'."
+        },
+        "trigger": {
+          "type": "string",
+          "description": "The situation that surfaces this trap — what an agent or human would be about to do, or what they'd observe, right before walking into it. Prose, not a machine-matched pattern: a trap worth recording is usually a judgment call ('about to hand-edit a generated file'), not a regex over file paths. If a trap genuinely only fires on a mechanical pattern (a glob, a command shape), say so in this field rather than inventing a second parallel matching language."
+        },
+        "trap": {
+          "type": "string",
+          "description": "What goes wrong if the trigger is acted on naively — the actual failure, stated concretely enough that someone who hits it recognizes this entry as the explanation. Not just 'this is risky' — say what breaks."
+        },
+        "correctAction": {
+          "type": "string",
+          "description": "What to do instead. Concrete enough to act on directly — a command, a file to check, a person/process to route to — not a restatement of the trap as an imperative."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Blast radius if the trap is walked into, not how often it comes up. 'critical': irreversible or affects everyone downstream (force-pushed shared history, silently corrupted generated docs treated as source of truth). 'high': expensive to unwind but contained (a bad merge on a feature branch). 'medium': wastes time, self-correcting once noticed. 'low': cosmetic or easily reverted."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["repo", "language", "team", "org"],
+          "description": "How widely this trap applies, from narrowest to widest. 'repo': specific to this codebase's own history/config. 'language' or framework-wide conventions. 'team': a working agreement not enforced by tooling. 'org': applies across every project (an org-wide policy, say). Most entries are 'repo' — that's the default a registry like this exists to capture, since org- and language-wide traps tend to already live in shared docs.",
+          "default": "repo"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Free-text labels for grouping/filtering, e.g. ['git', 'generated-files']. Optional; not a controlled vocabulary — a project's own set of recurring themes, not the suite's."
+        },
+        "enforcedBy": {
+          "type": "string",
+          "description": "Reference to a mechanism that already checks for this trap in some form — a gate name, a script path, a CI job, a hook entry id. Optional: most traps are pure judgment calls with nothing that can mechanically catch them, which is exactly why they need to be written down here instead. When a mechanism exists, name it so the prose and the enforcement don't quietly drift apart (the entry says what the mechanism can't fully cover, or is redundant with it and should say so)."
+        },
+        "source": {
+          "type": "string",
+          "description": "Where this entry came from — a doc section ('CLAUDE.md#rules-that-live-only-here'), an incident, a PR/issue number. Optional, but strongly recommended: a trap with no source is a claim no one can go re-verify when the underlying situation changes."
+        },
+        "addedOn": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date this entry was added. Optional. Helps a reader judge whether a trap might be stale (the tool/process it warns about may since have changed)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "resolved"],
+          "description": "'resolved' means the underlying situation was fixed (the generated file no longer exists, the flaky gate was removed) — kept for history rather than deleted, so no one re-discovers and re-files the same trap. Defaults to 'active'.",
+          "default": "active"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

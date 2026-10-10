@@ -1,0 +1,22 @@
+{
+  "$schema": "./safe-repairers.schema.json",
+  "schemaVersion": 1,
+  "_readme": "Every script/skill named as a repair recommendation anywhere under bin/, design_suite/engine/, hooks/, commands/, or agents/ must have an entry here, keyed on the exact invocation text (see the schema's description of `invocation` for why a bare script name and a flagged one are different entries). audit_safe_repairers.py fails the gate on anything named that way and not listed. sync_mock_api.py is deliberately NOT here: it is a live repair path (issue #116) still being made loss-safe in a concurrent change, and an allowlist entry for it today would attest to a refusal that does not exist yet.",
+  "entries": [
+    {
+      "invocation": "repair_tokens.py",
+      "kind": "script",
+      "r1": "Never touches the working tree under any flag. Every mode (bare, --out, --report, --check, --files) either writes a unified diff to stdout/a file or prints band counts; --out writes the diff text itself, not the rewritten source. Applying the result requires a human to run `git apply` themselves (stated in the script's own module docstring), so there is no flag that makes this script write to source at all.",
+      "r2": "Its own refusal (exit 2) path is exercised by bin/repair_tokens_test.py's RefuseTests: test_no_declared_token_source_refuses, test_no_declared_accessor_refuses, test_no_declared_categories_refuses, and test_empty_token_set_refuses_rather_than_reporting_band_3 all construct a project where the script cannot establish what a token IS, and assert it refuses rather than guessing. This is a CAPABILITY refusal, not a data-loss refusal in the strict sense R2 asks for — the honest gap is that repair_tokens.py never writes to source at all (see r1), so there is no 'blind application would lose data' scenario to construct against it: the diff-only design makes the R2 property true by construction rather than by a planted-and-caught case. Recorded here rather than glossed over, per the instruction not to accept an entry without a real check behind it.",
+      "selftestCommand": "python3 plugins/design-suite/bin/repair_tokens_test.py",
+      "reason": "RFC-0003's own precedent for 'emit, do not apply' (cited by name in repair_tokens.py's docstring and in generate_openapi.py's docstring). Read in full for this gate (issue for F2); qualifies on both R1 and R2-as-capability-refusal."
+    },
+    {
+      "invocation": "generate_openapi.py",
+      "kind": "script",
+      "r1": "Keyed on the SCRIPT, not one flag, after checking both forms: `main()` (generate_openapi.py:547) writes to exactly one path, OPENAPI_FILE (mock_api/openapi.json), and only from data it reads elsewhere (contracts.json, each contract's fixture, openapi_meta.json) — it has no second code path that could touch a fixture, a mock example, or the API doc. `--check` additionally short-circuits before that write and only exits 1 on drift. So unlike sync_mock_api.py (issue #116), where the DANGER is flag-independent — it merges two independently-authored sources and can drop a field from either — generate_openapi.py's write is a whole-file overwrite of a single artifact that is ENTIRELY derived from the other three, every time, regardless of flags. There is no invocation of this script that can lose data that lives anywhere else, which is why this entry does not need to be split by flag the way the schema's `invocation` field allows for a script where the flag actually changes the danger.",
+      "r2": "No data-loss case exists to construct against it, for the same reason as repair_tokens.py's r1/r2 gap: a script whose only write is a total, purely-derived regeneration of one file has nothing to refuse — there is no input shape where 'apply the derivation' means 'discard something correct'. audit_mock_api.py's own finding text (openapi_vs_fixtures, around generate_openapi.py:281) and hooks/mock_api_reminders.py both point at this script by name as the fix, on exactly this reasoning ('generate_openapi.py alone is the fix here' / 'purely-derivational'); this entry is that existing engineering judgment made checkable instead of asserted in a comment nothing enforces.",
+      "reason": "Referenced as the fix for openapi_vs_fixtures drift in design_suite/engine/mockapi/audit_mock_api.py and in hooks/mock_api_reminders.py, both already reasoning (in comments) that this is safe because the spec is purely derivational, unlike sync_mock_api.py's cross-source merge. This entry is that reasoning, checked."
+    }
+  ]
+}

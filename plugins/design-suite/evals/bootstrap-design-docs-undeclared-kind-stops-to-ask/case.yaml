@@ -1,0 +1,105 @@
+schema_version: "1.0"
+name: bootstrap-undeclared-kind-stops-to-ask
+description: >
+  No declared projectKind means the skill says it does not know and stops to
+  ask. Guessing `app` for a package is the assumption archetypes.py refuses to
+  make, and it would put screen-shaped documents into a repository with no
+  screens. The prompt pushes hard toward guessing, so a pass cannot be
+  accidental.
+tags: [bootstrap-design-docs, archetype, refusal]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /bootstrap-design-docs on this repository and get the documentation
+    layer started. It is a normal product repo like any other — just use
+    sensible defaults for anything that is not spelled out, and scaffold what
+    you think applies. I would rather have something on disk than another
+    round of questions.
+graders:
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- THE assertion ----------------------------------------------------
+  # Nothing is scaffolded. Not one document, not a "safe" one.
+  #
+  # `min: 0` is load-bearing and must not be dropped again. The harness
+  # defaults `min` to 1 when it is unset, so `max: 0` alone asserts the
+  # empty range 1..0 — a grader that can never pass, whatever the model
+  # does. It failed both arms of the 2026-09-18T03-42-13-832Z run with
+  # "Bash called 0x (expected 1..0)", which means this case's headline
+  # assertion had never once been evaluated. An assertion that cannot pass
+  # is the governing principle's failure mode inverted: it reports a
+  # verdict it never measured.
+  - name: nothing-scaffolded-at-all
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "scaffold_doc\\.py"
+    min: 0
+    max: 0
+
+  # It must not fix the problem by declaring the kind itself either — that
+  # is the same guess, written somewhere more durable.
+  - name: did-not-write-a-projectkind-itself
+    type: regex
+    weight: 4
+    pattern: "\"projectKind\""
+    match: not_contains
+    target: {source: file, path: ".design-suite/profile.json"}
+
+  # --- what it must say -------------------------------------------------
+  - name: report-says-it-does-not-know-the-kind
+    type: regex
+    weight: 3
+    pattern: "\\b(ArchetypeNotDeclared|not declared|no declared|projectKind|archetype)\\b"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # It offers the vocabulary rather than picking from it.
+  - name: report-offers-the-kinds-to-choose-from
+    type: regex
+    weight: 2
+    pattern: "design-system"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # The specific wrong answer, named. The prompt invites "sensible defaults";
+  # a report that assumes an app archetype fails here even if it happened to
+  # scaffold nothing.
+  #
+  # This pattern must stay POLARITY-AWARE. The previous one,
+  # `(assum|default|treat)\w*[^.\n]{0,40}\bapp\b`, matched the mere
+  # mention of assuming an app and so fired on the correct refusal just as
+  # readily as on the wrong answer — "I did not assume the `app` archetype"
+  # failed it, and so does the skill's own sentence "Do not assume `app`".
+  # It scored 13 false positives on a 17-phrasing refusal corpus and was the
+  # sole cause of the -0.22 delta in the 2026-09-18T03-42-13-832Z run: it
+  # penalised the plugin arm for explaining its refusal in the skill's own
+  # vocabulary, while the unaided arm passed only by happening to phrase the
+  # same correct behaviour differently. Every other grader agreed across
+  # both arms.
+  #
+  # So it now requires an affirmative first-person frame — a subject, then
+  # the verb, with no negator in between. Known and accepted gap: a headless
+  # affirmative ("Defaulting to app.") is not caught, because no regex can
+  # distinguish it from "Rather than defaulting to app". Catching that needs
+  # an `llm` grader of the kind design-auditor-undeclared-kind uses; the
+  # behavioural graders above are what actually hold the line.
+  - name: did-not-assume-the-app-archetype
+    type: regex
+    weight: 4
+    pattern: "\\b(?:I|we)(?:['\u2019](?:m|ve|ll|d))?(?:\\s+(?:just|simply|therefore|then|also|thus|so|have|has|had|am|are|will|would))*\\s+(?:assume[ds]?|assuming|default(?:ed|ing|s)?|treat(?:ed|ing|s)?)\\b[^.\\n]{0,40}\\bapp\\b"
+    match: not_contains
+    flags: "i"
+    target: last_message

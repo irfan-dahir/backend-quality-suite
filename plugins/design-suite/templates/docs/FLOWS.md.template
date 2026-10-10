@@ -1,0 +1,118 @@
+# {{PROJECT_NAME}} — User Flows & Routing
+
+The agreed record of how a user moves through {{PROJECT_NAME}}, and of the routing decisions that
+enforce it. Where this document and the router disagree, one of them is a bug — decide which.
+
+**Six things read this document**, more than any other in the set: `/generate-walkthrough`,
+`/scaffold-screen`, `/sync-docs`, `/review-docs`, `/bootstrap-design-docs`, and
+`/onboard-new-client`. That has a practical consequence — see the next section.
+
+Maintained by whoever changes navigation, adds a screen, or changes a guard.
+
+---
+
+## How to write a flow here
+
+`/generate-walkthrough` produces a stakeholder demo by *executing* the flows below. That only works
+if each step names **a screen a reader can find and the single action that advances it**. Prose like
+"the user completes onboarding" cannot be executed, screenshotted, or tested — it reads fine and is
+useless to every consumer of this document.
+
+So each step needs three things:
+
+| Needs | Not |
+|---|---|
+| The screen or route it happens on | "the onboarding section" |
+| The one action that advances it — tap, submit, select | "the user provides their details" |
+| What makes it end — success, and every failure a user can actually hit | only the happy path |
+
+Number top-level sections, and give each distinct sub-flow its own `###`. Both are cited by name
+elsewhere: audit findings and PR descriptions reference flows by number, and the `###` boundary is
+what makes a sub-flow addressable on its own.
+
+<!-- DECIDE: is the happy path enough for this project, or must every flow document its failure
+     branches too? Answer once, here, rather than per-flow. A project that only documents happy
+     paths gets QA checklists and walkthroughs that only cover happy paths — and the gap is
+     invisible, because the generated artifact looks complete. -->
+
+## Navigation structure
+
+The shell every flow runs inside — tabs, stacks, modals — and which of them persist across a flow.
+
+<!-- DERIVED: enumerate from the router. Route names and hierarchy are mechanical; which tab is
+     "home" and why a given screen is a modal rather than a push are decisions worth recording. -->
+
+State explicitly which navigation is **global** (always reachable) and which is **trapped** inside a
+flow. A screen a user cannot leave is a deliberate choice if documented and a defect if not.
+
+## 1. <!-- DECIDE: your first flow area, e.g. Authentication & Onboarding -->
+
+### <!-- Sub-flow name -->
+
+**Entry points:** where a user can start this from. More than one is normal; listing only the
+obvious one is how a flow gets broken by a change to the other.
+
+**Preconditions:** what must already be true. If a guard or redirect enforces it, name the guard —
+see §Routing decisions.
+
+**Steps:**
+
+| # | Screen / route | Action | Advances to |
+|---|---|---|---|
+| 1 | | | |
+
+**Branches:** every point where the path forks, and what decides it.
+
+**Exit states:** how this ends — completion, abandonment, and each failure a user can reach. A flow
+with one exit state is almost always under-documented.
+
+<!-- DERIVED: the screen sequence can be reconstructed from the router and each screen's navigation
+     callbacks. Entry points and exit states usually cannot — they are product decisions. -->
+
+## 2. …
+
+## Routing decisions
+
+Distinct from the flows above: flows are what the user experiences, this is what the code enforces.
+Keep them apart — mixing them produces a document where you cannot tell an intention from a
+guarantee.
+
+Record, with the reasoning:
+
+- **Guards and redirects** — which conditions send a user somewhere other than where they asked to
+  go. This is the section that explains surprising navigation a year later.
+- **Relaunch behaviour** — where a returning user lands, and what state decides it.
+- **Deep links** — which routes are addressable from outside the app, and what happens when one is
+  opened without the preconditions its flow assumes.
+
+<!-- DECIDE: does this project support deep links at all? If not, say so — it is a real constraint
+     on every flow above, and an absent answer gets rediscovered as a bug report. -->
+
+## State machines
+
+Where an entity moves through statuses — an order, a booking, a request — document the states and
+the legal transitions. QA checklists are derived from these, so an undocumented state is an untested
+state.
+
+| Entity | States | Legal transitions | Who triggers each |
+|---|---|---|---|
+| <!-- DECIDE: which entities have a lifecycle worth pinning down? Not everything does; a table of
+       trivial state machines dilutes the ones that matter. --> | | | |
+
+Name the states exactly as the code names them. A document calling it `cancelled` while the code
+says `canceled` costs someone an afternoon.
+
+## Unbuilt flows
+
+Flows that are agreed but not implemented, clearly marked.
+
+Worth a section of its own, because the alternative is worse: an agreed-but-unbuilt flow described
+alongside built ones will be walked through, demoed, and tested as though it exists.
+
+- <!-- DECIDE: keep unbuilt flows here, or in the backlog? Either is fine; what matters is that a
+       reader can never mistake one for built. If they live in the backlog, say so here so nobody
+       adds them above. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

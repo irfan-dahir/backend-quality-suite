@@ -1,0 +1,104 @@
+# {{PROJECT_NAME}} — Theming
+
+What can be changed without changing code, what cannot, and exactly how much of the appearance a
+new theme actually moves.
+
+The claim a theming document exists to make is *"change these values and everything follows"*. That
+claim is only worth anything if it is **measured** rather than asserted — see §5. A semantic role
+that nothing reads changes nothing when a theme changes it, and a document that lists such roles as
+theming surface is making a promise the code does not keep.
+
+Owned by whoever owns the token source. Must change whenever a role is added, removed, or rewired.
+
+---
+
+## 1. The theming model
+
+<!-- DECIDE: which shape does this project have? The answer changes everything below, so answer it
+     first and in one sentence. The usual shapes:
+
+     - one theme, varying only by appearance mode (light / dark / high contrast)
+     - one brand per build or package, chosen at compile time
+     - many brands, selected at run time
+     - consumer-supplied themes, where this project defines only the contract
+
+     Each has a different answer to "what happens when two brands need different values for the
+     same role", and that question decides the architecture. -->
+
+| | |
+|---|---|
+| Model | |
+| Themes that exist today | |
+| Selected | <!-- at build time / at run time / by the consumer --> |
+
+## 2. What a theme may change
+
+The contract. Everything in this list is theming surface; everything not in it is fixed, and a
+consumer who needs it changed needs a code change rather than a theme.
+
+<!-- DERIVED: the semantic roles a theme supplies, from the token source. -->
+
+<!-- DECIDE: for each, what it means — not what colour or value it currently is. "Surface colour
+     behind primary content" is a contract; "light grey" is this theme's answer to it. A role
+     described by its current value cannot be re-themed, because the next brand's answer makes the
+     description wrong. -->
+
+| Role | What it means | Required from a theme |
+|---|---|---|
+| | | |
+
+## 3. What a theme may not change
+
+<!-- DECIDE: name these explicitly rather than leaving them as the unlisted remainder. Usually:
+     spacing and layout rhythm, interaction behaviour, accessibility minimums, anything a component
+     hardcodes on purpose. For each, one line of why it is fixed — "brand identity should not be
+     able to shrink a touch target" is a reason that survives being challenged. -->
+
+| Fixed | Why |
+|---|---|
+| | |
+
+## 4. Adding a theme
+
+<!-- DERIVED: the real steps from how the last theme was added. If none has been added yet, say so
+     plainly — a process that has never been run once is a proposal, and labelling it as a process
+     is how the first real attempt discovers three missing steps under deadline. -->
+
+1. <!-- DECIDE -->
+
+**What must be true before it ships:**
+
+<!-- DECIDE: the acceptance bar. At minimum: every required role supplied, contrast re-checked
+     against the accessibility document's minimums (a new brand's colours do not inherit the old
+     brand's contrast results), and the coverage measurement in §5 re-run. -->
+
+## 5. Coverage — how much actually moves
+
+**This is the section that makes the rest true.** Measure it; do not estimate it.
+
+<!-- DERIVED: run the unwired-roles audit. It finds semantic roles that are defined and read by
+     nothing — the roles a brand can change with no visible effect. Record the result here with its
+     date, because it is the honest form of the re-theming claim. -->
+
+| | |
+|---|---|
+| Roles defined | |
+| Roles read by at least one component | |
+| Roles read by nothing | |
+| Measured on | |
+
+<!-- DECIDE: for each role read by nothing, one of: wire it up, or delete it, or record here why it
+     exists unread — a role reserved for a planned surface is legitimate, but only if that is
+     written down. Leaving it unexplained lets the defined-roles count stand in for coverage, which
+     is the specific way this claim goes wrong. -->
+
+## 6. What a consumer must supply
+
+<!-- DECIDE: if anything outside this project themes it, state exactly what it owes — every required
+     role, and what happens when one is missing. "Falls back to a default" and "fails at startup"
+     are both defensible; silently rendering an unthemed value is not, because it looks like the
+     theme was applied. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

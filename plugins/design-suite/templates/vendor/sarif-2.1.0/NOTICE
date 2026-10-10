@@ -1,0 +1,80 @@
+sarif-schema-2.1.0.json — vendored, unmodified (byte-identical to the source).
+
+Source:  https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json
+Title:   Static Analysis Results Format (SARIF) Version 2.1.0 JSON Schema (Errata 01, OASIS Standard)
+SHA-256: c3b4bb2d6093897483348925aaa73af03b3e3f4bd4ca38cef26dcb4212a2682e
+Fetched: 2026-10-08 (hash re-confirmed against the source URL 2026-10-09)
+
+This file is NOT covered by this plugin's MIT licence. It is an OASIS
+deliverable and is redistributed under the OASIS terms below. The schema file
+itself carries no notice, and it may not be modified to add one, so the
+required notice travels in this adjacent NOTICE file. Keep the two together.
+
+------------------------------------------------------------------------------
+Notice reproduced verbatim from the "Notices" section of the specification this
+schema is a component of (SARIF v2.1.0 Plus Errata 01, OASIS Standard), as
+required by OASIS IPR Policy section 14.1:
+
+Copyright © OASIS Open 2023. All Rights Reserved.
+
+This document and translations of it may be copied and furnished to others,
+and derivative works that comment on or otherwise explain it or assist in its
+implementation may be prepared, copied, published, and distributed, in whole
+or in part, without restriction of any kind, provided that the above copyright
+notice and this section are included on all such copies and derivative works.
+However, this document itself may not be modified in any way, including by
+removing the copyright notice or references to OASIS, except as needed for the
+purpose of developing any document or deliverable produced by an OASIS
+Technical Committee (in which case the rules applicable to copyrights, as set
+forth in the OASIS IPR Policy, must be followed) or as required to translate
+it into languages other than English.
+
+The limited permissions granted above are perpetual and will not be revoked by
+OASIS or its successors or assigns.
+
+This document and the information contained herein is provided on an "AS IS"
+basis and OASIS DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT
+INFRINGE ANY OWNERSHIP RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR
+FITNESS FOR A PARTICULAR PURPOSE.
+
+OASIS makes no representation regarding validity or scope of any intellectual
+property rights or the availability of licenses for implementations.
+
+------------------------------------------------------------------------------
+Short-form notice for machine-readable deliverables (OASIS IPR Policy section
+14.2), verbatim with the publication year filled in:
+
+Copyright © OASIS Open 2023. All Rights Reserved. Distributed under the terms
+of the OASIS IPR Policy, [ http://www.oasis-open.org/policies-guidelines/ipr ],
+AS-IS, WITHOUT ANY IMPLIED OR EXPRESS WARRANTY; there is no warranty of
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE or NONINFRINGEMENT of the
+rights of others.
+
+------------------------------------------------------------------------------
+What this means for redistribution (read against the sources below):
+- Unmodified copies may be copied and distributed, including inside an
+  MIT-licensed project, provided the notice above accompanies them.
+- The schema file itself must not be modified. Do not reformat, minify,
+  re-indent, or patch it. Derivative works that "assist in its implementation"
+  are permitted but must carry this notice too.
+- Patent terms are separate: the SARIF TC operates under the RF on RAND Terms
+  Mode of the OASIS IPR Policy. This notice grants no patent licence.
+
+Sources read 2026-10-09:
+- OASIS IPR Policy, sections 14.1-14.2 (last revised 2013-07-31):
+  https://www.oasis-open.org/policies-guidelines/ipr/
+- SARIF v2.1.0 Plus Errata 01, Notices section and IPR mode:
+  https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/sarif-v2.1.0-errata01-os-complete.html
+- The schema file (no copyright or licence header present):
+  https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json
+- SARIF TC repository licence (defers to the OASIS IPR Policy, RF on RAND):
+  https://github.com/oasis-tcs/sarif-spec/blob/main/LICENSE.md
+
+Why it is vendored: the export test (bin/export_sarif_test.py) must validate
+offline — the local run is the only verdict this repo has, and a test that needs
+the network would skip on a plane and be read as a pass.
+
+Do not edit the schema. To update, re-fetch from the source URL, replace the
+file whole, update the SHA-256 above, and re-read the sources for a changed
+notice; bin/export_sarif_test.py checks the hash.

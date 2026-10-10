@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Regenerable audit output — never committed (baselines live in the consuming repo).
+# The .design-suite/ entries matter beyond tidiness: findings quote the source
+# they matched, so committing them publishes code excerpts. Consumer projects get
+# the same rules scaffolded into .design-suite/.gitignore by bin/init.py — this
+# block is this repo's own copy, since the suite is also run against itself.
+findings.json
+*_findings.json
+.design-suite/findings/
+.design-suite/evidence/
+.design-suite/.golden_local_ab/
+
+# `claude plugin eval` writes scored runs, transcripts and HTML reports here.
+# Same reasoning as the block above: a run's trace quotes whatever the agent
+# read, so committing results publishes excerpts of the fixture — and of
+# anything a case was pointed at. The eval dir itself IS committed; only its
+# output is not.
+plugins/*/evals/results/

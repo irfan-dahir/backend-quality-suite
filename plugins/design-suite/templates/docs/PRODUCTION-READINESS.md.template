@@ -1,0 +1,71 @@
+# {{PROJECT_NAME}} — Production Readiness
+
+The internal checklist for whether this is fit to put in front of real users. Gates,
+their current state, and what is blocking each.
+
+**This is the internal version.** It names branches, files, internal tool names and
+commit hashes, none of which belong in front of a client. The client-facing summary
+is a *derived collateral* generated from this document — never authored separately,
+or the two will diverge and someone will read the wrong one.
+
+Owned by <!-- DECIDE: the person accountable for shipping -->.
+
+---
+
+## 1. How to read this
+
+| State | Means |
+|---|---|
+| ✅ | Done and verified. Say how it was verified |
+| 🟡 | In progress, owner named, no unknowns |
+| 🔴 | Blocked or not started |
+| ⚪ | Not applicable to this project — say why |
+
+**"Verified" means someone checked the real thing.** A passing test suite is not
+verification that a user-facing flow works, and neither is "should work".
+
+## 2. Gates
+
+<!-- DECIDE: the gates that apply here. A starting set, each of which has sunk a
+     launch somewhere:
+
+     auth and session handling · error and offline behaviour · accessibility ·
+     performance on the slowest supported device · analytics and crash reporting ·
+     data handling and privacy · third-party licence compliance · store metadata ·
+     rollback plan · on-call and support path -->
+
+| # | Gate | State | Owner | Blocking |
+|---|---|---|---|---|
+| 1 | | | | |
+
+## 3. What we need from the client
+
+The section a client-facing version is built around, so keep it specific and
+actionable rather than a list of grievances.
+
+<!-- DECIDE: content, credentials, approvals, access, decisions. Each with a date
+     it is needed by and what stops if it is late. -->
+
+| Needed | Why | Needed by | If late |
+|---|---|---|---|
+| | | | |
+
+## 4. Known risks accepted
+
+Things shipping in a known-imperfect state, deliberately.
+
+<!-- DECIDE: each needs who accepted it and when. An accepted risk with no name
+     against it is an unaccepted risk. -->
+
+| Risk | Impact | Accepted by | Date |
+|---|---|---|---|
+| | | | |
+
+## 5. Explicitly not ready
+
+<!-- DECIDE: what is not going in the first release. Being clear here is what stops
+     a scope conversation happening during launch week. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

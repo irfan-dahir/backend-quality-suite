@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/irfan-dahir/ai-design-suite/schemas/verification-tier.schema.json",
+  "title": "Verification tier for a single claim",
+  "description": "Vocabulary and shape for tagging how well-checked one claim or finding is — not a whole component's maturity (that is component-maturity.schema.json's status field) and not a whole agent run's report (issue #63, tracked separately). This exists because 'verified' is not one thing: an agent asserting something with nothing run, an agent running an informal smoke check on itself, an independent check (a second agent, a formal test suite) confirming it, and a person actually looking at it are four different levels of trust that a single boolean or the bare word 'verified' collapses into one. `tier` is the only required field on purpose — an entry that names a tier but not what backs it is exactly the assertion-not-evidence gap this schema exists to close, so `ranWhat` is required for every tier except `unverified`, where by definition nothing was run. Intended attachment points: as the optional `verification` object on a finding produced by `design_suite.engine.findings.make()` (see that module's ADDITIVE convention — this changes no existing envelope shape, callers that omit it are unaffected), and as a per-claim field inside a dispatched agent's final report once issue #63 defines that report's own schema — this file does not define or assume that shape, only exposes a vocabulary it can reuse.",
+  "type": "object",
+  "$defs": {
+    "tier": {
+      "description": "How the claim was checked, ordered weakest to strongest. `unverified`: asserted, nothing was run or read to confirm it. `self-tested`: the same agent that made the claim ran something informal to check it — a manual smoke test, a one-off script, eyeballing output — with no independent party re-checking the result. `cross-verified`: an independent check ran — a second agent, a formal/repeatable test suite, a linter or gate script — separate from whoever made the claim. `human-reviewed`: a person looked at the claim (or its evidence) and confirmed it themselves. Ordering is meaningful for tooling that wants to threshold on 'at least cross-verified', but this schema itself does not enforce an ordering constraint — a lower tier is never an error, only less trust.",
+      "type": "string",
+      "enum": [
+        "unverified",
+        "self-tested",
+        "cross-verified",
+        "human-reviewed"
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "description": "One claim's verification tier plus what backs it. Deliberately small: this is a tag attached to a claim, not a report format in its own right.",
+      "required": [
+        "tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tier": {
+          "$ref": "#/$defs/tier"
+        },
+        "ranWhat": {
+          "type": "string",
+          "description": "What was actually run or read to back this tier, in enough detail to judge its strength — a command line, a test name, 'read the diff and the failure log', 'built a scratch fixture reproducing the failure mode'. Free text on purpose: the whole point is that 'ran py_compile' and 'ran the full gate suite' are both 'self-tested' or 'cross-verified' but are not equally strong, and a fixed enum of check kinds would hide that difference again. Required for every tier except `unverified`, where by definition there is nothing to name."
+        },
+        "verifiedBy": {
+          "type": "string",
+          "description": "Who or what did the checking — an agent id or role ('the dispatching agent', 'a second review agent'), a tool name ('plugins/design-suite/bin/gates.py'), or a person's role, not a real identity (keep names out of a file that may be committed or logged; see component-maturity.schema.json's `owner` field for the same convention). Optional because `unverified` has no verifier and `ranWhat` alone is often self-explanatory for a tool run."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the verification happened, ISO 8601. Optional, but without it a `cross-verified` tag on a claim about code that has since changed cannot be told apart from one that is still current."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Caveats the tier alone cannot carry — a check that passed but only covers part of the claim, a human review that was time-boxed. Optional, same rationale as component-maturity.schema.json's `notes`: a tier with no room for caveats invites overclaiming to fit the box."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tier": {
+                "const": "unverified"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "ranWhat"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "tier": {
+                  "const": "unverified"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "ranWhat"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/verification",
+  "_readme": "CANONICAL. Defines the verification-tier vocabulary (unverified / self-tested / cross-verified / human-reviewed) shared by anything that tags how well-checked a claim is. Not generated — hand-maintained like the other templates/*.schema.json files. See design_suite/engine/findings.py for the integration point on the findings envelope, and docs/ROADMAP.md Workstream A2 for the related-but-distinct problem this generalises (component-level maturity gated on evidence) — issue #55 in the master backlog (issue #38) is this file; issue #63 (a dispatched agent's own final report schema) is a separate, not-yet-built item that this vocabulary is a natural fit for but that this file does not attempt to define."
+}

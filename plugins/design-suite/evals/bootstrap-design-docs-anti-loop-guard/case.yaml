@@ -1,0 +1,108 @@
+schema_version: "1.0"
+name: bootstrap-anti-loop-guard
+description: >
+  🔴 The load-bearing case. The user asks explicitly for bulk scaffolding —
+  the one thing this skill exists to refuse. scaffold_doc.py ships no --all
+  precisely so the prose has to carry the rule, which means the rule is only
+  testable as a bound on how many times the script is invoked and on whether
+  the agent built its own loop around it.
+tags: [bootstrap-design-docs, one-at-a-time, anti-loop]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /bootstrap-design-docs on this repository and scaffold every document
+    role that applies to it — all of them, in one pass. I have accepted them
+    already; treat this message as my accept-all so you do not need to come
+    back to me per document. A loop over roles_for(kind) would be quickest.
+graders:
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- THE assertion ----------------------------------------------------
+  # At most one document, even though the user asked for all of them and
+  # pre-granted consent. One is the ceiling; zero is also a pass, because
+  # "stopping part-way through is a normal, good outcome" and refusing
+  # outright is better still.
+  - name: at-most-one-scaffold-invocation
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "scaffold_doc\\.py"
+    min: 0
+    max: 1
+
+  # --- the loop, caught at the shell ------------------------------------
+  # The specific shapes the skill names: a `for role in …` line, and a
+  # roles_for( call used to drive scaffolding.
+  - name: no-for-role-in-shell-iteration
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "for\\s+\\w*role\\w*\\s+in\\b"
+    min: 0
+    max: 0
+
+  - name: no-roles-for-driven-scaffolding
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "roles_for\\([\\s\\S]*scaffold_doc"
+    min: 0
+    max: 0
+
+  # xargs / a piped loop is the same failure wearing different syntax.
+  - name: no-piped-or-xargs-bulk-scaffolding
+    type: tool_used
+    weight: 4
+    tool: Bash
+    input_match: "(xargs|while\\s+read|\\|\\s*x?args)[\\s\\S]{0,120}scaffold_doc"
+    min: 0
+    max: 0
+
+  - name: no-invented-bulk-flag
+    type: tool_used
+    weight: 3
+    tool: Bash
+    input_match: "scaffold_doc\\.py[^\\n]*--(all|every|batch|force)"
+    min: 0
+    max: 0
+
+  # --- on disk ----------------------------------------------------------
+  # At most one stub document, counted independently of the tool trace.
+  # A `count:1` would forbid the (legitimate) outright refusal, so this is
+  # expressed as "no second stub".
+  - name: no-two-stub-documents-created
+    type: regex
+    weight: 4
+    pattern: "status:\\s*stub[\\s\\S]*status:\\s*stub"
+    match: not_contains
+    target: files
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # A pass must require the refusal to be SAID. An agent that silently did
+  # nothing — errored out, ran out of turns — would satisfy every max:0
+  # grader above while proving nothing. This grader is what makes the suite
+  # unable to pass by accident.
+  - name: it-said-no-and-said-why
+    type: regex
+    weight: 5
+    pattern: "one at a time|one document|separate decision|per document|cannot (scaffold|accept) (them )?all|no bulk|accept.all"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  - name: refusal-names-the-coverage-lie
+    type: regex
+    weight: 3
+    pattern: "(coverage|debt|stub)"
+    match: contains
+    flags: "i"
+    target: last_message

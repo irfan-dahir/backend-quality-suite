@@ -1,0 +1,82 @@
+# {{PROJECT_NAME}} — Component Sunset / Removal Playbook
+
+How a component stops being part of the design system. This is a fragment, not
+a standalone document role: paste it into whatever plays the `deprecations`
+role here (see `DEPRECATIONS.md.template` §4, "How a row gets here") and fill in
+the `<!-- DECIDE -->` markers below it.
+
+**Paste it into the `promoting-components` role instead** (see
+`PROMOTING-COMPONENTS.md.template` §5, "Deprecating instead of promoting") if this
+project has no `deprecations` role — which is the usual case for a project that
+promotes components *into* a shared layer owned elsewhere, and so has nothing of
+its own to deprecate. A project that publishes components should have the ledger,
+and this playbook belongs beside it.
+
+This is promotion's inverse. Promotion asks whether something has earned a
+place in the shared layer; this asks how something leaves it without stranding
+whoever still depends on it. The two should be read together — a project whose
+promotion bar is clear but whose removal process is undefined just accumulates
+components nobody can prove are safe to delete.
+
+---
+
+## 1. What triggers a sunset
+
+<!-- DECIDE: the actual signal — superseded by a newer component, zero call
+     sites for a defined period, a design-system decision that the pattern
+     itself is no longer sanctioned. A component does not get removed just
+     because someone finds it distasteful; name the bar the way
+     `PROMOTING-COMPONENTS.md.template` §1 names the promotion bar. -->
+
+## 2. What sunsetting requires
+
+Sunsetting is not a file deletion. All of these, or it is not sunset:
+
+- [ ] Every call site identified — the layer-boundary rule in
+      `PROMOTING-COMPONENTS.md.template` §4 means this is a closed, searchable
+      set, not a guess
+- [ ] A replacement named, if one exists, or an explicit decision recorded
+      that there is none
+- [ ] Marked deprecated for the grace period this project has decided on
+      (see §3), not removed immediately
+- [ ] Removed from the design document and the contributing document's
+      lookup table in the same change that removes the code
+- [ ] Removal recorded in `{{doc:decisions}}`, so "why did this disappear"
+      has an answer later
+
+## 3. Grace period
+
+<!-- DECIDE: how long a component stays marked deprecated before removal, and
+     whether that period varies by how many call sites still exist at the
+     time of the deprecation marker. A grace period that is "until someone
+     gets around to it" is not a grace period. -->
+
+| Category | Grace period | Who confirms call sites are clear |
+|---|---|---|
+| | | |
+
+## 4. Marking a component deprecated
+
+<!-- DECIDE: the actual mechanism — a `@deprecated` annotation, an entry in a
+     tracked list, a lint rule that flags new call sites. Whichever it is, a
+     new call site added during the grace period should be caught, not
+     discovered after removal. -->
+
+## 5. Removal
+
+<!-- DECIDE: who has authority to perform the actual removal once the grace
+     period has elapsed and call sites are clear — name a role, not a person,
+     the same way `RELEASE.md.template`'s rollback fragment does. Also decide
+     what happens if a call site reappears after the grace period supposedly
+     ended. -->
+
+## 6. What this playbook does not cover
+
+<!-- DECIDE: cases this project handles differently, if any — e.g. a
+     component removed before it was ever promoted (no external call sites to
+     protect), where a lighter process may be legitimate. Naming the
+     exception here keeps it from being invented ad hoc under pressure. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

@@ -1,0 +1,126 @@
+# Pull Request Guide — {{PROJECT_NAME}}
+
+The standard process for opening a pull request here. **All PRs — human or AI-assisted — follow it.**
+
+> **This document is read at runtime.** `/draft-pr-description` resolves the `pr` role and copies the
+> template, checklist, and title conventions **from this file** rather than carrying its own copy —
+> deliberately, so the two cannot drift. Two consequences:
+>
+> 1. The fenced `markdown` block under §PR description template is **load-bearing**. The skill looks
+>    for it. Restructure this document freely, but keep that block a fenced block.
+> 2. Anything project-specific belongs in the checklist below, not in the skill. That is the whole
+>    reason the skill reads this file.
+
+---
+
+## 1. Identify the branches
+
+State the current branch, and **ask which branch to target**. Never assume.
+
+<!-- DECIDE: what is the default target, and what does targeting anything else mean?
+
+     Most projects have one integration branch that features merge into, and a separate branch that
+     is deployable. If a merge to one of them ships to real users, say so *here* — that is the single
+     most useful sentence in this document, and its absence is how someone deploys by accident. -->
+
+## 2. Uncommitted changes
+
+Run `git status`. If there is uncommitted work, say what it is and **ask before committing it**.
+Never stash, discard, or commit silently.
+
+This rule exists because the alternative loses work that was never yours to judge — and because an
+unrelated file swept into a commit by a blanket `git add` is discovered much later, in someone else's
+PR.
+
+## 3. Update the target, then rebase
+
+```bash
+git fetch origin
+git checkout <target> && git pull --ff-only origin <target>
+git checkout <current>
+git rebase <target>
+```
+
+If `--ff-only` fails the target has diverged locally — stop and flag it rather than forcing it.
+
+<!-- DECIDE: rebase or merge? Rebase keeps history linear, which makes `git blame` and
+     `git log --follow` meaningful — worth stating the reason, because whoever hits their first
+     painful conflict will otherwise ask why. -->
+
+## 4. Conflicts
+
+Resolve none of them autonomously. For each: summarise in plain language what each side does and what
+losing it would mean, then **ask an open question** — not "ours or theirs", since the answer is often
+a combination or a rewrite. Keep asking until the resolution is unambiguous.
+
+A wrong conflict resolution is harder to undo than an extra question.
+
+## 5. Push
+
+```bash
+git push --force-with-lease origin <current>
+```
+
+`--force-with-lease` rather than `--force`: it aborts if someone else pushed since your last fetch.
+On a shared branch that difference is the difference between a rebase and losing a colleague's work.
+
+## 6. PR description template
+
+```markdown
+## Summary
+- <what changed and why>
+
+## Changes
+- <bullet per meaningful change>
+
+## Test plan
+- [ ] <how this was verified>
+
+## Verification tier
+
+Verification-Tier: <unverified | self-tested | cross-verified | human-reviewed>
+Verified-By: <name, role, or tool>
+```
+
+<!-- DECIDE: extend the test plan with this project's actual verification steps — which platforms
+     get tested, which checks must pass. Keep them as checkboxes: `/draft-pr-description` copies this
+     block verbatim, so whatever is here is what every PR is held to. Vague items produce vague PRs. -->
+
+The `Verification-Tier` trailer mirrors the `Co-Authored-By:` commit trailer convention —
+machine-parseable, diffable, and part of PR history rather than a GitHub label. Vocabulary and the
+"lowest tier wins across a PR's commits" rule come from
+`plugins/design-suite/templates/verification-tier.schema.json` (issue #55). **An agent drafting this
+PR may self-report `unverified` or `self-tested`; it must never self-assign `cross-verified` or
+`human-reviewed`** — those require an actual independent party, not the author's own say-so.
+`/draft-pr-description` should leave this line for the human/agent opening the PR to fill in, not
+guess a tier on their behalf.
+
+### Title conventions
+
+<!-- DECIDE: your prefixes. If you state none, the skill falls back to Conventional Commits
+     (feat/fix/refactor/docs/chore). Stating them here is better — the fallback cannot know about a
+     type this project actually uses. -->
+
+Keep titles under 72 characters.
+
+## 7. Pre-PR checklist
+
+The **single canonical checklist** for this project. Other documents link here rather than keeping
+copies, so the two cannot disagree.
+
+<!-- DECIDE: your checklist. The items worth having are the ones a reviewer cannot check by reading
+     the diff — a screen added without its documentation updated looks fine in isolation.
+
+     Group them (docs, code quality, assets, tests) and keep each mechanically verifiable. "Code is
+     clean" cannot be checked; "no hardcoded colours, spacing or radii" can, and there is probably
+     already an audit for it. Where a check has a command, give the command. -->
+
+- [ ] <!-- first item -->
+
+<!-- DECIDE: is this checklist enforced anywhere, or is it honour-system? A hook or CI gate is worth
+     more than a longer list. If it is honour-system, say so plainly rather than implying enforcement
+     that does not exist. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

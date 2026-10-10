@@ -1,0 +1,54 @@
+{
+  "$schema": "../chain.schema.json",
+  "_readme": "The existing-project half of drop-in onboarding: what the SessionStart hook offers when a project has source code but no .design-suite/. It sequences four things that already work when driven by hand — survey, scaffold from the survey, propose mappings, bootstrap docs — so a user does not have to know them. Every step that writes is a checkpoint. init.py is not a skill, so the scaffold is carried as the map-project step's decision point rather than invented as a fake step.",
+  "schemaVersion": 1,
+  "name": "understand-existing-project",
+  "description": "Understand an existing, unconfigured codebase and build its context documentation, one confirmed step at a time.",
+  "steps": [
+    {
+      "id": "survey",
+      "skill": "survey",
+      "args": "--project-root .",
+      "purpose": "Detect the stack, source roots, candidate token sources and document inventory, and list what could not be determined. Writes .design-suite/survey.json (creating .design-suite/).",
+      "decisionPoint": "This creates .design-suite/survey.json in the project. Confirm before running. If /survey refuses on an unconfigured project, run python3 \"${CLAUDE_PLUGIN_ROOT}/bin/survey.py\" --project-root . directly.",
+      "checkpoint": true,
+      "checkpointReason": "It is the first write into the project, and the user should read couldNotDetermine before anything is built on it.",
+      "onFail": "halt"
+    },
+    {
+      "id": "map",
+      "skill": "map-project",
+      "purpose": "Scaffold .design-suite/ config seeded from the survey, then propose which document fills each role, the project kind and the true token source — all written as provenance 'inferred'.",
+      "decisionPoint": "If .design-suite/profile.json does not exist yet, show the user what python3 \"${CLAUDE_PLUGIN_ROOT}/bin/init.py\" --from-survey --dir . will create, and run it only on their yes. Then run map-project.",
+      "checkpoint": true,
+      "checkpointReason": "Both halves write config. Inferred mappings are guesses until a human ratifies them with /ratify.",
+      "onFail": "halt"
+    },
+    {
+      "id": "context-docs",
+      "skill": "bootstrap-design-docs",
+      "purpose": "Reverse-engineer the project's context documents from what is built, proposing each document for accept or decline.",
+      "skipIf": "The project already has the documents the mapped roles need.",
+      "checkpoint": true,
+      "checkpointReason": "Writes documents; the skill's own contract is one document at a time with sign-off.",
+      "onFail": "halt"
+    },
+    {
+      "id": "propose-config",
+      "skill": "propose-config",
+      "purpose": "Propose values for the TODO config sections a code scan can measure (layer rules, adapter seam, animated-widget list, colour token names), each with evidence and _provenance state 'inferred'. Preview by default; writes a section only with --apply.",
+      "decisionPoint": "Show each proposed section's value and evidence and ask per section. Run --apply only for the sections the user accepted. Exit 2 on the preview means nothing could be inferred — report the reasons and continue.",
+      "checkpoint": true,
+      "checkpointReason": "Writes .design-suite/ config that turns refusing audits into running ones; an inferred rule must be confirmed by a human section by section.",
+      "onFail": "skip"
+    },
+    {
+      "id": "health",
+      "skill": "repo-health",
+      "purpose": "Record where the project starts — which audits are configured, clean, or refusing — now that config exists. Not write-free: every audit leaves a findings envelope under .design-suite/findings/ (ignored by init's .gitignore), and the raw reports audits save (e.g. .design-suite/tokens-findings.json) also land inside .design-suite/, covered by the scaffolded .design-suite/.gitignore.",
+      "checkpoint": false,
+      "checkpointReason": "Report-only: it edits no source, config or document, and nothing downstream depends on sign-off. Its regenerable output is named in purpose, which is what chain.py next prints.",
+      "onFail": "skip"
+    }
+  ]
+}

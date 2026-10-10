@@ -1,0 +1,40 @@
+{
+  "_readme": "What counts as a violation, for this project only. Read alongside .design-suite/profile.json, which says WHERE things are (this file says what is WRONG once found). Read by design-auditor and audit_tokens.py. `token_categories.color.names` must list every real colour token — audit_tokens.py exits 1 if this drifts from the token source in either direction, so keep it current when tokens change.",
+  "token_categories": {
+    "color": {
+      "correct_pattern": "TODO: how a colour token is referenced correctly, e.g. 'AppColors.primary' or 'theme.colors.primary'",
+      "violation_pattern": "TODO: what a hardcoded violation looks like, e.g. a raw hex literal such as Color(0xFF...) or '#RRGGBB'",
+      "names": {
+        "TODO_GROUP_NAME": ["TODO_TOKEN_NAME_1", "TODO_TOKEN_NAME_2"]
+      }
+    },
+    "spacing": {
+      "correct_pattern": "TODO: e.g. 'AppSpacing.md'",
+      "violation_pattern": "TODO: e.g. a literal pixel/dp number in padding or margin"
+    },
+    "radius": {
+      "correct_pattern": "TODO: e.g. 'AppRadius.card'",
+      "violation_pattern": "TODO: e.g. BorderRadius.circular(<literal>)"
+    },
+    "motion": {
+      "correct_pattern": "TODO: e.g. 'AppDurations.standard' / 'AppCurves.standard'",
+      "violation_pattern": "TODO: e.g. Duration(milliseconds: <literal>)",
+      "animated_widgets": [
+        "TODO: every widget/class name audit_reduced_motion.py should treat as an animated node, e.g. 'AnimationController', 'AnimatedSwitcher', 'AnimatedOpacity', 'SlideTransition'. Read by design_suite/adapters/dart.py's reduced_motion_checks — an animated node with none of these names nearby is never checked, so keep this current as new animated widgets are added."
+      ]
+    }
+  },
+  "named_widgets_no_reimplementation": [
+    {
+      "widget": "TODO: shared component name, e.g. 'PrimaryButton'",
+      "instead_of": "TODO: what a private re-implementation of it typically looks like"
+    }
+  ],
+  "known_non_issues": [
+    "TODO: a deliberate non-feature the audit must never flag as a gap, e.g. 'no dark mode — light-only by design'"
+  ],
+  "accessibility_minimums": {
+    "min_text_sp": "TODO or delete, e.g. 14",
+    "min_touch_target_dp": "TODO or delete, e.g. 48"
+  }
+}

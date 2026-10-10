@@ -1,0 +1,4 @@
+# Salted SHA-256 digests of client/customer names. See client_denylist.py.
+# Never add plaintext here; generate with: client_denylist.py --hash "Name"
+46c6e7d23a4ac99f6be0b7487e1007860b7547b26b1c2eb0ae9b4895ea1d1c31
+8607f7c6e0e4544363f06acb57d4fa94503574ae7bf9b91e958dff9a9bf9faa2

@@ -1,0 +1,62 @@
+# {{PROJECT_NAME}} — Builds
+
+How to produce a build locally and in CI, and what each build flavour is for. Read
+when a build fails and you need to know whether it is your change or the setup.
+
+Distinct from the release document: this covers *producing an artifact*, that covers
+*shipping one to people*.
+
+---
+
+## 1. Prerequisites
+
+<!-- DERIVED: exact tool versions, from the project's own version files. Pin them —
+     "a recent version" is how a build works on one machine and not another. -->
+
+| Tool | Version | Pinned in |
+|---|---|---|
+| | | |
+
+## 2. Local build
+
+<!-- DERIVED: the real commands. -->
+
+```bash
+```
+
+## 3. Flavours and configuration
+
+<!-- DECIDE: the build variants and what differs between them — API base URL,
+     logging, analytics, feature flags. Never inline a secret here; name the
+     mechanism that supplies it. -->
+
+| Flavour | Points at | Used for |
+|---|---|---|
+| | | |
+
+## 4. CI
+
+<!-- DERIVED: workflow files and what triggers each. Include path filters — a
+     contributor who does not know a workflow is path-filtered will read a skipped
+     check as a broken one. -->
+
+| Workflow | Triggers on | Does |
+|---|---|---|
+| | | |
+
+<!-- DECIDE: is CI metered on this project? If minutes are limited, say so here —
+     it changes whether adding a job is free or a cost, and reviewers need to know
+     which. -->
+
+## 5. Build failures worth recognising
+
+<!-- DECIDE: the failures this project has actually hit, and what each really
+     means. This section is the reason anyone opens this file twice. -->
+
+| Symptom | Actual cause | Fix |
+|---|---|---|
+| | | |
+
+---
+
+_Last updated: <!-- DERIVED --> _

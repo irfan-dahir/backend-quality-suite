@@ -1,0 +1,57 @@
+# {{PROJECT_NAME}} — Brief
+
+What this product is, who it is for, and what it is deliberately not. The document
+everything else answers to.
+
+**This document is not maintained by tooling and must never be edited by a skill.**
+It records what was agreed with the people who decided it. When reality diverges
+from it, that divergence is recorded in the decision log — the brief is not
+quietly rewritten to match what got built.
+
+Owned by <!-- DECIDE: the person accountable for product scope -->.
+
+---
+
+## 1. What it is
+
+<!-- DECIDE: two or three sentences. If it takes a page, the product is not
+     understood well enough yet. -->
+
+## 2. Who it is for
+
+<!-- DECIDE: the actual users, distinguished from the buyer if they differ. Name
+     the primary audience first; a product that claims three equal audiences
+     usually has one and two hopes. -->
+
+## 3. What success looks like
+
+<!-- DECIDE: how anyone would know this worked. Prefer something observable over
+     something aspirational. -->
+
+## 4. Explicitly out of scope
+
+The most useful section in the document, and the one most often skipped.
+
+<!-- DECIDE: what this product is not going to do, and why. Each entry prevents a
+     future argument. Anything ruled out here should also appear in the decision
+     log with its reasoning. -->
+
+| Not doing | Why | Revisit when |
+|---|---|---|
+| | | |
+
+## 5. Constraints
+
+<!-- DECIDE: the fixed facts — platforms, deadlines, compliance obligations,
+     integrations that must be supported, accessibility commitments. Distinguish a
+     genuine constraint from a current assumption; assumptions belong in §6. -->
+
+## 6. Open questions
+
+<!-- DECIDE: what is genuinely undecided. An empty list this early is a warning
+     sign, not a good sign. Move each one into the decision log as it is settled,
+     rather than deleting it here. -->
+
+---
+
+_Last updated: <!-- DERIVED --> _

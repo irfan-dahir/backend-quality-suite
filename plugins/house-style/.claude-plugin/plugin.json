@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "house-style",
+  "version": "0.1.1",
+  "license": "MIT",
+  "description": "Org-level conventions on top of design-suite: client-readiness reporting with letterhead, Typst styles, and PR-process reminders. Internal use — do not install into client-facing repositories.",
+  "author": {
+    "name": "Irfan Dahir",
+    "url": "https://github.com/irfan-dahir"
+  },
+  "homepage": "https://github.com/irfan-dahir/ai-design-suite",
+  "keywords": ["org", "reporting", "pr-workflow", "typst"]
+}

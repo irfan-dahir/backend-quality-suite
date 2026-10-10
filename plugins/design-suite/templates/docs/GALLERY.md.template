@@ -1,0 +1,88 @@
+# {{PROJECT_NAME}} — Gallery
+
+The runnable showcase: where to see this project's output rendered rather than described, how to run
+it, and what it is and is not evidence of.
+
+A gallery is the fastest way to answer "what does this actually look like", and the easiest thing in
+a project to let rot — because nothing breaks when it does. A gallery that no longer builds is
+discovered by the person who most needed it.
+
+Owned by whoever owns the components it renders.
+
+---
+
+## 1. What the gallery is
+
+<!-- DECIDE: what form does it take here — a runnable example application, a published site, a
+     storybook-style catalogue, a set of rendered snapshots? And where does it live: in this
+     repository, or a sibling one? Name it precisely, because "the gallery" means four different
+     things across projects and this document is what disambiguates. -->
+
+| | |
+|---|---|
+| Form | |
+| Lives in | |
+| Published at | <!-- DECIDE: a URL, or "not published — run it locally" --> |
+
+## 2. Running it
+
+<!-- DERIVED: the real commands, confirmed to work from a clean checkout before being written down.
+     A gallery whose documented command fails is worse than an undocumented one: the reader
+     concludes the gallery is broken rather than the instructions. -->
+
+```bash
+# From a clean checkout
+```
+
+<!-- DECIDE: what does it need that a clean checkout does not have — a built package, generated
+     tokens, a particular runtime version? Name each, with the command that provides it. -->
+
+## 3. What is in it
+
+<!-- DECIDE: does the gallery cover everything published, or a selection? Answer explicitly, because
+     the two are read completely differently: a complete gallery means an absence is a finding,
+     while a selective one means an absence means nothing at all. -->
+
+<!-- DERIVED: if the gallery is meant to be complete, the honest version of this section is a
+     measured coverage figure — how many published components appear in it, out of how many exist —
+     together with the list of those that do not. Generate it; a stated intention to cover
+     everything is not a coverage claim, and the gap is invisible from inside the gallery. -->
+
+| | |
+|---|---|
+| Published components | |
+| Appearing in the gallery | |
+| Measured on | |
+
+**Not covered:**
+
+<!-- DECIDE: list them, each with why. "Not yet" is an acceptable reason; being absent from the list
+     is not. -->
+
+## 4. What the gallery is evidence of
+
+It shows that something renders. That is less than it appears to be, and the distinction is worth
+stating because a gallery is routinely cited as proof of things it cannot demonstrate.
+
+| It does show | It does not show |
+|---|---|
+| The component renders in at least one configuration | That it renders correctly in the configurations the gallery omits |
+| How it looks in the themes the gallery exercises | How it looks in a theme the gallery does not carry |
+| That the current build compiles | That behaviour is unchanged since the last build — unless something compares them |
+
+<!-- DECIDE: is the gallery used as a visual regression oracle — rendered and compared between
+     versions? If yes, say what compares them and what a difference means. If no, say so plainly:
+     an unstated "no" gets assumed as a "yes" by anyone who has seen the tooling elsewhere. -->
+
+## 5. Keeping it current
+
+<!-- DECIDE: is adding a gallery entry part of adding a component, or a separate task? Only the
+     first survives. If it is part of the component's definition of done, it belongs in the
+     contributing document's spine as a step, and this line should point there. -->
+
+<!-- DECIDE: what checks that the gallery still builds, and when? If the answer is "nobody", write
+     that down — a known-unchecked gallery is a manageable risk, and an assumed-checked one is not. -->
+
+---
+
+_Last updated: <!-- DERIVED: install date -->_

@@ -1,0 +1,688 @@
+<!-- PARTLY GENERATED. Every region between <!--gen:NAME--> ... <!--gen:/NAME--> markers
+     (the counts, the agent/hook/cheat-sheet tables, the DATA array) is written by
+     plugins/design-suite/bin/skills_catalog.py --html, from the same frontmatter that
+     produces docs/SKILLS.md. Do not hand-edit those; run the generator and commit.
+     Everything outside a marker is authored prose and is preserved byte-for-byte —
+     the page is its own template. `--html --check` fails if this file is stale. -->
+<meta charset="utf-8">
+<title>Design Suite Field Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#F5F6F4; --panel:#FFFFFF; --sunk:#ECEEEA;
+    --ink:#191C1A; --ink-2:#4A524D; --ink-3:#7C857F;
+    --rule:#D8DCD6; --rule-2:#E8EBE6;
+    --accent:#2F5D50; --accent-soft:#E2EDE7; --accent-ink:#1E4338;
+    --ok:#2C6E49; --ok-bg:#E4F0E6;
+    --warn:#8A5A12; --warn-bg:#F6EBD8;
+    --off:#A3352B; --off-bg:#F8E3E0;
+    --shadow:0 1px 2px rgba(25,28,26,.06),0 8px 24px -16px rgba(25,28,26,.22);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#121514; --panel:#1A1E1C; --sunk:#232826;
+      --ink:#E8ECE8; --ink-2:#A8B1AB; --ink-3:#7A847E;
+      --rule:#2E3532; --rule-2:#252B29;
+      --accent:#7FBFA6; --accent-soft:#1E2E28; --accent-ink:#9FD4BD;
+      --ok:#7FBF8F; --ok-bg:#1B2A1F;
+      --warn:#D9A441; --warn-bg:#2C2418;
+      --off:#E08377; --off-bg:#2E1D1B;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#121514; --panel:#1A1E1C; --sunk:#232826;
+    --ink:#E8ECE8; --ink-2:#A8B1AB; --ink-3:#7A847E;
+    --rule:#2E3532; --rule-2:#252B29;
+    --accent:#7FBFA6; --accent-soft:#1E2E28; --accent-ink:#9FD4BD;
+    --ok:#7FBF8F; --ok-bg:#1B2A1F;
+    --warn:#D9A441; --warn-bg:#2C2418;
+    --off:#E08377; --off-bg:#2E1D1B;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -16px rgba(0,0,0,.8);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    font-size:15px; line-height:1.6;
+    padding-block:0; padding-left:20px; padding-right:20px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding-block:0 72px}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+
+  /* ---- masthead ---- */
+  header.top{padding-block:52px 28px; border-bottom:2px solid var(--ink)}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 14px
+  }
+  h1{
+    font-family:"IBM Plex Serif",Georgia,serif; font-weight:600;
+    font-size:clamp(34px,6vw,54px); line-height:1.04; margin:0 0 16px;
+    text-wrap:balance; letter-spacing:-.015em;
+  }
+  .standfirst{
+    font-size:clamp(16px,2.2vw,19px); color:var(--ink-2); max-width:62ch; margin:0;
+  }
+  .standfirst em{font-family:"IBM Plex Serif",serif; font-style:italic; color:var(--ink)}
+
+  /* ---- counts strip ---- */
+  .counts{
+    display:flex; flex-wrap:wrap; gap:0; margin-block:0;
+    border-bottom:1px solid var(--rule);
+  }
+  .counts div{
+    flex:1 1 130px; padding:18px 20px 16px; border-right:1px solid var(--rule-2);
+  }
+  .counts div:last-child{border-right:0}
+  .counts b{
+    display:block; font-family:"IBM Plex Mono",monospace; font-size:27px;
+    font-weight:500; font-variant-numeric:tabular-nums; line-height:1; color:var(--accent-ink);
+  }
+  .counts span{
+    display:block; margin-top:6px; font-size:11px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+
+  /* ---- nav ---- */
+  nav.toc{
+    position:sticky; top:0; z-index:20; background:var(--ground);
+    border-bottom:1px solid var(--rule); padding-block:11px;
+    display:flex; gap:6px; margin-bottom:8px;
+    /* Scrolls rather than wraps. Wrapping cost three rows in a narrow pane and
+       parked the sticky bar over the table the reader was trying to read. */
+    overflow-x:auto; scrollbar-width:none;
+  }
+  nav.toc::-webkit-scrollbar{display:none}
+  nav.toc a{
+    font-size:12.5px; color:var(--ink-2); text-decoration:none;
+    padding:5px 11px; border-radius:999px; border:1px solid transparent; white-space:nowrap;
+  }
+  nav.toc a:hover{background:var(--sunk); color:var(--ink)}
+  nav.toc a:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  section{padding-block:40px 8px; scroll-margin-top:60px}
+  h2{
+    font-family:"IBM Plex Serif",serif; font-weight:600;
+    font-size:clamp(22px,3.4vw,30px); line-height:1.2; margin:0 0 6px;
+    text-wrap:balance; letter-spacing:-.01em;
+  }
+  h3{
+    font-size:14px; font-weight:600; margin:30px 0 10px; letter-spacing:.01em;
+  }
+  .sub{color:var(--ink-2); max-width:68ch; margin:0 0 22px}
+  p{max-width:68ch}
+
+  /* ---- the unattended box: the one thing users most need ---- */
+  .alarm{
+    background:var(--panel); border:1px solid var(--rule);
+    border-left:4px solid var(--accent); border-radius:3px;
+    padding:22px 24px; margin:26px 0; box-shadow:var(--shadow);
+  }
+  .alarm h3{margin-top:0}
+  .alarm .big{
+    font-family:"IBM Plex Mono",monospace; font-size:15px;
+    font-variant-numeric:tabular-nums; color:var(--accent-ink); font-weight:500;
+  }
+  .note{
+    background:var(--sunk); border-radius:3px; padding:15px 18px; margin:20px 0;
+    font-size:14px; color:var(--ink-2); border-left:3px solid var(--warn);
+  }
+  .note b{color:var(--ink)}
+
+  /* ---- filter ---- */
+  .filter{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    margin:0 0 18px; padding:14px 16px; background:var(--panel);
+    border:1px solid var(--rule); border-radius:3px;
+  }
+  .filter input{
+    flex:1 1 220px; min-width:0; font:inherit; font-size:14px; color:var(--ink);
+    background:var(--ground); border:1px solid var(--rule); border-radius:3px;
+    padding:8px 11px;
+  }
+  .filter input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  .chip{
+    font:inherit; font-size:12.5px; cursor:pointer; color:var(--ink-2);
+    background:var(--ground); border:1px solid var(--rule); border-radius:999px;
+    padding:6px 13px;
+  }
+  .chip[aria-pressed="true"]{
+    background:var(--accent-soft); color:var(--accent-ink);
+    border-color:var(--accent); font-weight:500;
+  }
+  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .hitcount{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; margin-left:auto;
+  }
+
+  /* ---- tables ---- */
+  .scroller{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--panel)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+  th{
+    text-align:left; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+    color:var(--ink-3); font-weight:600; padding:11px 14px;
+    border-bottom:1px solid var(--rule); white-space:nowrap; background:var(--panel);
+    position:sticky; top:0;
+  }
+  td{padding:11px 14px; border-bottom:1px solid var(--rule-2); vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--sunk)}
+  td.cmd{white-space:nowrap}
+  td.cmd code{
+    font-size:13px; font-weight:500; color:var(--accent-ink);
+    background:var(--accent-soft); padding:2px 7px; border-radius:3px;
+  }
+  td.what{color:var(--ink-2); min-width:300px}
+  .tag{
+    display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px;
+    padding:2px 8px; border-radius:3px; white-space:nowrap;
+  }
+  .t-ok{background:var(--ok-bg); color:var(--ok)}
+  .t-warn{background:var(--warn-bg); color:var(--warn)}
+  .t-off{background:var(--off-bg); color:var(--off)}
+  .t-plain{background:var(--sunk); color:var(--ink-3)}
+
+  /* ---- recipes ---- */
+  .recipes{display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:16px; margin-top:8px}
+  .recipe{
+    background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+    padding:20px; display:flex; flex-direction:column; gap:10px;
+  }
+  .recipe h3{margin:0; font-size:15px}
+  .recipe .who{font-size:13px; color:var(--ink-3); margin:0}
+  .recipe ol{margin:4px 0 0; padding-left:18px; font-size:13.5px; color:var(--ink-2)}
+  .recipe li{margin-bottom:5px}
+  .recipe code{font-size:12.5px; background:var(--sunk); padding:1px 5px; border-radius:3px; color:var(--ink)}
+
+  pre{
+    background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+    padding:16px 18px; overflow-x:auto; font-size:13px; line-height:1.65; margin:16px 0;
+  }
+  pre .c{color:var(--ink-3)}
+  pre .g{color:var(--ok)}
+
+  .cheat{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
+  .cheat div{background:var(--panel); border:1px solid var(--rule); border-radius:3px; padding:16px 18px}
+  .cheat h3{margin:0 0 9px; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+  .cheat p{margin:0; font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:2; color:var(--ink-2)}
+
+  footer{margin-top:56px; padding-top:22px; border-top:1px solid var(--rule); font-size:13px; color:var(--ink-3)}
+  a{color:var(--accent-ink)}
+  @media (max-width:560px){
+    body{padding-left:16px; padding-right:16px}
+    .counts div{flex-basis:50%; border-bottom:1px solid var(--rule-2)}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Design Suite · field guide · 17 Sep 2026</p>
+  <h1>Everything this thing can run, and what it does without asking</h1>
+  <p class="standfirst">A set of Claude Code skills that read your code and compare it to your own design documents. Where the two disagree, you get a list. <em>It reports; you decide.</em></p>
+</header>
+
+<div class="counts">
+  <div><b><!--gen:n-commands-->58<!--gen:/n-commands--></b><span>slash commands</span></div>
+  <div><b><!--gen:n-auto-->32<!--gen:/n-auto--></b><span>fire on their own</span></div>
+  <div><b><!--gen:n-audits-->22<!--gen:/n-audits--></b><span>audits</span></div>
+  <div><b><!--gen:n-agents-->4<!--gen:/n-agents--></b><span>agents, all read-only</span></div>
+  <div><b><!--gen:n-hooks-->4<!--gen:/n-hooks--></b><span>hooks, all advisory</span></div>
+</div>
+
+<nav class="toc">
+  <a href="#open">Opening a project</a>
+  <a href="#stacks">Stacks &amp; reports</a>
+  <a href="#unattended">What runs unasked</a>
+  <a href="#commands">All <!--gen:n-commands-->58<!--gen:/n-commands--> commands</a>
+  <a href="#agents">Agents</a>
+  <a href="#audits">Audits</a>
+  <a href="#hooks">Hooks</a>
+  <a href="#install">Install recipes</a>
+  <a href="#first">First five minutes</a>
+  <a href="#config">Config files</a>
+  <a href="#mcp">MCP</a>
+  <a href="#version">Version &amp; removal</a>
+  <a href="#cheat">Cheat sheet</a>
+</nav>
+
+<section id="open">
+  <h2>When you open a project</h2>
+  <p class="sub">You do not need to know a command to get started. When a session starts, the suite checks the folder and <em>offers</em> the right next step. It writes nothing until you say yes.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>What it finds</th><th>What Claude does</th></tr></thead>
+      <tbody>
+        <tr><td><b>Configured</b> — <code>.design-suite/profile.json</code> exists</td><td class="what">Nothing. You are set up.</td></tr>
+        <tr><td><b>New</b> — no source code yet</td><td class="what">Offers <code>/onboard-new-client</code>.</td></tr>
+        <tr><td><b>Existing</b> — code, but no <code>.design-suite/</code></td><td class="what">Offers <code>/run-chain understand-existing-project</code>, the guided setup below.</td></tr>
+        <tr><td><b>Half set up</b> — <code>.design-suite/</code> but no profile</td><td class="what">Says most skills will refuse; suggests <code>doctor.py</code> or resuming the guided setup.</td></tr>
+        <tr><td><b>Can't tell</b> — home folder, unreadable, or too big to check quickly</td><td class="what">Says so and suggests nothing. Asks you if you bring it up.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <b>Turning the offer off.</b> For one project, add an empty <code>.design-suite-onboarding-declined</code> file at the project root (Claude creates it only if you ask). For your whole machine, set <code>DESIGN_SUITE_NO_ONBOARDING=1</code>.
+  </div>
+
+  <h3>The guided setup for an existing project</h3>
+  <p>Five steps. It stops and asks before every step that writes, and remembers where it got to between sessions.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>#</th><th>Step</th><th>What it does</th><th>Writes</th><th>Asks first?</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="cmd"><code>/survey</code></td><td class="what">Works out your stack, source folders, likely token files and documents — and lists what it couldn't work out.</td><td><code>.design-suite/survey.json</code></td><td>Yes</td></tr>
+        <tr><td>2</td><td class="cmd"><code>init.py --from-survey</code>, then <code>/map-project</code></td><td class="what">Creates the config, pre-filled from the survey, then suggests which doc is which and which file holds the real tokens. Every guess is marked <code>inferred</code> until you approve it with <code>/ratify</code>.</td><td><code>.design-suite/</code> config</td><td>Yes</td></tr>
+        <tr><td>3</td><td class="cmd"><code>/bootstrap-design-docs</code></td><td class="what">Drafts missing context docs one at a time. Skipped if you have them.</td><td>Docs you accept</td><td>Yes, per doc</td></tr>
+        <tr><td>4</td><td class="cmd"><code>/propose-config</code></td><td class="what">Proposes real values for <code>TODO</code> config sections from your code, with evidence. Proposes nothing when the evidence is weak.</td><td>Sections you approve</td><td>Yes, per section</td></tr>
+        <tr><td>5</td><td class="cmd"><code>/repo-health</code></td><td class="what">Runs every audit once to record where you start.</td><td>Git-ignored reports in <code>.design-suite/</code></td><td>No — report only</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Before setup: the "not configured" notice</h3>
+  <p>In a project that isn't set up, the on-edit hooks say so <b>once per session</b> — <i>"nothing is checked on edit (this is not a clean result)"</i> — so silence is never mistaken for a pass.</p>
+</section>
+
+<section id="stacks">
+  <h2>Which stacks it can read</h2>
+  <p class="sub">Documentation skills work anywhere. Audits that read source need a language adapter, set as <code>adapters.lang</code> in the profile. <code>/survey</code> suggests one.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Adapter</th><th>For</th><th>Audits that work</th><th>Trust</th></tr></thead>
+      <tbody>
+        <tr><td class="cmd"><code>dart</code></td><td>Flutter</td><td class="what">All source audits, except accessibility and copy (switched off for everyone)</td><td><span class="tag t-ok">most tested</span></td></tr>
+        <tr><td class="cmd"><code>tsx</code></td><td>React / TypeScript</td><td class="what">tokens, adapter pattern, layer boundaries, error handling</td><td><span class="tag t-plain">checked on one real codebase</span></td></tr>
+        <tr><td class="cmd"><code>web</code></td><td>React/TS, Vue, Svelte, CSS/SCSS</td><td class="what">tokens, adapter pattern, layer boundaries</td><td><span class="tag t-plain">unverified</span></td></tr>
+        <tr><td class="cmd"><code>swift</code></td><td>SwiftUI / UIKit</td><td class="what">tokens, reduced motion, adapter pattern</td><td><span class="tag t-plain">unverified</span></td></tr>
+        <tr><td class="cmd"><code>kotlin</code></td><td>Jetpack Compose</td><td class="what">tokens, reduced motion, adapter pattern</td><td><span class="tag t-plain">unverified</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <b>Exit 2 means "could not check".</b> Any audit not listed for your adapter refuses with exit 2 and says why. So does an audit missing a config section, or one run in an unconfigured git repo nested inside a configured one. It is not a pass and not a list of problems — read the message, which names what is missing.
+  </div>
+
+  <h3>Where reports go</h3>
+  <p>Raw reports land inside <code>.design-suite/</code> — <code>tokens-findings.json</code>, <code>adapter-pattern-findings.json</code>, <code>layer-boundaries-findings.json</code>, <code>reduced-motion-findings.json</code> and <code>findings/</code>. The scaffolded <code>.design-suite/.gitignore</code> keeps them out of git, because they quote your source. Delete them any time.</p>
+
+  <h3>Upgrading from v0.1.0</h3>
+  <ul>
+    <li>Delete or <code>git rm --cached</code> the old reports: <code>token_pipeline/findings.json</code>, <code>scripts/adapter_pattern_findings.json</code>, <code>scripts/layer_boundaries_findings.json</code>.</li>
+    <li>Point any script or CI step at the new <code>.design-suite/…-findings.json</code> paths, or pass <code>--out</code> with the old path.</li>
+    <li>Add the three new file names to an older <code>.design-suite/.gitignore</code>.</li>
+    <li>Treat exit 2 as "could not check" — several refusals moved from 1 to 2.</li>
+    <li>Nested git repos now need their own setup, or the tools refuse.</li>
+  </ul>
+  <p>Full list and reasons: <code>CHANGELOG.md</code>, <i>Unreleased › Breaking</i>.</p>
+</section>
+
+<section id="unattended">
+  <h2>What runs without you asking</h2>
+  <p class="sub">The honest answer to the question most people have on install day.</p>
+
+  <div class="alarm">
+    <h3>The complete unattended surface</h3>
+    <p class="big"><!--gen:n-auto-->32<!--gen:/n-auto--> commands · <!--gen:n-auto-agents-->3<!--gen:/n-auto-agents--> agents · <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks</p>
+    <p style="margin:10px 0 0">Nothing else in the suite starts itself. The <!--gen:n-auto-->32<!--gen:/n-auto--> commands are read-only or ask before writing; the <!--gen:n-auto-agents-->3<!--gen:/n-auto-agents--> agents are granted exactly <code>Read, Grep, Glob</code> — no <code>Write</code>, no <code>Edit</code>, no <code>Bash</code>, so none of them can change a file; the <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks print a reminder after a tool call, or a note to Claude when a session opens, and nothing more — none of them writes a file.</p>
+  </div>
+
+  <h3>How a command actually fires</h3>
+  <p>Not the way the frontmatter suggests. Each command declares <code>invocation: auto</code> or <code>explicit</code>, but <b>no runtime code reads that key</b> — only the catalogue generator, <code>preflight.py</code>, <code>doctor.py</code> and the CI gates do. What Claude actually matches on is the <code>description</code> field, loaded at session start and compared against your phrasing.</p>
+  <p>So <code>invocation: auto</code> is a promise the description keeps, not a switch. Practically:</p>
+  <ul>
+    <li><b>To make one fire:</b> use the words in its description — or just type <code>/name</code>, which always works.</li>
+    <li><b>To stop one firing:</b> disable the plugin, or name what you want instead. Nothing in <code>.design-suite/</code> tunes triggering; it is description text only.</li>
+  </ul>
+
+  <h3>The rule behind the split</h3>
+  <p>Blast radius, not difficulty. Read-only and report-only run automatically; anything that generates content or sets a project-wide convention waits for you.</p>
+
+  <div class="note">
+    <b>One honest exception.</b> <code>/scaffold-screen</code> is marked <code>auto</code> and it writes files. Either the rule has an exception nobody wrote down, or that frontmatter is wrong. It is listed here rather than quietly excluded.
+  </div>
+
+  <h3>Say this, and this fires</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>If you say…</th><th>This is what runs</th></tr></thead>
+      <tbody>
+        <tr><td>“are there hardcoded colours in here?”</td><td class="cmd"><code>/audit-tokens</code></td></tr>
+        <tr><td>“how healthy is this project's design system?”</td><td class="cmd"><code>/design-debt</code></td></tr>
+        <tr><td>“run everything and tell me where we stand”</td><td class="cmd"><code>/repo-health</code></td></tr>
+        <tr><td>“are the docs out of date?”</td><td class="cmd"><code>/review-docs</code></td></tr>
+        <tr><td>“what is this project even built with?”</td><td class="cmd"><code>/survey</code></td></tr>
+        <tr><td>“which component should I use for a filter bar?”</td><td class="cmd"><code>/suggest-component</code></td></tr>
+        <tr><td>“does the mock API still match the fixtures?”</td><td class="cmd"><code>/audit-mock-api</code></td></tr>
+        <tr><td>“do errors actually reach the user?”</td><td class="cmd"><code>/audit-error-handling</code></td></tr>
+        <tr><td>“is anything animating without a reduced-motion check?”</td><td class="cmd"><code>/audit-reduced-motion</code></td></tr>
+        <tr><td>“write the PR description”</td><td class="cmd"><code>/draft-pr-description</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="commands">
+  <h2>All <!--gen:n-commands-->58<!--gen:/n-commands--> commands</h2>
+  <p class="sub">Search, or filter by whether it fires on its own and how far to trust it. Every row is read from the component's own frontmatter.</p>
+
+  <div class="filter">
+    <input id="q" type="search" placeholder="Search commands…" aria-label="Search commands">
+    <button class="chip" id="f-auto" aria-pressed="false">Fires on its own</button>
+    <button class="chip" id="f-explicit" aria-pressed="false">Waits for you</button>
+    <button class="chip" id="f-proven" aria-pressed="false">✅ proven only</button>
+    <span class="hitcount" id="hits"><!--gen:n-commands-->58<!--gen:/n-commands--> of <!--gen:n-commands-->58<!--gen:/n-commands--></span>
+  </div>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Command</th><th>What it does</th><th>Fires</th><th>Maturity</th><th>Plugin</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <h3>What the maturity markers mean</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Marker</th><th>Means</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t-ok">✅ proven</span></td><td>There is recorded evidence of a real end-to-end run.</td></tr>
+        <tr><td><span class="tag t-warn">⚠ use with review</span></td><td>Nobody has confirmed it end to end. <b>Not a claim it is broken</b> — read what it produces before acting on it.</td></tr>
+        <tr><td><span class="tag t-warn">⚠ experimental</span></td><td>Known rough edges. Read its own file first.</td></tr>
+        <tr><td><span class="tag t-plain">pointer</span></td><td>Not an implementation. It tells you where the real thing lives.</td></tr>
+        <tr><td><span class="tag t-off">🔴 off</span></td><td>Switched off. It refuses with exit 2 rather than running, for a measured reason.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="agents">
+  <h2>Agents</h2>
+  <p class="sub">A separate surface from commands, and easy to miss. All <!--gen:w-agents-->four<!--gen:/w-agents--> are read-only — and that is <em>checked</em> by the catalogue build, not merely asserted: an agent granted a writing tool makes the build refuse.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Agent</th><th>What it does</th><th>Fires</th><th>Maturity</th></tr></thead>
+      <tbody><!--gen:agent-rows-->
+        <tr><td class="cmd"><code>design-auditor</code></td><td class="what">Use when asked to audit, review, or check a built screen, flow, or component for design-system compliance against the doc-of-record and tokens, or to find undocumented…</td><td><span class="tag t-plain">auto</span></td><td><span class="tag t-warn">⚠ use with review</span></td></tr>
+        <tr><td class="cmd"><code>design-critic</code></td><td class="what">Use when asked to critique or give feedback on a design, mockup, screenshot, or proposed screen before it is built (not existing code).</td><td><span class="tag t-plain">explicit</span></td><td><span class="tag t-warn">⚠ use with review</span></td></tr>
+        <tr><td class="cmd"><code>mock-api-auditor</code></td><td class="what">Use when asked to find hardcoded data sources that should be wired to a mock GET endpoint, fixtures with no contract, or mutations given a fake POST/PATCH.</td><td><span class="tag t-plain">auto</span></td><td><span class="tag t-ok">✅ proven</span></td></tr>
+        <tr><td class="cmd"><code>session-decisions</code></td><td class="what">Read-only sweep of the current working session for decisions that belong in the project's decision log and follow-up work that belongs in its backlog.</td><td><span class="tag t-plain">auto</span></td><td><span class="tag t-warn">⚠ use with review</span></td></tr>
+      <!--gen:/agent-rows-->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="audits">
+  <h2>Audits</h2>
+  <p class="sub"><!--gen:n-audits-->22<!--gen:/n-audits--> audits, enumerated by the same discovery <code>/repo-health</code> and the MCP server use — so this cannot disagree with what actually runs. Each is reachable by its own command, by <code>/repo-health</code>, through MCP, or by running the script directly.</p>
+
+  <h3>The <!--gen:w-off-audits-->two<!--gen:/w-off-audits--> that are switched off</h3>
+  <p>A disabled audit stays listed on purpose. A check that quietly stopped running looks exactly like a check that ran and found nothing, so every surface has to name it.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Audit</th><th>Measured reason it is off</th></tr></thead>
+      <tbody>
+        <tr><td class="cmd"><code>/audit-accessibility</code></td><td class="what"><b>100% false positives</b> — all 31 findings across two real projects were PDF-generating widgets judged against a screen text-size minimum. On one project it also had zero true-positive capacity.</td></tr>
+        <tr><td class="cmd"><code>/audit-copy</code></td><td class="what"><b>73% of commit-gating findings wrong</b> (19 of 26). The classifier calls everything “microcopy” as soon as a keyword matches, so body prose gets judged by label rules.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    Neither is deleted, and neither is hidden. Silence from a disabled audit is <b>not</b> a pass — read it as a gap in coverage.
+  </div>
+</section>
+
+<section id="hooks">
+  <h2>Hooks</h2>
+  <p class="sub"><!--gen:w-hooks-->Four<!--gen:/w-hooks-->, all advisory. A <code>PostToolUse</code> hook prints a reminder after a tool call; the <code>SessionStart</code> hook notices an unconfigured project and tells Claude to <em>offer</em> onboarding — it writes nothing, and a configured or declined project gets no message. None of them edits a file, blocks a tool call, or fails a build.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Hook</th><th>Plugin</th><th>Fires on</th><th>What you see</th></tr></thead>
+      <tbody><!--gen:hook-rows-->
+        <tr><td class="cmd"><code>session_start_onboarding.py</code></td><td>design-suite</td><td>SessionStart on <code>startup | clear</code></td><td class="what">Checking whether this project is set up for design-suite...</td></tr>
+        <tr><td class="cmd"><code>mock_api_reminders.py</code></td><td>design-suite</td><td>PostToolUse on <code>Write | Edit</code></td><td class="what">Checking for mock-API contract changes...</td></tr>
+        <tr><td class="cmd"><code>audit_on_edit.py</code></td><td>design-suite</td><td>PostToolUse on <code>Write | Edit | Bash</code></td><td class="what">Running audits mapped to this change...</td></tr>
+        <tr><td class="cmd"><code>pr_reminders.py</code></td><td>house-style</td><td>PostToolUse on <code>Bash</code></td><td class="what">Checking for PR-related commands...</td></tr>
+      <!--gen:/hook-rows-->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Read this before you assume hooks are working.</b> <code>audit_on_edit.py</code> only runs what your own <code>.design-suite/hooks.map.json</code> tells it to. That file used to ship as a TODO placeholder, so on-save nudges did nothing at all — and worse, the placeholder redirected the wrong flag, which would have made the hook fail silently even once wired. It now ships with a working default, and <code>doctor.py</code> reports an unconfigured map as a finding instead of saying nothing.
+  </div>
+
+  <h3>The only thing that can fail a commit</h3>
+  <p>Nothing above blocks anything. Blocking is a separate, opt-in path: <code>install_precommit_hook.py</code> plus entries you explicitly mark <code>preCommit: true</code>. Nothing ships that way — you turn it on deliberately, for fast checks you are confident in.</p>
+</section>
+
+<section id="install">
+  <h2>Install recipes</h2>
+  <p class="sub">Four situations people actually land in, if you would rather set up by hand than take the <a href="#open">offer on session start</a>. Five language adapters exist — see <a href="#stacks">which stacks it can read</a>.</p>
+  <div class="recipes">
+    <div class="recipe">
+      <h3>A · You already have a design system</h3>
+      <p class="who">Tokens exist, docs exist, you want to know where the code disagrees.</p>
+      <ol>
+        <li>Install the plugin</li>
+        <li><code>init.py</code> to scaffold <code>.design-suite/</code></li>
+        <li>Fill the five required profile sections</li>
+        <li>Map your docs to roles</li>
+        <li><code>/audit-tokens</code>, then <code>/design-debt</code></li>
+      </ol>
+    </div>
+    <div class="recipe">
+      <h3>B · You have no design docs at all</h3>
+      <p class="who">Code exists; nothing is written down.</p>
+      <ol>
+        <li><code>/survey</code> — read the project first</li>
+        <li><code>/map-project</code> — confirm what it guessed</li>
+        <li><code>/bootstrap-design-docs</code> — one doc at a time, you accept each</li>
+      </ol>
+      <p class="who">Bootstrap is <b>⚠ use with review</b>. It reverse-engineers what exists; it does not know what you intended.</p>
+    </div>
+    <div class="recipe">
+      <h3>C · Your stack has no adapter</h3>
+      <p class="who">Not Dart, TypeScript/web, Swift or Kotlin.</p>
+      <ol>
+        <li>The documentation skills still work</li>
+        <li>Everything that scans source does <b>not</b></li>
+        <li>An unknown adapter is a hard error, never a quiet pass</li>
+      </ol>
+      <p class="who">That refusal is the point: a silent skip would look exactly like a clean codebase.</p>
+    </div>
+    <div class="recipe">
+      <h3>D · Five minutes, smallest possible</h3>
+      <p class="who">Just show me it works.</p>
+      <ol>
+        <li>Install</li>
+        <li><code>init.py</code></li>
+        <li>Fill <code>source.root</code>, <code>source.fileGlob</code>, <code>adapters.lang</code></li>
+        <li><code>/audit-tokens</code></li>
+      </ol>
+    </div>
+  </div>
+  <div class="note">
+    <b>Which plugins?</b> <code>design-suite</code> is the base and goes anywhere. <code>house-style</code> is internal-only — client repos take the base plugin alone.
+  </div>
+</section>
+
+<section id="first">
+  <h2>Your first five minutes</h2>
+  <p class="sub">Run these in order. The second one matters most: it tells you which skills can actually run here before you try any of them.</p>
+<pre><span class="c"># 1. Scaffold the config. Every value lands as a TODO — that is intended.</span>
+python3 "$CLAUDE_PLUGIN_ROOT/bin/init.py"
+
+<span class="c"># 2. Which skills can run on THIS project, and what is blocking the rest?</span>
+python3 "$CLAUDE_PLUGIN_ROOT/bin/preflight.py" --json
+
+<span class="c"># 3. Validate the profile. A fresh scaffold SHOULD report unresolved TODOs.</span>
+python3 "$CLAUDE_PLUGIN_ROOT/bin/doctor.py" --profile
+
+<span class="c"># 4. What audits exist, and which are switched off?</span>
+python3 "$CLAUDE_PLUGIN_ROOT/bin/repo_health.py" --list
+
+<span class="c"># 5. First real run.</span>
+<span class="g">/audit-tokens</span></pre>
+  <div class="note">
+    <b>Exit codes are load-bearing.</b> <code>0</code> clean · <code>1</code> findings · <code>2</code> refused · <code>3</code> external · <code>4</code> declined · <code>5</code> stub. A refusal is never reported as a pass, because an audit that reports nothing must never be indistinguishable from a clean codebase.
+  </div>
+</section>
+
+<section id="config">
+  <h2>The config files</h2>
+  <p class="sub">All in <code>.design-suite/</code>, all scaffolded by <code>init.py</code>. Only the profile is mandatory — delete what you do not need rather than filling TODOs that do not apply to you.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>File</th><th>What it is for</th><th>Needed?</th></tr></thead>
+      <tbody>
+        <tr><td class="cmd"><code>profile.json</code></td><td class="what">Where your source is, what stack, where tokens live, where docs live. The five required sections: <code>project</code>, <code>adapters</code>, <code>source</code>, <code>tokens</code>, <code>docs</code>.</td><td><span class="tag t-ok">required</span></td></tr>
+        <tr><td class="cmd"><code>docs.manifest.json</code></td><td class="what">Which of your documents plays which role. A menu, not a checklist.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>design-audit-config.json</code></td><td class="what">Project-specific rules the design auditor reads instead of hardcoding them.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>exceptions.json</code></td><td class="what">Findings you have accepted. Where a wrong or irrelevant finding goes to be silenced deliberately.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>arch-rules.json</code></td><td class="what">Layering rules and your design-system package name.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>hooks.map.json</code></td><td class="what">Which audits run on save, and which may gate a commit.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>known-traps.json</code></td><td class="what">Your project's own recorded traps, machine-queryable.</td><td><span class="tag t-plain">optional</span></td></tr>
+        <tr><td class="cmd"><code>component-capabilities.json</code></td><td class="what">What each of your components can do — what <code>/suggest-component</code> matches against.</td><td><span class="tag t-plain">optional</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Doc roles are a menu</h3>
+  <p>There are <!--gen:n-roles-->35<!--gen:/n-roles--> roles. You are not meant to have all of them. Map the ones you have, and <b>decline</b> the ones you genuinely do not — a declined role is recorded as declined, which is different from a role nobody got round to.</p>
+  <p>Anything <code>--from-survey</code> fills in is marked <code>inferred</code>: a machine's guess. Reviewing it is your job, and <code>/ratify</code> is how you sign off on one.</p>
+</section>
+
+<section id="mcp">
+  <h2>The MCP server</h2>
+  <p class="sub">It ships, it registers itself on install, and it needs no configuration from you.</p>
+  <p>It exposes one tool per audit, with no required inputs. Disabled audits appear in that list too — listed and refusing, rather than vanishing. You would care if you want to drive these audits from another MCP client or script them outside Claude Code. Otherwise you can ignore it entirely.</p>
+</section>
+
+<section id="version">
+  <h2>Which version do you actually have?</h2>
+  <p class="sub">Worth checking before you conclude a command is missing.</p>
+  <p>The plugin installs as a snapshot into a cache. If that snapshot is older than the repo, commands documented here simply will not exist for you — and nothing in Claude Code will tell you why. This was measured on a real machine: <b>30 commands installed against 50 shipped</b>, because the cached copy was 226 commits behind.</p>
+<pre><span class="c"># Compares what is installed against what the repo ships.</span>
+<span class="c"># 0 = in sync · 1 = drift · 2 = cannot determine (never reported as 0)</span>
+python3 "$CLAUDE_PLUGIN_ROOT/bin/installed_drift.py"</pre>
+  <h3>Removing it cleanly</h3>
+  <p>Two things, not one. Uninstall the plugin — <b>and</b>, if you opted into commit gating, uninstall the pre-commit hook, which lives in your repo's git hooks and will otherwise keep running against a plugin that is gone. Your <code>.design-suite/</code> directory is yours: deleting it is a separate decision.</p>
+</section>
+
+<section id="cheat">
+  <h2>Cheat sheet</h2>
+  <p class="sub">Every command, by the job you came here to do.</p>
+  <div class="cheat"><!--gen:cheat-rows-->
+    <div><h3>Audit · 21</h3><p>/audit-accessibility · /audit-adapter-pattern · /audit-api-consistency · /audit-claude-md-drift · /audit-contract-headers · /audit-contrast · /audit-copy · /audit-doc-staleness · /audit-error-handling · /audit-focus-order · /audit-layer-boundaries · /audit-pattern-adoption · /audit-promotion-candidates · /audit-proposal-status · /audit-prose-flags · /audit-reduced-motion · /audit-reinvented-components · /audit-semantics · /audit-tokens · /audit-unused-tokens · /audit-unwired-roles</p></div>
+    <div><h3>Document · 8</h3><p>/bootstrap-design-docs · /capture-backlog · /establish-brand-voice · /establish-interaction-spec · /log-decision · /review-docs · /rewrite-copy · /sync-docs</p></div>
+    <div><h3>Generate · 8</h3><p>/design-debt · /generate-client-readiness · /generate-walkthrough · /promote-component · /repair-tokens · /scaffold-screen · /suggest-component · /wire-endpoint</p></div>
+    <div><h3>Assets · 4</h3><p>/add-asset · /animate-asset · /audit-assets · /generate-asset</p></div>
+    <div><h3>Mock API · 2</h3><p>/audit-mock-api · /sync-mock-api</p></div>
+    <div><h3>Workflow · 5</h3><p>/design-review-pr · /draft-pr-description · /onboard-new-client · /run-chain · /survey</p></div>
+    <div><h3>Other · 10</h3><p>/cleanup-worktrees · /export-tokens-dtcg · /golden-local-ab · /import-tokens-dtcg · /map-project · /propose-config · /ratify · /repo-health · /upgrade-apply · /upgrade-measure</p></div>
+  <!--gen:/cheat-rows-->
+  </div>
+</section>
+
+<footer>
+  <p>Counts on this page are measured, not remembered: <!--gen:n-commands-->58<!--gen:/n-commands--> commands, <!--gen:n-auto-->32<!--gen:/n-auto--> auto, <!--gen:n-audits-->22<!--gen:/n-audits--> audits, <!--gen:n-agents-->4<!--gen:/n-agents--> agents, <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks. The canonical generated source is <code>docs/SKILLS.md</code>; regenerate with <code>skills_catalog.py</code>, and CI fails if it is stale.</p>
+</footer>
+</div>
+
+<script>
+const DATA=[/*gen:data*/
+["/audit-adapter-pattern","Mechanically check that screens never import the layers they are supposed to reach only through an adapter — state-management, repositories, data sources, HTTP clients.","auto","review","design-suite"],
+["/audit-api-consistency","Use when asked whether a component API is coherent, or before a release that changes one.","auto","proven","design-suite"],
+["/audit-assets","Audit the asset library for drift: manifest entries with no rendered file, orphan files with no manifest entry, unregistered assets, stale palette, and missing…","auto","review","design-suite"],
+["/audit-claude-md-drift","Use when asked whether CLAUDE.md is still accurate, or before trusting a rule it states.","auto","review","design-suite"],
+["/audit-contract-headers","Use when asked whether screen contracts or adapter interfaces are still accurate, or after adding or removing an adapter field.","auto","proven","design-suite"],
+["/audit-contrast","Use when asked whether colour contrast is compliant, or before shipping a palette change.","auto","review","design-suite"],
+["/audit-doc-staleness","Use when asked how stale a doc is by its own stated date, or before relying on an old doc.","auto","review","design-suite"],
+["/audit-error-handling","Use when asked about error-handling coverage, or before wiring a new endpoint.","auto","proven","design-suite"],
+["/audit-focus-order","Best-effort, source-only check of focus/tab traversal order against visual layout order — Stack/Positioned mismatches and explicit traversal overrides (autofocus…","auto","review","design-suite"],
+["/audit-layer-boundaries","Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package.","auto","review","design-suite"],
+["/audit-mock-api","Report-only drift audit for registered mock-API contracts — never edits a contract artifact, but writes its findings to .design-suite/mock-api-findings.json (pass --out…","auto","proven","design-suite"],
+["/audit-pattern-adoption","Count which design-system patterns this project actually calls, and fail on ones it claims but never reaches for. Read-only: reports findings, never edits.","auto","review","design-suite"],
+["/audit-promotion-candidates","Use when asked what should be promoted into the design system, or what was reinvented under a different noun.","auto","review","design-suite"],
+["/audit-proposal-status","Use when asked whether a proposal's status is current, or before relying on a roadmap/proposal doc's header.","auto","review","design-suite"],
+["/audit-prose-flags","Use when maintaining this plugin's own skills, or after renaming or removing a script flag.","auto","review","design-suite"],
+["/audit-reduced-motion","Use when asked to check reduced-motion support or accessibility of animations.","auto","review","design-suite"],
+["/audit-reinvented-components","Use when asked what has been rebuilt instead of reused.","auto","review","design-suite"],
+["/audit-semantics","Four precisely-scoped Flutter semantics rules, each from a defect that shipped (issue #128) — error text never announced, selection shown by colour alone…","auto","review","design-suite"],
+["/audit-tokens","Mechanically audit source for hardcoded design values that should route through design tokens — colours, spacing, radii, durations, curves.","auto","proven","design-suite"],
+["/audit-unused-tokens","Use when asked which design tokens are unused, or before pruning a palette.","auto","review","design-suite"],
+["/audit-unwired-roles","Use when asked whether the theming contract is real, or which design-system colour roles a project never uses.","auto","proven","design-suite"],
+["/design-debt","Use when asked for an overall picture of design health or design debt across audits.","auto","review","design-suite"],
+["/design-review-pr","Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that…","auto","review","design-suite"],
+["/draft-pr-description","Draft a PR title and description from the actual diff and commit history, following the project's own PR template.","auto","proven","house-style"],
+["/generate-walkthrough","Produce a narrated screenshot or video walkthrough of one named user flow, for stakeholder demos.","auto","experimental","design-suite"],
+["/import-tokens-dtcg","Report drift between a W3C DTCG (2025.10) token file — a Figma variables, Tokens Studio or Style Dictionary export — and the tokens this project's code declares: missing…","auto","review","design-suite"],
+["/repo-health","Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read.","auto","review","design-suite"],
+["/review-docs","Audit the project's documents against each other and against the codebase, reporting what is stale, out of sync, or missing.","auto","review","design-suite"],
+["/scaffold-screen","Generate a new screen pre-wired with the three standard states — loading, error, content — using the components the project has already standardized on.","auto","review","design-suite"],
+["/suggest-component","Use when asked which component to use, whether one already covers a need, or to compare candidates.","auto","review","design-suite"],
+["/survey","Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of…","auto","review","design-suite"],
+["/upgrade-measure","Use before upgrading the suite in a project, or on a suite PR before merging.","auto","review","design-suite"],
+["/add-asset","Add a purchased 3D asset to the library: register it in the manifest with provenance and licence, recolour and render it, optimise, and bundle it.","explicit","review","design-suite"],
+["/animate-asset","Add baked motion to an existing asset: pick a preset, render the frame sequence, encode an animated file plus a static reduce-motion poster, and bundle both.","explicit","review","design-suite"],
+["/audit-accessibility","DISABLED pending correct scoping — measured 100% false positives on two real projects (issue #104), and zero true-positive capacity on one of them.","explicit","off","design-suite"],
+["/audit-copy","DISABLED pending re-scoping — 73% of its commit-gating findings were wrong, measured on two real projects (issues #104, #109).","explicit","off","design-suite"],
+["/bootstrap-design-docs","Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or…","explicit","review","design-suite"],
+["/capture-backlog","Draft backlog entries in the project backlog's own existing format, for review before anything is written.","explicit","review","design-suite"],
+["/cleanup-worktrees","Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work.","explicit","review","design-suite"],
+["/establish-brand-voice","Establish or update the project's brand voice and terminology glossary — the source of truth copy audits check against. Never rewrites existing copy.","explicit","review","design-suite"],
+["/establish-interaction-spec","Establish or update motion and haptic/sound conventions — the source of truth the token audit measures durations and curves against.","explicit","review","design-suite"],
+["/export-tokens-dtcg","Export this project's declared design tokens as a W3C Design Tokens Community Group (DTCG 2025.10) .tokens.json that Figma, Tokens Studio and Style Dictionary can read.","explicit","review","design-suite"],
+["/generate-asset","Generate a new asset from a script we author rather than a purchased source — SVG, Blender, or the shapes icon-as-data kind — then render, optimise and bundle it.","explicit","review","design-suite"],
+["/generate-client-readiness","Derive a client-facing production-readiness summary from the internal checklist and export it to PDF.","explicit","proven","house-style"],
+["/golden-local-ab","Prove a refactor changed no pixels by rendering the golden corpus on this machine before and after and comparing the two byte-for-byte.","explicit","proven","design-suite"],
+["/log-decision","Draft an entry for the project's decision log in that log's own existing format, for review before anything is written.","explicit","review","design-suite"],
+["/map-project","Propose the mappings a survey cannot: which document is really the design doc, which project kind this is, which candidate token source is the true one — each with the…","explicit","review","design-suite"],
+["/onboard-new-client","Playbook rather than a new capability: the ordered sequence of existing skills for standing up the design-system foundation of a new client project or a greenfield area.","explicit","review","design-suite"],
+["/promote-component","Move a component from an application into the shared design system, or demote one back.","explicit","review","design-suite"],
+["/propose-config","Propose real values for the TODO sections init.py scaffolds (layer rules, the adapter seam, the animated-widget list, colour token names), each measured from this…","explicit","review","design-suite"],
+["/ratify","Use when asked to ratify, approve, or sign off a profile field, or when doctor reports fields as UNTRUSTED.","explicit","review","design-suite"],
+["/repair-tokens","Use when asked to fix, repair, or auto-tokenise the findings /audit-tokens reported.","explicit","review","design-suite"],
+["/rewrite-copy","Draft or rewrite user-facing copy so it is on-brand and on-terminology, and does not read as machine-written. Never applies a change without showing it first.","explicit","review","design-suite"],
+["/run-chain","Run a multi-skill playbook one step at a time, keeping its position across sessions and stopping at every checkpoint.","explicit","experimental","design-suite"],
+["/sync-docs","Take new information — client feedback, a call summary, a product decision, a direction change — and update the correct project documents.","explicit","review","design-suite"],
+["/sync-mock-api","Regenerate the generated parts of a mock-API contract from its hand-edited fixture — API docs, mock entry, and derived artifacts.","explicit","proven","design-suite"],
+["/upgrade-apply","Use only when explicitly asked to apply or migrate a suite upgrade, after /upgrade-measure and human approval.","explicit","review","design-suite"],
+["/wire-endpoint","Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — model, datasource, bloc, fixture, contract registration, docs, test.","explicit","review","design-suite"]
+/*gen:/data*/];
+const M={proven:['t-ok','✅ proven'],review:['t-warn','⚠ use with review'],
+         experimental:['t-warn','⚠ experimental'],pointer:['t-plain','pointer'],off:['t-off','🔴 off']};
+const body=document.getElementById('rows'),hits=document.getElementById('hits'),q=document.getElementById('q');
+const chips={auto:document.getElementById('f-auto'),explicit:document.getElementById('f-explicit'),proven:document.getElementById('f-proven')};
+const state={auto:false,explicit:false,proven:false};
+function render(){
+  const term=q.value.trim().toLowerCase();
+  const rows=DATA.filter(([n,d,fire,mat])=>{
+    if(state.auto&&fire!=='auto')return false;
+    if(state.explicit&&fire!=='explicit')return false;
+    if(state.proven&&mat!=='proven')return false;
+    if(term&&!(n+' '+d).toLowerCase().includes(term))return false;
+    return true;
+  });
+  body.innerHTML=rows.map(([n,d,fire,mat,pl])=>{
+    const[c,l]=M[mat];
+    return `<tr><td class="cmd"><code>${n}</code></td><td class="what">${d}</td>`+
+           `<td><span class="tag t-plain">${fire}</span></td>`+
+           `<td><span class="tag ${c}">${l}</span></td>`+
+           `<td><span class="tag t-plain">${pl}</span></td></tr>`;
+  }).join('');
+  hits.textContent=`${rows.length} of ${DATA.length}`;
+}
+q.addEventListener('input',render);
+for(const k in chips){chips[k].addEventListener('click',()=>{
+  state[k]=!state[k];
+  if(k==='auto'&&state.auto){state.explicit=false;chips.explicit.setAttribute('aria-pressed','false');}
+  if(k==='explicit'&&state.explicit){state.auto=false;chips.auto.setAttribute('aria-pressed','false');}
+  chips[k].setAttribute('aria-pressed',String(state[k]));render();
+});}
+render();
+</script>

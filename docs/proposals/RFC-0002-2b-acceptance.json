@@ -1,0 +1,78 @@
+{
+  "_readme": [
+    "RFC-0002 §2b's six known bugs, as a machine-runnable acceptance test.",
+    "",
+    "Decision 2 keeps these six unfixed in the consumer repositories on purpose: they",
+    "are the survey's acceptance test, and a survey that does not surface them has not",
+    "earned trust. This file is the scorecard for that, so the number cannot regress",
+    "quietly — issue #114 scored 4 of 6 the first time it was run by hand.",
+    "",
+    "It lives in docs/ and not in plugins/design-suite/ because every expectation here",
+    "names a specific real project. The scorer that reads it (bin/score_acceptance.py)",
+    "carries none of that: project roots are supplied on the command line, so nothing",
+    "in the universal plugin knows these repositories exist.",
+    "",
+    "  python3 plugins/design-suite/bin/score_acceptance.py \\",
+    "      --spec docs/proposals/RFC-0002-2b-acceptance.json \\",
+    "      --project portal=<path> --project mobile=<path>",
+    "",
+    "Read-only against both projects: `survey --check` writes nothing and `doctor`",
+    "writes nothing."
+  ],
+  "specVersion": 1,
+  "name": "RFC-0002 §2b — six known bugs",
+  "projects": {
+    "portal": "the consumer whose profile predates four directories and a router",
+    "mobile": "the consumer whose schema copy has drifted from the plugin's"
+  },
+  "expectations": [
+    {
+      "id": "2b-1-routes-file",
+      "bug": "portal declares no routesFile despite having a router",
+      "consequence": "/review-docs check C is silently inert there — the governing principle violated in production",
+      "project": "portal",
+      "tool": "survey-check",
+      "match": {"kind": "undeclared-capability", "pathContains": "routesFile"}
+    },
+    {
+      "id": "2b-2-other-shared-dirs",
+      "bug": "portal declares no otherSharedDirs; four exist on disk",
+      "consequence": "audits skip real shared code",
+      "project": "portal",
+      "tool": "survey-check",
+      "match": {"kind": "undeclared-sibling-directory", "pathContains": "lib/shared/", "minCount": 4}
+    },
+    {
+      "id": "2b-3-ships-no-imagery",
+      "bug": "portal's profile states it ships no imagery; six JPEGs exist",
+      "consequence": "asset audits scope wrongly",
+      "project": "portal",
+      "tool": "survey-check",
+      "match": {"kind": "undeclared-top-level-directory", "pathContains": "assets/", "requireProseMention": true}
+    },
+    {
+      "id": "2b-4-tokens-permissive",
+      "bug": "the tokens object lacks additionalProperties: false",
+      "consequence": "roleSource/roleAccessor validate silently against nothing",
+      "project": "portal",
+      "tool": "survey-check",
+      "match": {"kind": "schema-accepts-undescribed-keys", "pathContains": "tokens"}
+    },
+    {
+      "id": "2b-5-palette-type",
+      "bug": "assets.palette is a string in the schema and an object in mobile's shipping profile",
+      "consequence": "the schema does not describe reality",
+      "project": "mobile",
+      "tool": "doctor",
+      "match": {"stdoutContains": "assets.palette: expected string, got dict"}
+    },
+    {
+      "id": "2b-6-schema-drift",
+      "bug": "the two consumer profile.schema.json copies have drifted from the plugin's",
+      "consequence": "nothing compared them",
+      "project": "mobile",
+      "tool": "doctor",
+      "match": {"stdoutContains": "profile.schema.json is missing"}
+    }
+  ]
+}
