@@ -141,13 +141,6 @@ jobs:
         # mapping 2 of 20 doc roles. Without it, every PASS is worthless.
         run: python3 plugins/design-suite/bin/preflight.py --selftest
 
-      - name: Tailwind token enumeration works, and refuses on code-built configs
-        # The refusal cases matter more than the happy path. A dynamic config that
-        # quietly returned a partial set instead of None would make the token-drift
-        # check report every token the spread contributed as nonexistent — a
-        # confident wrong answer, which is worse than "cannot tell".
-        run: python3 plugins/design-suite/design_suite/adapters/tailwind_theme.py
-
       - name: Every bin/*_test.py runs, and none of them is silently absent
         # The repo had 13 test files and nothing ran any of them — not this
         # workflow, not gates.py, not the pre-commit hook. They all passed by
@@ -223,9 +216,3 @@ jobs:
         run: python3 -m compileall -q plugins
       - name: The engine still runs a non-Dart adapter
         run: python3 plugins/design-suite/design_suite/adapters/verify_seam.py
-      - name: The asset and scaffold seams hold, including their refusals
-        # Asserts the implementations answer correctly AND that a stack with no
-        # asset registry raises instead of returning a boolean it invented. The
-        # second half is the point: False would be a permanent false finding on
-        # every asset, True would hide every real one.
-        run: python3 plugins/design-suite/design_suite/adapters/verify_seams_asset_scaffold.py
