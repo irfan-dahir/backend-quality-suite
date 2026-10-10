@@ -39,21 +39,26 @@ def expect(condition: bool, what: str) -> None:
 
 
 def main() -> int:
-    # The hyphen exception: audit_focus_order.py names itself with an
-    # underscore but writes its envelope with a hyphen. If envelope_name()
+    # The hyphen exception: audit_claude_md_drift.py names itself with
+    # underscores but writes its envelope with hyphens. If envelope_name()
     # ever falls back to the naive stem-strip for this one, this case fails.
-    focus_order = BIN / "audit_focus_order.py"
-    expect(audit_discovery.envelope_name(focus_order) == "focus-order",
-           "audit_focus_order.py's envelope name is 'focus-order', not 'focus_order'")
+    # (Was audit_focus_order.py, removed when this repo re-domained; this is
+    # the same exception shape on a live audit.)
+    hyphen = BIN / "audit_claude_md_drift.py"
+    expect(audit_discovery.envelope_name(hyphen) == "claude-md-drift",
+           "audit_claude_md_drift.py's envelope name is 'claude-md-drift', "
+           "not 'claude_md_drift'")
 
     # The control: a script with no exception, where the naive strip is
     # already correct. If a future refactor made envelope_name() always
-    # return the naive strip (silently dropping the grep), this case would
-    # still pass and hide the regression the case above exists to catch —
-    # which is exactly why both must be asserted, not just the hyphen one.
-    tokens = BIN / "audit_tokens.py"
-    expect(audit_discovery.envelope_name(tokens) == "tokens",
-           "audit_tokens.py's envelope name is 'tokens' (the naive strip, and correct)")
+    # return some transformed form (silently dropping the grep), this case
+    # would still pass and hide the regression the case above exists to
+    # catch — which is exactly why both must be asserted, not just the
+    # hyphen one.
+    control = BIN / "audit_contract_headers.py"
+    expect(audit_discovery.envelope_name(control) == "contract_headers",
+           "audit_contract_headers.py's envelope name is 'contract_headers' "
+           "(the naive strip, and correct)")
 
     # Every discovered audit that supports --findings must resolve to SOME
     # envelope name — a silent None here is the same class of bug with a
@@ -70,12 +75,14 @@ def main() -> int:
     # DIFFERENT paths under repo_health.py's own resolver, since a bug that
     # made them collide (e.g. both falling back to the naive strip) would
     # pass a same-name check trivially.
-    fo_path = repo_health._findings_path(focus_order)
-    tok_path = repo_health._findings_path(tokens)
-    expect(fo_path.name == "focus-order.json",
-           f"repo_health._findings_path(audit_focus_order.py) is focus-order.json, got {fo_path.name}")
-    expect(tok_path.name == "tokens.json",
-           f"repo_health._findings_path(audit_tokens.py) is tokens.json, got {tok_path.name}")
+    fo_path = repo_health._findings_path(hyphen)
+    tok_path = repo_health._findings_path(control)
+    expect(fo_path.name == "claude-md-drift.json",
+           f"repo_health._findings_path(audit_claude_md_drift.py) is "
+           f"claude-md-drift.json, got {fo_path.name}")
+    expect(tok_path.name == "contract_headers.json",
+           f"repo_health._findings_path(audit_contract_headers.py) is "
+           f"contract_headers.json, got {tok_path.name}")
     expect(fo_path != tok_path,
            "the two resolved paths are not the same file")
 

@@ -35,85 +35,12 @@ NOT_AN_AUDIT = {
 # `reason` is one line for a table. `detail` is the measured evidence. `pathBack`
 # is the bar the next person has to clear to re-enable it — written down here so
 # re-enabling is a decision against evidence rather than someone's optimism.
-DISABLED: dict[str, dict[str, str]] = {
-    "audit_accessibility": {
-        "reason": "disabled — 100% false positives measured on two projects (issue #104)",
-        "detail": (
-            "All 31 findings across two live consumer projects (25 on one, 6 on the other, "
-            "judged independently) were `package:pdf` widgets checked against "
-            "`accessibility_minimums.min_text_sp`, a SCREEN minimum that is meaningless for "
-            "generated print output. Worse than the rate: on one of those projects every one "
-            "of the 29 `fontSize:` literals under its source root is in a PDF-generating "
-            "file, so the font_size check has zero true-positive capacity there "
-            "— it is blind as well as noisy. The cause is that the scanner's font-size pattern "
-            "has no notion of which framework's `TextStyle` it matched. "
-            "RE-MEASURED 2026-10 on public OSS Flutter apps only (no consumer project was "
-            "used): step 1 is done — `.design-suite/exceptions.json` "
-            "`accessibility.excludeFilesImporting` lets a project declare its print library, "
-            "and set-aside findings are counted, not dropped; on dart_pdf's demo it set aside "
-            "all 23 PDF findings and left 0. Two further measured FP classes fixed: an "
-            "IconButton labelled by an enclosing Tooltip/Semantics, or by a Tooltip / "
-            "semanticLabel inside its icon. Fresh sample before those two fixes "
-            "(lichess-org/mobile, openfoodfacts/smooth-app): 47 findings, 2 wrong (4.3%), 45 "
-            "true positives. Second fresh sample after them (localsend, spotube): 10 findings, "
-            "0 clearly wrong, 1 uncertain (<=10%); spotube's IconButton is shadcn_flutter's, "
-            "not Material's — the same framework-blindness shape as the PDF case. One judge; "
-            "min_text_sp=12 chosen by the measurer. Still off: the bar names real CONSUMER "
-            "projects, and none was measured."
-        ),
-        "pathBack": (
-            "1. Give the scanner a project-declared exclusion for PDF/print-generation code — "
-            "declared in the consumer's own config (`.design-suite/`), never hardcoded in this "
-            "plugin, per CLAUDE.md's no-project-literals rule. 2. Re-measure the false-positive "
-            "rate on at least two real consumer projects and record it. 3. Re-enable only if it "
-            "clears the bar issue #104 proposes (<=5% wrong) AND is shown to have non-zero "
-            "true-positive capacity — a check that is 0% wrong because it finds nothing is not "
-            "fixed. Delete this entry in the same commit that does all three."
-        ),
-    },
-    "audit_copy": {
-        "reason": "disabled — 73% of commit-gating findings wrong, measured on two projects (issues #104, #109)",
-        "detail": (
-            "Of the 26 findings that would actually gate a commit, 19 were wrong (73%); 81% "
-            "of total output was noise. Measured independently on a second project, 93% of "
-            "findings trace to one cause: `engine/copy.py`'s `classify()` returns "
-            "\"microcopy\" unconditionally as soon as the adapter's keyword matched, but "
-            "`message:`, `hintText:` and `helperText:` routinely carry body copy — so prose "
-            "is judged by label rules. 13 of the 14 `title_case` findings are multi-sentence "
-            "prose. The four rules that need no label-vs-body judgment produced 0 findings "
-            "across 444 strings, so they carry none of the value and none of the risk; only "
-            "`all_caps` showed true-positive capacity, at 9% of output. The distinction the "
-            "rules encode — label copy vs. body copy — is not one the checker can make, so it "
-            "guesses and then states the guess as a verdict. That is a shape, not a threshold. "
-            "RE-MEASURED 2026-10 on public OSS Flutter apps only (no consumer project): "
-            "classify() no longer treats a keyword as chrome — only kinds the project declares "
-            "in exceptions.json `copy.chromeKinds` are; multi-sentence text and complete 3+-word "
-            "sentences are content; letterless fragments and code comments are not copy "
-            "(flutter/gallery's code_segments.dart produced 2,547 of its 2,683 findings); "
-            "all_caps needs 3+ Latin cased letters (CJK text and '23.5MB' were flagged). Six "
-            "apps (flutter_deer, ente auth, lichess, smooth-app, localsend, spotube) before: "
-            "114 findings incl. 21 terminal_period, all on sentences. After: 87 findings, 41 "
-            "wrong (47%) — nearly all title_case on brand, product, feature and person names, "
-            "and all_caps on acronyms. all_caps alone: 18 findings, 5 wrong (28%). What is "
-            "left is exactly the semantic judgement (load-bearing capital vs. slip) the path "
-            "back says a regex cannot make."
-        ),
-        "pathBack": (
-            "1. The microcopy/content split must stop treating an adapter keyword as proof of "
-            "chrome — the classifier needs an actual signal, declared by the consumer project "
-            "in its own `.design-suite/` config rather than hardcoded here (CLAUDE.md's "
-            "no-project-literals rule). 2. `all_caps` must be measured separately from the "
-            "rules that depend on that split, because it is the only one with demonstrated "
-            "true-positive capacity and grading it with the others hides that. 3. Re-enable "
-            "only on <=5% wrong AND demonstrated non-zero true-positive capacity, re-measured "
-            "on two real consumer projects — a check that is 0% wrong because it finds nothing "
-            "is silenced, not fixed. The documented path back is issue #109's option 3: "
-            "re-scope the failing part as a skill under RFC-0002 3b-ii, because the "
-            "distinction it fails at is semantic and belongs to a reader, not a regex. Delete "
-            "this entry in the same commit that clears the bar."
-        ),
-    },
-}
+# Both entries this shipped with (audit_accessibility, audit_copy) were removed
+# with their scripts when this repo was re-domained from design-suite to the
+# backend suite -- the registry stays, empty, because the surfaces that render
+# it (MCP tools, skills catalogue, hooks map) must handle 'no disabled audits'
+# as a first-class state rather than a surprise.
+DISABLED: dict[str, dict[str, str]] = {}
 
 
 def disabled_reason(script: Path | str) -> dict[str, str] | None:

@@ -143,16 +143,33 @@ class Review(unittest.TestCase):
     def test_only_refusals_is_exit_2_and_listed(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = make_repo(Path(tmp))
-            proc = cli("main", "--repo", str(repo), "-k", "adapter_pattern")
+            # doc-staleness has no docs to sweep here and refuses (exit 2) --
+            # the adapter_pattern fixture this used to use left with its script
+            # when this repo re-domained.
+            proc = cli("main", "--repo", str(repo), "-k", "doc_staleness")
             self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
-            self.assertIn("**audit_adapter_pattern** — refused", proc.stdout)
+            self.assertIn("**audit_doc_staleness** — refused", proc.stdout)
             self.assertIn("not a clean review", proc.stderr)
 
     def test_disabled_audit_is_listed_not_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = make_repo(Path(tmp))
-            proc = cli("main", "--repo", str(repo), "-k", "audit_copy")
-            self.assertIn("**audit_copy** — disabled", proc.stdout)
+            # The DISABLED registry ships empty (its two entries left with
+            # their scripts when this repo re-domained), so the mechanism is
+            # exercised by planting one entry in-process rather than by
+            # reaching for a registry entry that is really there.
+            import contextlib, io
+            from design_suite.engine import audit_discovery
+            audit_discovery.DISABLED["audit_doc_staleness"] = {
+                "reason": "planted for this test", "detail": "d", "pathBack": "p"}
+            try:
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    R.main(["main", "--repo", str(repo), "-k", "doc_staleness"])
+                out = buf.getvalue()
+            finally:
+                audit_discovery.DISABLED.pop("audit_doc_staleness", None)
+            self.assertIn("**audit_doc_staleness** — disabled", out)
 
 
 class NeverPostsUnlessAsked(unittest.TestCase):

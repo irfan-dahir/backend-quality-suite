@@ -3,7 +3,7 @@
     design-suite list                      every subcommand and the script it runs
     design-suite where                     the resolved suite root, and how it was found
     design-suite mcp                       start the MCP server (stdio) from the located root
-    design-suite audit tokens [args...]    -> bin/audit_tokens.py [args...]
+    design-suite audit doc-staleness [args...] -> bin/audit_doc_staleness.py [args...]
     design-suite doctor [args...]          -> bin/doctor.py [args...]
     python3 -m design_suite ...            same thing, without installing
 
@@ -64,16 +64,13 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "design-debt": ("design_debt.py", "roll audit findings into per-category grades"),
     "harness": ("harness.py", "preview/apply/check generated per-harness files (AGENTS.md, MCP configs, skills)"),
     "chain": ("chain.py", "run or resume a multi-step playbook"),
-    "repair-tokens": ("repair_tokens.py", "emit a reviewable token-repair diff (never applies it)"),
     "scaffold-doc": ("scaffold_doc.py", "scaffold one project document from its template"),
     "decline-doc": ("decline_doc.py", "record a declined document role"),
     "query-decisions": ("query_decisions.py", "query the project's decision log"),
-    "quick-ref": ("quick_ref.py", "print the project quick reference"),
     "preflight": ("preflight.py", "pre-work checks"),
     "verify": ("verify.py", "verify a commit's claims"),
     "upgrade": ("suite_upgrade.py", "upgrade a project's .design-suite/ to this suite version"),
     "installed-drift": ("installed_drift.py", "compare installed suite against the source"),
-    "extract-copy": ("extract_copy.py", "extract user-facing copy strings"),
     "golden-local-ab": ("golden_local_ab.py", "byte-compare golden renders before/after"),
     "precommit": ("run_precommit_audits.py", "run the pre-commit audit set"),
     "hooks": ("harness_hooks.py", "wire hooks per harness (--status | --harness X [--apply] | --git)"),

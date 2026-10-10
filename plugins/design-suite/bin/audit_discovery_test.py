@@ -69,8 +69,8 @@ def main() -> int:
 
     # Control: an ordinary bin/ audit is still found, so widening the glob
     # didn't accidentally narrow it or change what bin/ contributes.
-    expect(any(s.stem == "audit_tokens" for s in found),
-           "an ordinary bin/ audit (audit_tokens) is still discovered")
+    expect(any(s.stem == "audit_doc_staleness" for s in found),
+           "an ordinary bin/ audit (audit_doc_staleness) is still discovered")
 
     # Control: the plugin-self-check exclusions still apply after widening —
     # a scanner that checks THIS repo, not a consumer project, is not "every

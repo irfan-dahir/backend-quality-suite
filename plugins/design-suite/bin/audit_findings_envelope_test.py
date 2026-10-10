@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""The seven audits retrofitted onto the common findings envelope, tested as a set.
+"""The five audits retrofitted onto the common findings envelope, tested as a set.
 
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_findings_envelope_test.py"
 
 `audit_api_consistency`, `audit_claude_md_drift`, `audit_doc_staleness`,
-`audit_proposal_status`, `audit_prose_flags`, `audit_unused_tokens` and
-`audit_unwired_roles` each wrote their own output and nothing else, so
-`/design-debt` could not grade them, `repo_health.py` reported them `unclear`,
+`audit_proposal_status` and `audit_prose_flags` each wrote their own output and
+nothing else, so `/quality-debt` could not grade them, `repo_health.py` reported them `unclear`,
 and `mcp/audit_server.py` returned their raw stdout tagged `"structured":
 false`. A third of the suite was invisible to its own roll-up — the governing
 principle's failure mode at the dashboard level.
@@ -57,8 +56,6 @@ EXPECTED_ENVELOPE_NAMES = {
     "audit_doc_staleness": "doc-staleness",
     "audit_proposal_status": "proposal-status",
     "audit_prose_flags": "prose-flags",
-    "audit_unused_tokens": "unused-tokens",
-    "audit_unwired_roles": "unwired-roles",
 }
 
 
@@ -460,151 +457,14 @@ def dart_fixture(tmp: str) -> Path:
     return repo
 
 
-class UnusedTokens(unittest.TestCase):
-    def test_clean_fixture_writes_an_envelope_with_the_token_count(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            result = run("audit_unused_tokens", ["--findings"], repo)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            data = envelope(repo, "unused-tokens")
-            EnvelopeContract().assert_well_formed(data, "unused-tokens")
-            self.assertEqual(data["findings"], [])
-            # Three declared tokens swept, not three files — the sweep unit for
-            # this audit is the declared token.
-            self.assertEqual(data["scanned"], 3)
+# UnusedTokens and UnwiredRoles classes removed with their scripts (audit_unused_tokens.py, audit_unwired_roles.py) when this repo re-domained; re-authored against backend audits if the envelope gain is re-measured.
 
-    def test_planted_unread_token_reaches_the_envelope_under_its_category(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            tokens = repo / "lib" / "theme" / "tokens.dart"
-            tokens.write_text(tokens.read_text().replace(
-                "  static const radius4 = 4.0;",
-                "  static const radius4 = 4.0;\n  static const space99 = 99.0;"))
-            result = run("audit_unused_tokens", ["--findings"], repo)
-            self.assertEqual(result.returncode, 1, result.stderr)
-            data = envelope(repo, "unused-tokens")
-            self.assertEqual(len(data["findings"]), 1)
-            planted = data["findings"][0]
-            # Category is the project's own naming convention, so a dead spacing
-            # token grades separately from a dead radius.
-            self.assertEqual(planted["category"], "spacing")
-            self.assertEqual(planted["severity"], "should-fix")
-            self.assertIn("space99", planted["summary"])
-            self.assertEqual(data["scanned"], 4)
-
-    def test_control_output_is_unchanged(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            EnvelopeContract().assert_control_unchanged(
-                "audit_unused_tokens", [], ["--findings"], repo)
-
-
-class UnwiredRoles(unittest.TestCase):
-    def test_clean_fixture_writes_an_envelope_with_the_role_count(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            result = run("audit_unwired_roles", ["--findings"], repo)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            data = envelope(repo, "unwired-roles")
-            EnvelopeContract().assert_well_formed(data, "unwired-roles")
-            self.assertEqual(data["findings"], [])
-            self.assertEqual(data["scanned"], 2)
-
-    def test_planted_claimed_role_is_a_should_fix_finding(self):
-        """A role this project holds itself to and reads nowhere — the broken
-        re-skinning promise, and the case that exits 1."""
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            roles = repo / "lib" / "theme" / "roles.dart"
-            roles.write_text(roles.read_text().replace(
-                "  final Color surface;",
-                "  final Color surface;\n  final Color danger;"))
-            rules = json.loads((repo / ".design-suite" / "arch-rules.json").read_text())
-            rules["unwiredRoles"]["requiredRoles"].append("danger")
-            (repo / ".design-suite" / "arch-rules.json").write_text(json.dumps(rules))
-            result = run("audit_unwired_roles", ["--findings"], repo)
-            self.assertEqual(result.returncode, 1, result.stderr)
-            data = envelope(repo, "unwired-roles")
-            self.assertEqual(len(data["findings"]), 1)
-            self.assertEqual(data["findings"][0]["category"], "claimed-role")
-            self.assertEqual(data["findings"][0]["severity"], "should-fix")
-            self.assertIn("danger", data["findings"][0]["summary"])
-            self.assertEqual(data["scanned"], 3)
-
-    def test_planted_offered_role_is_reported_but_only_as_fyi(self):
-        """Defined by the design system, never claimed by this project. Reported
-        every run, never failed — so the two must not share a category, or the
-        dashboard would grade accepted breadth as debt."""
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            roles = repo / "lib" / "theme" / "roles.dart"
-            roles.write_text(roles.read_text().replace(
-                "  final Color surface;",
-                "  final Color surface;\n  final Color danger;"))
-            result = run("audit_unwired_roles", ["--findings"], repo)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            data = envelope(repo, "unwired-roles")
-            self.assertEqual(categories(data), {"offered-role"})
-            self.assertEqual(data["findings"][0]["severity"], "fyi")
-
-    def test_control_output_is_unchanged(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            EnvelopeContract().assert_control_unchanged(
-                "audit_unwired_roles", [], ["--findings"], repo)
-
-
-class ApiConsistency(unittest.TestCase):
-    def test_clean_fixture_writes_an_envelope_with_the_file_count(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            result = run("audit_api_consistency", ["--findings"], repo)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            data = envelope(repo, "api-consistency")
-            EnvelopeContract().assert_well_formed(data, "api-consistency")
-            self.assertEqual(data["findings"], [])
-            self.assertEqual(data["scanned"], 3)
-
-    def test_planted_defects_reach_the_envelope_under_three_categories(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            (repo / "lib" / "bad.dart").write_text(BAD_SOURCE)
-            result = run("audit_api_consistency", ["--findings"], repo)
-            self.assertEqual(result.returncode, 1, result.stderr)
-            data = envelope(repo, "api-consistency")
-            EnvelopeContract().assert_well_formed(data, "api-consistency")
-            # One planted file trips three distinct checks; each must grade
-            # under its own check name rather than rolling into one row.
-            self.assertEqual(categories(data),
-                             {"hardbaked", "semantics", "vocabulary"})
-            self.assertEqual({f["file"] for f in data["findings"]}, {"lib/bad.dart"})
-            self.assertEqual(data["scanned"], 4)
-
-    def test_a_disabled_check_is_named_as_suppressed_not_silently_absent(self):
-        """A check switched off must not read as a check that found nothing."""
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            (repo / "lib" / "bad.dart").write_text(BAD_SOURCE)
-            rules = json.loads((repo / ".design-suite" / "arch-rules.json").read_text())
-            rules["apiConsistency"]["checks"]["authoredSemantics"] = {
-                "enabled": False, "why": "this fixture has no screens"}
-            (repo / ".design-suite" / "arch-rules.json").write_text(json.dumps(rules))
-            run("audit_api_consistency", ["--findings"], repo)
-            data = envelope(repo, "api-consistency")
-            self.assertNotIn("semantics", categories(data))
-            self.assertIn("semantics", data["suppressed"])
-            self.assertIn("this fixture has no screens", data["suppressed"]["semantics"])
-
-    def test_control_output_is_unchanged(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            (repo / "lib" / "bad.dart").write_text(BAD_SOURCE)
-            EnvelopeContract().assert_control_unchanged(
-                "audit_api_consistency", [], ["--findings"], repo)
-
+# ApiConsistency class removed with the dart fixtures when this repo re-domained;
+# it is re-authored against the php adapter's component-contract fixture in Phase D
+# (SWAP-PLAN.md) -- the audit itself (bin/audit_api_consistency.py) still ships.
 
 class EnvelopesAreReadableByTheRollUp(unittest.TestCase):
-    """The point of all of the above: /design-debt can now grade these.
+    """The point of all of the above: /quality-debt can now grade these.
 
     Written against `findings.read_all`/`summarize` — the functions the
     dashboard itself calls — rather than against the JSON, because "the file
@@ -615,21 +475,20 @@ class EnvelopesAreReadableByTheRollUp(unittest.TestCase):
     def test_a_planted_finding_becomes_a_graded_row(self):
         from design_suite.engine import findings as F
         with tempfile.TemporaryDirectory() as tmp:
-            repo = dart_fixture(tmp)
-            (repo / "lib" / "bad.dart").write_text(BAD_SOURCE)
-            run("audit_api_consistency", ["--findings"], repo)
-            run("audit_unused_tokens", ["--findings"], repo)
-            run("audit_unwired_roles", ["--findings"], repo)
+            repo = Path(tmp)
+            (repo / "docs").mkdir(parents=True, exist_ok=True)
+            (repo / "docs" / "a.md").write_text("# Thing\n\n_Last updated: 2001-01-01_\n")
+            run("audit_doc_staleness",
+                ["--repo", str(repo), "--today", "2026-01-01", "--findings"])
             rows = F.summarize(F.read_all(repo))
-            self.assertEqual({r["audit"] for r in rows},
-                             {"api-consistency", "unused-tokens", "unwired-roles"})
+            self.assertEqual({r["audit"] for r in rows}, {"doc-staleness"})
             self.assertNotIn("!", {r["grade"] for r in rows})
             # No row may grade "?" — that is the marker for "did this run at
             # all", and it is exactly what these seven used to produce.
             self.assertNotIn("?", {r["grade"] for r in rows})
-            graded = [r for r in rows if r["audit"] == "api-consistency"]
+            graded = [r for r in rows if r["audit"] == "doc-staleness"]
             self.assertEqual({r["category"] for r in graded},
-                             {"hardbaked", "semantics", "vocabulary"})
+                             {"stale_by_stated_date"})
 
 
 if __name__ == "__main__":

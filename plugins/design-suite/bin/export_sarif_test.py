@@ -158,23 +158,36 @@ class CouldNotCheckNeverVanishes(unittest.TestCase):
         self.assertIn(needle, texts)
         self.assertEqual(run["results"], [])
 
+    def plant_disabled(self):
+        # The registry ships empty (its two entries left with their scripts
+        # when this repo re-domained), so the mechanism is exercised by
+        # planting one entry against a live audit in-process.
+        audit_discovery.DISABLED["audit_doc_staleness"] = {
+            "reason": "disabled - planted for this test", "detail": "d", "pathBack": "p"}
+        return "audit_doc_staleness", audit_discovery.DISABLED["audit_doc_staleness"]
+
     def test_disabled_audits_are_failed_invocations_with_their_reason(self):
         write_env(self.repo, "tokens", TOKENS)
-        log = export_sarif.build(self.repo, None)
-        self.assertTrue(audit_discovery.DISABLED, "no disabled audit to test against")
-        for stem, entry in audit_discovery.DISABLED.items():
+        stem, entry = self.plant_disabled()
+        try:
+            log = export_sarif.build(self.repo, None)
             script = next(s for s in audit_discovery.discover(BIN) if s.stem == stem)
             name = audit_discovery.envelope_name(script) or stem.removeprefix("audit_")
             self.assertFailedWith(run_named(log, name), "DISABLED")
             self.assertFailedWith(run_named(log, name), entry["reason"])
+        finally:
+            audit_discovery.DISABLED.pop(stem, None)
 
     def test_disabled_audit_with_stale_envelope_still_contributes_nothing(self):
-        stem = next(iter(audit_discovery.DISABLED))
-        script = next(s for s in audit_discovery.discover(BIN) if s.stem == stem)
-        name = audit_discovery.envelope_name(script) or stem.removeprefix("audit_")
-        write_env(self.repo, name, {"reports": "violations", "scanned": 1, "findings": [
-            {"audit": name, "category": "x", "severity": "critical", "summary": "stale"}]})
-        self.assertFailedWith(run_named(export_sarif.build(self.repo, None), name), "DISABLED")
+        stem, _entry = self.plant_disabled()
+        try:
+            script = next(s for s in audit_discovery.discover(BIN) if s.stem == stem)
+            name = audit_discovery.envelope_name(script) or stem.removeprefix("audit_")
+            write_env(self.repo, name, {"reports": "violations", "scanned": 1, "findings": [
+                {"audit": name, "category": "x", "severity": "critical", "summary": "stale"}]})
+            self.assertFailedWith(run_named(export_sarif.build(self.repo, None), name), "DISABLED")
+        finally:
+            audit_discovery.DISABLED.pop(stem, None)
 
     def test_never_collected_audit_is_a_failed_invocation(self):
         write_env(self.repo, "tokens", TOKENS)

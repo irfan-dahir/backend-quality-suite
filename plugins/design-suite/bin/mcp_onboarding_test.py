@@ -26,11 +26,41 @@ SERVER = PLUGIN / "mcp" / "audit_server.py"
 BIN = PLUGIN / "bin"
 
 
+def patched_plugin_server(dest: Path) -> Path:
+    """A copy of this plugin whose DISABLED registry has one planted entry.
+
+    The registry is a hardcoded product fact and the server runs as a
+    subprocess, so the mechanism -- "a disabled audit is LISTED, not hidden" --
+    can only be exercised end-to-end against a copy whose registry is
+    non-empty. The registry ships empty in this repo: its two entries left
+    with their scripts when this repo re-domained.
+    """
+    import shutil
+    # Mirror the real marketplace layout (plugins/<name>/bin/...) so that every
+    # path derived from `BIN.parents[2]` -- audit_prose_flags.py's SUITE_REPO,
+    # for one -- lands inside this temp dir instead of two levels too high (a
+    # shallower copy once wrote its findings envelope into the system temp
+    # root, which is an ancestor of every other test's fixtures and poisoned
+    # their marker walk-up).
+    dst = dest / "plugins" / "design-suite"
+    shutil.copytree(PLUGIN, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    core = dst / "design_suite" / "engine" / "audit_discovery.py"
+    text = core.read_text()
+    marker = "DISABLED: dict[str, dict[str, str]] = {}"
+    assert marker in text, "registry literal moved -- update this test"
+    text = text.replace(marker,
+                        "DISABLED: dict[str, dict[str, str]] = {\n"
+                        '    "audit_doc_staleness": {"reason": "disabled - planted for "'
+                        '"this test", "detail": "d", "pathBack": "p"},\n}', 1)
+    core.write_text(text)
+    return dst / "mcp" / "audit_server.py"
+
+
 class Server:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, server: Path | None = None):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(root))
         env.pop("DESIGN_SUITE_NO_ONBOARDING", None)
-        self.p = subprocess.Popen([sys.executable, str(SERVER)], cwd=root, env=env,
+        self.p = subprocess.Popen([sys.executable, str(server or SERVER)], cwd=root, env=env,
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
         self.n = 0
         init = self.rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
@@ -79,8 +109,8 @@ class Base(unittest.TestCase):
             s.close()
         self.tmp.cleanup()
 
-    def server(self):
-        s = Server(self.root)
+    def server(self, server: Path | None = None):
+        s = Server(self.root, server)
         self.servers.append(s)
         return s
 
@@ -91,7 +121,10 @@ class Base(unittest.TestCase):
 
 class ToolsList(Base):
     def test_lists_onboarding_and_disabled_audits(self):
-        tools = {t["name"]: t for t in self.server().rpc("tools/list", {})["result"]["tools"]}
+        with tempfile.TemporaryDirectory() as tmp:
+            patched = patched_plugin_server(Path(tmp))
+            tools = {t["name"]: t for t
+                     in self.server(server=patched).rpc("tools/list", {})["result"]["tools"]}
         for name in ("project_status", "survey", "resolve_role", "doctor", "repo_health",
                      "init_from_survey", "map_project", "chain_status", "chain_next",
                      "chain_checkpoint"):
@@ -104,8 +137,8 @@ class ToolsList(Base):
 
 
 class ProjectStatus(Base):
-    def state(self):
-        res, err = self.server().call("project_status")
+    def state(self, server: Path | None = None):
+        res, err = self.server(server=server).call("project_status")
         self.assertFalse(err, res)
         return res
 
@@ -131,7 +164,12 @@ class ProjectStatus(Base):
     def test_configured_lists_refusing_and_disabled(self):
         (self.root / "app.py").write_text("x = 1\n")
         self.configure()
-        res = self.state()
+        # Disabled half runs against the patched copy (see
+        # patched_plugin_server); the refusing half needs no patch -- an
+        # audit with no adapter refuses on its own.
+        with tempfile.TemporaryDirectory() as tmp:
+            patched = patched_plugin_server(Path(tmp))
+            res = self.state(server=patched)
         self.assertEqual(res["state"], "configured")
         self.assertTrue(res["audits"]["disabled"])
         for row in res["audits"]["refusing"]:

@@ -141,7 +141,14 @@ def main() -> int:
 
         print("check: a tree that declares everything it has")
         result = run("--check", "--project-root", str(root))
-        expect(result.returncode == 0, "exit 0 when nothing on disk is undeclared")
+        # Exit-0-on-clean needs a loadable adapter: the fixture names `dart`,
+        # which no longer ships, so the honest current state is exit 1 with
+        # capabilities-not-examined -- loud, never silent. The clean-run leg
+        # returns when the php adapter lands (SWAP-PLAN.md).
+        expect(result.returncode == 1,
+               f"an absent adapter is not clean (got {result.returncode})")
+        expect("capabilities-not-examined" in result.stdout,
+               "the absent adapter is reported as unexamined, not ignored")
 
         print("check: the same tree with one directory planted")
         (root / "extras").mkdir()
@@ -162,26 +169,11 @@ def main() -> int:
                "reports a sibling of a declared directory even though `source.root` is "
                "an ancestor of it")
 
-        print("check: a capability the code has and no field points at")
-        (root / "src" / "router.dart").write_text(
-            "final router = GoRouter(routes: []);\n")
-        result = run("--check", "--project-root", str(root), "--json")
-        kinds = {f["kind"]: f for f in json.loads(result.stdout)["findings"]}
-        expect("undeclared-capability" in kinds,
-               "reports routing the code does that source.routesFile does not declare — "
-               "nothing is missing from disk, so the two path rules cannot see this")
-        expect(kinds.get("undeclared-capability", {}).get("path") == "source.routesFile",
-               "names the profile field the check downstream would have read")
-
-        print("check: declaring the field silences the finding, and only then")
-        profile_path = root / ".design-suite" / "profile.json"
-        declared = json.loads(profile_path.read_text())
-        declared["source"]["routesFile"] = "src/router.dart"
-        profile_path.write_text(json.dumps(declared))
-        result = run("--check", "--project-root", str(root), "--json")
-        kinds = {f["kind"] for f in json.loads(result.stdout)["findings"]}
-        expect("undeclared-capability" not in kinds,
-               "convergence — the code routes and the profile says where — is not a finding")
+        # The undeclared-capability routing cases (a router the profile's
+        # source.routesFile does not declare, and the convergence case that
+        # declaring it silences the finding) need a loadable language adapter
+        # to answer "does this code route?". They are re-authored against the
+        # php adapter and a routes/ fixture in Phase D -- SWAP-PLAN.md.
 
         # The fixture the whole capability seam exists for: an adapter that
         # cannot reach an answer must say so. If it returned False here the
@@ -199,11 +191,12 @@ def main() -> int:
         result = run("--check", "--project-root", str(unreadable), "--json")
         findings = json.loads(result.stdout)["findings"]
         kinds = {f["kind"] for f in findings}
-        expect("capability-undetermined" in kinds,
-               "a source tree with no hand-written code yields a refusal, not 'no routing'")
+        # capability-undetermined (adapter loaded, THIS tree unanswerable)
+        # cannot be reached while no adapter loads; the invariants that still
+        # hold are the two below. Full leg with a php fixture: SWAP-PLAN.md.
         expect("undeclared-capability" not in kinds and "declared-capability-unused" not in kinds,
-               "the refusal is not also reported as an answer")
-        expect(result.returncode == 1, "an undetermined capability keeps the run non-clean")
+               "no answer is invented when nothing could be examined")
+        expect(result.returncode == 1, "an unexamined capability keeps the run non-clean")
 
         print("check: an adapter with no capability support is reported, not skipped")
         nocap = tmpdir / "nocap"
@@ -329,22 +322,21 @@ def main() -> int:
         report = json.loads(result.stdout)
         expect(report["stack"]["stack"] == "dart/flutter",
                "the manifest wins over a census dominated by another language")
-        expect(report["stack"]["candidateAdapter"] == "dart", "proposes the dart adapter")
+        expect(report["stack"]["candidateAdapter"] is None,
+               "no adapter is proposed while the plugin ships none")
 
         print("survey: an adapter that ships is an adapter the survey can reach")
-        # The defect: `adapters/tsx.py` shipped, `availableAdapters` listed it,
-        # and MANIFESTS still mapped package.json to no adapter — so every
-        # JS/TS project was told "no adapter in this plugin" while the plugin
-        # was printing the adapter's name two lines below. A lookup failure
-        # wearing a capability gap's clothes.
+        # The defect this controls for: `adapters/tsx.py` shipped, availableAdapters
+        # listed it, and MANIFESTS still mapped package.json to no adapter — so
+        # every JS/TS project was told "no adapter in this plugin" while the plugin
+        # was printing the adapter's name two lines below. Until a language adapter
+        # ships here (php, for data-API projects), the honest state is: none
+        # available, none proposed, and adapters.lang reported as undetermined.
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import survey as S  # noqa: E402
 
-        expect("tsx" in S.language_adapters(),
-               "tsx is recognised as a language adapter (NAME + FILE_GLOBS + checks)")
-        expect("tailwind_theme" not in S.language_adapters(),
-               "CONTROL: a helper module that the loader cannot use as adapters.lang "
-               "is not reported as an available adapter")
+        expect(S.language_adapters() == [],
+               "no language adapter ships yet — the loader must find nothing to pick")
         expect(S.adapter_reachability() == [],
                "every language adapter that ships is named by some root manifest — "
                "an adapter no manifest can reach can never be proposed")
@@ -356,12 +348,11 @@ def main() -> int:
         report = json.loads(run("--stdout", "--project-root", str(node)).stdout)
         expect(report["stack"]["stack"] == "javascript/typescript",
                "a root package.json still decides the stack")
-        expect(report["stack"]["candidateAdapter"] == "tsx",
-               "proposes the tsx adapter instead of reporting no adapter at all")
+        expect(report["stack"]["candidateAdapter"] is None,
+               "no adapter is proposed on a stack this plugin ships none for")
         fields = {item["field"] for item in report["couldNotDetermine"]}
-        expect("adapters.lang" not in fields,
-               "adapters.lang is no longer reported as undeterminable on a stack "
-               "this plugin can in fact audit")
+        expect("adapters.lang" in fields,
+               "adapters.lang is reported as undeterminable until an adapter ships")
 
         print("survey: writes exactly one file, and only survey.json")
         before = {p.name for p in (root / ".design-suite").iterdir()}
