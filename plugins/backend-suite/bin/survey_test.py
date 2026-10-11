@@ -329,14 +329,14 @@ def main() -> int:
         # The defect this controls for: `adapters/tsx.py` shipped, availableAdapters
         # listed it, and MANIFESTS still mapped package.json to no adapter — so
         # every JS/TS project was told "no adapter in this plugin" while the plugin
-        # was printing the adapter's name two lines below. Until a language adapter
-        # ships here (php, for data-API projects), the honest state is: none
-        # available, none proposed, and adapters.lang reported as undetermined.
+        # was printing the adapter's name two lines below. `php` now ships for
+        # data-API projects; the same two controls hold it reachable, via
+        # composer.json in the MANIFESTS table.
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import survey as S  # noqa: E402
 
-        expect(S.language_adapters() == [],
-               "no language adapter ships yet — the loader must find nothing to pick")
+        expect(S.language_adapters() == ["php"],
+               "the registry's language adapters are discovered — php ships")
         expect(S.adapter_reachability() == [],
                "every language adapter that ships is named by some root manifest — "
                "an adapter no manifest can reach can never be proposed")
@@ -352,7 +352,18 @@ def main() -> int:
                "no adapter is proposed on a stack this plugin ships none for")
         fields = {item["field"] for item in report["couldNotDetermine"]}
         expect("adapters.lang" in fields,
-               "adapters.lang is reported as undeterminable until an adapter ships")
+               "adapters.lang is reported as undeterminable when the mapped "
+               "adapter does not ship")
+
+        phpfix = tmpdir / "phpfix"
+        (phpfix / "src").mkdir(parents=True)
+        (phpfix / "composer.json").write_text('{"name": "fixture/api"}\n')
+        (phpfix / "src" / "Thing.php").write_text("<?php\n")
+        report = json.loads(run("--stdout", "--project-root", str(phpfix)).stdout)
+        expect(report["stack"]["stack"] == "php",
+               "a root composer.json still decides the stack")
+        expect(report["stack"]["candidateAdapter"] == "php",
+               "the shipped php adapter is proposed on a composer.json project")
 
         print("survey: writes exactly one file, and only survey.json")
         before = {p.name for p in (root / ".backend-suite").iterdir()}

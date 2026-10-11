@@ -285,7 +285,7 @@ def error_handling_syntax(adapter):
             f"ERROR_HANDLING capability — it cannot say how this stack spells a "
             f"catch, a type test, or a stringified exception. Running another "
             f"language's patterns would match nothing and report a confident zero. "
-            f"Implement ERROR_HANDLING in that adapter (see adapters/dart.py, tsx.py).",
+            f"Implement ERROR_HANDLING in that adapter (see adapters/php.py).",
             audit="audit_error_handling")
     return syntax
 

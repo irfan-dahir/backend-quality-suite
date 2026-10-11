@@ -14,7 +14,7 @@ changed; they moved.
 
 Expose two things:
 
-    NAME = "dart"
+    NAME = "php"
 
     def checks(ctx: AdapterContext) -> list[Check]: ...
 
@@ -253,11 +253,17 @@ class Check:
 # ---------------------------------------------------------------------------
 #
 # Per decision D5 the suite designs adapter interfaces up front and implements
-# them when a real project needs one. All three seams are now built:
+# them when a real project needs one. The language seam ships one adapter —
+# `adapters/php.py` — and `verify_seam.py` proves the engine sweeps a second,
+# in-process language through the same interface with no engine changes. The
+# asset and scaffold seams below stay as written contracts; their design-era
+# implementations (flutter_pubspec, bundler, flutter scaffold) left with the
+# design domain rather than being re-pointed at a backend stack that does not
+# need them.
 #
-#   language  adapters/dart.py, adapters/tsx.py
-#   asset     adapters/assets/flutter_pubspec.py, adapters/assets/bundler.py
-#   scaffold  adapters/scaffold/flutter.py
+#   language  adapters/php.py
+#   asset     protocol below — no backend-stack implementation yet
+#   scaffold  protocol below — no backend-stack implementation yet
 #
 # The protocols below stay as the written contract — they are what an
 # implementation is checked against, and they record *why* each method exists,

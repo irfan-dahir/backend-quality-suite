@@ -2,30 +2,31 @@
 """Prove the scan engine is not shaped around any one language.
 
 The engine's whole justification is that a second language plugs in without
-touching it. That claim is easy to assert and easy to get wrong, so this builds
-a minimal second language IN PROCESS — the same `Check` / `AdapterContext` /
-`scan_tree` seam a real adapter uses — and runs the engine over a synthetic
-fixture with it, asserting what comes back and, more importantly, what must NOT
-come back, which is where a naive adapter fails.
+touching it. That claim is easy to assert and easy to get wrong, so two
+deliberately different proofs run here:
+
+  * the SHIPPED leg — the registry discovers `php`, `load("php")` returns
+    it, and the engine sweeps a PHP fixture through its own
+    `checks()` / `FILE_GLOBS`, positives and negatives both held. This is
+    the path a consumer project takes, end to end. If the php adapter ever
+    leaves the registry, this leg FAILS rather than skips: a second shipped
+    language is the point, not an optional extra.
+  * the MINIMAL leg — a deliberately tiny language built IN PROCESS through
+    the same `Check` / `AdapterContext` / `scan_tree` seam, so every
+    expectation is about the SEAM rather than about any real language's
+    patterns.
+
+plus a structural pass over whatever the registry discovers (NAME,
+FILE_GLOBS, checks()), so an adapter that would load and then fail at first
+use is caught here rather than on a consumer's repo.
 
     python3 backend_suite/adapters/verify_seam.py
 
 Exit 0 = the seam holds. Exit 1 = the seam is broken.
 
-## What this proves, and what it does not (read before trusting it)
-
-Proves: the engine sweeps a second language through the adapter interface with
-no engine changes, positive and negative cases both held, and every adapter
-module the registry discovers exposes the structural contract (NAME,
-FILE_GLOBS, checks()).
-
-Does NOT prove: the `load("<name>")` discovery path against a SECOND shipped
-language module, because no second language module ships right now — the UI
-adapters left with the design domain and the `php` adapter is Phase D work
-(tracked in docs/SWAP-PLAN.md). When it lands, extend this file with a
-`load("php")` leg over the php fixture; until then, an adapter-free interim
-that proves the interface is honest beats either a red gate or a green one
-that proves nothing.
+What this does NOT prove: how either adapter behaves on a real codebase —
+that is the consumer audits' job, run against real trees. This proves the
+seam.
 """
 from __future__ import annotations
 
@@ -42,7 +43,7 @@ from backend_suite.engine.scan import scan_tree  # noqa: E402
 
 
 # --------------------------------------------------------------------------- #
-# The interim second language: a deliberately tiny one, so every expectation
+# The minimal in-process language: deliberately tiny, so every expectation
 # below is about the SEAM rather than about the language.
 # --------------------------------------------------------------------------- #
 
@@ -76,6 +77,22 @@ password = ENV("DB_PASSWORD")
 retry = 3
 """
 
+# The shipped leg's fixture: one planted debug call, one planted plaintext
+# secret, and the correct shape for each living in the same file — the
+# negatives are what make a pass mean anything.
+PHP_FIXTURE = """<?php
+// synthetic php fixture for the seam proof — positives and negatives both planted
+Route::get('/health', function () {
+    dd($response);
+    $password = env('DB_PASSWORD');
+    return response()->json(['message' => 'ok']);
+});
+$router->post('/session', function () {
+    $legacy = $password = 'hunter2long';
+    return response()->json(['message' => 'ok']);
+});
+"""
+
 
 def main() -> int:
     problems: list[str] = []
@@ -102,37 +119,72 @@ def main() -> int:
 
     # 4. Whatever the registry discovers loads and is structurally a valid
     #    adapter. `available()` + `load()` are the same path a project takes.
-    problems_scope: list[str] = []
     names = available()
     for name in names:
         try:
             module = load(name)
         except Exception as exc:  # noqa: BLE001 — any load failure is the finding
-            problems_scope.append(f"registered adapter {name!r} failed to load: {exc}")
+            problems.append(f"registered adapter {name!r} failed to load: {exc}")
             continue
         for attr in ("NAME", "FILE_GLOBS"):
             if not hasattr(module, attr):
-                problems_scope.append(f"registered adapter {name!r} has no {attr} — "
-                                      f"the registry would load it and then fail at "
-                                      f"first use, which is the silent half of the seam")
+                problems.append(f"registered adapter {name!r} has no {attr} — "
+                                f"the registry would load it and then fail at "
+                                f"first use, which is the silent half of the seam")
         if not callable(getattr(module, "checks", None)):
-            problems_scope.append(f"registered adapter {name!r} exposes no checks(ctx)")
-    problems += problems_scope
+            problems.append(f"registered adapter {name!r} exposes no checks(ctx)")
 
     print(f"engine + {_STUB_NAME} adapter over a synthetic fixture: "
           f"{len(findings)} finding(s), 1 expected")
-    print(f"registered adapters discovered by the registry: "
-          f"{names or 'none (php is Phase D — see docs/SWAP-PLAN.md)'}")
+    print(f"registered adapters discovered by the registry: {', '.join(names)}")
+
+    # 5. The load() discovery leg, live: the SHIPPED php adapter, discovered by
+    #    the registry, sweeping a php fixture through its own checks and globs.
+    if "php" not in names:
+        problems.append("the php adapter is missing from the registry — this "
+                        "file's shipped-language leg exists to prove a second "
+                        "real language loads and sweeps; its absence is a "
+                        "regression, not a skip")
+    else:
+        php = load("php")
+        with tempfile.TemporaryDirectory() as raw:
+            fixture = Path(raw)
+            (fixture / "routes").mkdir()
+            (fixture / "routes" / "api.php").write_text(PHP_FIXTURE)
+            ctx = AdapterContext(repo=fixture, profile={}, exceptions={},
+                                 token_accessor=None)
+            php_findings = scan_tree(fixture, fixture, php.checks(ctx),
+                                     globs=php.FILE_GLOBS)
+
+            if not any(f["kind"] == "debug_statement" and "dd(" in f["snippet"]
+                       for f in php_findings):
+                problems.append("php leg: no debug_statement finding for the "
+                                "planted dd() call")
+            if not any(f["kind"] == "plaintext_secret"
+                       and "hunter2long" in f["snippet"]
+                       for f in php_findings):
+                problems.append("php leg: no plaintext_secret finding for the "
+                                "planted literal")
+            # The negative control, same as the stub leg's: env('…') is a
+            # config REFERENCE, the correct shape, and must never be flagged.
+            if any("DB_PASSWORD" in f["snippet"] for f in php_findings):
+                problems.append("php leg: env('DB_PASSWORD') was flagged — a "
+                                "naive secret matcher that cannot tell a "
+                                "literal from a config reference")
+            if any(f["file"] != "routes/api.php" for f in php_findings):
+                problems.append("php leg: a finding landed outside the "
+                                "adapter's FILE_GLOBS")
+            print(f"shipped php adapter over a php fixture: "
+                  f"{len(php_findings)} finding(s), 2 expected")
 
     if problems:
         print("\nSEAM BROKEN:")
         for p in problems:
             print(f"  ✗ {p}")
         return 1
-    print("\nSeam holds: the engine ran a second language with no engine changes.")
-    if not names:
-        print("Note: the load() discovery leg is proven live again when the php "
-              "adapter lands; this interim proves the interface contract only.")
+    print("\nSeam holds: the engine ran a second language with no engine "
+          "changes, and the shipped php adapter loads and sweeps through the "
+          "same seam.")
     return 0
 
 

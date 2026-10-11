@@ -7,7 +7,7 @@ shape of the thing: sections, continuation lines, and the arithmetic between wha
 a header claims and what a class declares.
 
 Comment syntax and class structure are the language adapter's business
-(`adapters/dart.py`). This module never sees a `/*` or a `final`.
+(`adapters/php.py`). This module never sees a `/*` or a `private $x;`.
 
 ## Two dialects, because two exist
 

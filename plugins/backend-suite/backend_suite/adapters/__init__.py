@@ -103,8 +103,10 @@ def for_project(repo: Path):
 
 # Source suffixes of stacks the suite knows exist but has no language adapter for
 # yet, so a file of one under the scan root is counted as "present and unscanned"
-# rather than simply not noticed. Swift and Kotlin used to be listed here; they
-# now have adapters, whose FILE_GLOBS feed the same set below.
+# rather than simply not noticed. Empty for now: the one shipped adapter (php)
+# globs every PHP suffix it knows about, and a suffix belongs here only when a
+# stack audits it through a DIFFERENT adapter — adding an adapter widens the
+# derived set below without editing this line.
 KNOWN_UNADAPTED_SUFFIXES = ()
 
 

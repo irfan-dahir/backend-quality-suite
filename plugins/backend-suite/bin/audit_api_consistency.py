@@ -136,7 +136,7 @@ if _SYNTAX is None:
         f"API_CONSISTENCY capability — it cannot say how this stack spells "
         f"on-screen copy or a raw tap target, and running another language's "
         f"patterns would report a confident zero. Implement API_CONSISTENCY in "
-        f"that adapter (see adapters/dart.py).", audit="audit_api_consistency")
+        f"that adapter (see adapters/php.py).", audit="audit_api_consistency")
 
 if not hasattr(_ADAPTER, "blank_comments"):
     # Was a raw AttributeError (exit 1, read as "findings") on any adapter
