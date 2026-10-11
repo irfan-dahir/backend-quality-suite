@@ -6,7 +6,7 @@
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/propose_config.py" --apply layerBoundaries
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/propose_config.py" --apply all
 
-Exit 0 at least one proposal (preview), or every --apply'd section written.
+Exit 0 with at least one proposal (preview), or every --apply'd section written.
 2 refused: no profile, nothing could be proposed, or an --apply'd section has no
 proposal / is already filled in by a human. Nothing is written on 2.
 
@@ -19,23 +19,27 @@ facts a code scan can measure; this proposes those, and only those.
 
 ## What it proposes, and the bar each has to clear
 
-  * `arch-rules.json` `layerBoundaries` — from the project's own import graph,
-    resolved exactly the way audit_layer_boundaries.py resolves it. A top-level
-    source directory (>= 2 files) that >= MIN_EDGES files in other directories
-    import, and that imports none of them back, is proposed as a layer that must not
-    import its consumers. Tied candidates: nothing proposed.
-  * `arch-rules.json` `adapterPattern` — only where a screens scope is known
-    (the adapter's default, or a filled-in `source.screensGlob`) and matches
-    real files. A layer — a top-level source directory, or a per-feature sibling
-    such as `<screensDir>/*/X` with the feature name wildcarded — that >= MIN_EDGES
-    non-screen files import and no screen file imports is proposed as banned.
-  * `design-audit-config.json` `token_categories.motion.animated_widgets` — the
-    animated widget names this project's source actually uses, matched with the
-    adapter's `ANIMATED_NODE_NAME_RE`. No adapter capability, or no use found:
+  * `arch-rules.json` `layerBoundaries` — from the project's own import graph.
+    A top-level source directory (>= 2 files) that >= MIN_EDGES files in other
+    directories import, and that imports none of them back, is proposed as a
+    layer that must not import its consumers. The banned roots are the two
+    forms the audit can actually enforce on this stack: path roots for
+    `require`d files and psr-4 namespace roots (`App\Http\`) for `use`
+    statements, derived from composer.json via engine/psr4.py so a proposed
+    rule is one audit_layer_boundaries.py can fire on. Tied candidates:
     nothing proposed.
-  * `design-audit-config.json` `token_categories.color.names` — the colour tokens
-    the adapter enumerates from `tokens.source`, only when that source is filled
-    in (not a TODO). An unresolved source is a map-project question, not this one.
+  * `arch-rules.json` `routeCoverage` — the routes layout the adapter knows
+    (its `routes/*.php` entry in FILE_GLOBS), an actionPattern measured from
+    the routes files themselves (every 'uses' entry must spell Class@method,
+    or nothing is proposed), and controllerDirs located by finding every
+    referenced controller class file. A controller that cannot be found, or
+    one that resolves to several files, refuses the whole section.
+  * `arch-rules.json` `cacheTtlCoverage` — the same routes measurement plus
+    the TTL map: exactly one file under config/ whose keys are action strings
+    gives ttlConfigGlob and ttlKeyPattern, both re-verified against the map's
+    own keys. Zero or several candidates: nothing proposed. (TTLs kept
+    outside config/ are not searched for — the refusal reason says so, rather
+    than the search pretending to be exhaustive.)
 
 Every one of those is an OBSERVED INVARIANT ("this is true of the code today"),
 not a known architectural intent. That is why each lands carrying a
@@ -46,10 +50,14 @@ a guessed rule that makes an audit "pass" is worse than a refusal.
 
 ## What it never proposes
 
-errorHandling, contractHeaders, apiConsistency.checks, reinventedComponents,
-patternAdoption, unwiredRoles, unusedTokens, contrast pairs: those are this
-project's names for its own machinery, or decisions about which checks matter.
-They are listed in the preview under `notProposed` with the reason.
+errorHandling, contractHeaders, apiConsistency, errorShape, endpointParity,
+rateLimit, versioning, toolchainGates, testNetworkCoupling: those are this
+project's own names, its stated conventions, or decisions about what CI owes
+the release. They are listed in the preview under `notProposed` with the
+reason. Also listed: the sections the scaffold still carries for audits that
+no longer ship (adapterPattern, reinventedComponents, unwiredRoles,
+unusedTokens, promotionCandidates) — nothing would consume a value written
+there, and the template drops them with its own re-author.
 
 ## Writes
 
@@ -64,13 +72,15 @@ import argparse
 import json
 import re
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 from _bootstrap import project_root  # noqa: E402
 
 from backend_suite.adapters import for_project  # noqa: E402
 from backend_suite.engine import imports as I  # noqa: E402
+from backend_suite.engine import psr4 as psr4_mod  # noqa: E402
+from backend_suite.engine import scan as scan_mod  # noqa: E402
 from backend_suite.engine.refusal import Refused as SuiteRefused  # noqa: E402
 
 import map_project  # noqa: E402  reuse its evidence rules and entry whitelist
@@ -80,21 +90,74 @@ PROFILE = ".backend-suite/profile.json"
 #: Fewest import edges that count as evidence of a layer relationship.
 MIN_EDGES = 5
 
+#: The routing table of this stack (Lumen/Laravel, same convention class the
+#: php adapter's `routes/*.php` glob encodes): a router call whose array
+#: carries a 'uses' entry. The router-call spelling is the same one
+#: audit_route_coverage counts, so both tools read the table identically.
+ROUTER_CALL_RE = re.compile(r"\$router->(?:get|post|put|patch|delete|any)\s*\(")
+USES_VALUE_RE = re.compile(r"""['"]uses['"]\s*=>\s*['"]([^'"\n]+)['"]""")
+#: What gets PROPOSED as routeCoverage.actionPattern: the audit reads
+#: group(1) as the controller and group(2) as the method.
+ACTION_PATTERN = (r"""['"]uses['"]\s*=>\s*['"]"""
+                  r"""([A-Za-z][A-Za-z0-9_]*)@([A-Za-z][A-Za-z0-9_]*)['"]""")
+ACTION_RE = re.compile(ACTION_PATTERN)
+#: The Class@method spelling itself, for the N-of-N checks below.
+ACTION_SHAPE_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]*@[A-Za-z][A-Za-z0-9_]*")
+#: What gets PROPOSED as cacheTtlCoverage.ttlKeyPattern: group(1) is the whole
+#: action string, which is how the TTL map spells its keys.
+TTL_KEY_PATTERN = (r"""['"]"""
+                   r"""([A-Za-z][A-Za-z0-9_]*@[A-Za-z][A-Za-z0-9_]*)"""
+                   r"""['"]\s*=>""")
+TTL_KEY_LOOSE_RE = re.compile(r"""['"]([^'"\n]+)['"]\s*=>""")
+
+#: A php project's runtime configuration lives under config/ — the same kind
+#: of layout fact the adapter's routes glob encodes. A TTL map kept anywhere
+#: else is not hunted for; the refusal says so.
+CONFIG_GLOB = "config/**/*.php"
+
 NOT_PROPOSED = {
-    "errorHandling": "the guard, error widget and network-call spelling are this "
-                     "project's own names; a wrong guess matches nothing and reports "
-                     "a confident zero",
-    "contractHeaders": "the header marker and receiver are a convention a human "
-                       "chose; there is nothing to measure until one exists",
-    "apiConsistency": "which checks are on is a decision about what matters here, "
-                      "not a fact in the code",
-    "reinventedComponents": "the design system's export prefix/package is a naming "
-                            "decision; a prefix guessed from frequency would compare "
-                            "private widgets against the wrong set",
-    "patternAdoption": "which patterns the project means to adopt is intent, not a "
-                       "measurement",
-    "unwiredRoles / unusedTokens": "need a resolved token source and a human choice "
-                                   "of required roles/categories",
+    "errorHandling": "the guard and error vocabulary are this project's own "
+                     "names; a wrong guess matches nothing and reports a "
+                     "confident zero",
+    "contractHeaders": "the header marker and field pattern are a convention a "
+                       "human chose; there is nothing to measure until one exists",
+    "apiConsistency": "which of its checks run, and the naming rules behind "
+                      "vocabulary, are explicit human decisions — the audit "
+                      "refuses on an unconfigured check precisely so a machine "
+                      "cannot pick for you",
+    "errorShape": "bypassPattern — how THIS stack spells a direct error-status "
+                  "response — is the project's stated convention (its own audit "
+                  "says so when it refuses); filling the other keys would still "
+                  "leave the audit refusing",
+    "endpointParity": "docMarkers — which docblock annotation counts as "
+                      "documentation — can only be found once already known: "
+                      "measuring it would need the marker to search for it",
+    "rateLimit": "protection spellings and the global-throttle wiring are this "
+                 "project's middleware names, not observations",
+    "versioning": "how a version prefix and namespace are spelled is a naming "
+                  "convention; nothing in the tree decides it",
+    "toolchainGates": "what CI must require is an expectation; proposing it "
+                      "from the scripts that exist today would ratify whatever "
+                      "absence already exists",
+    "testNetworkCoupling": "which hosts tests are ALLOWED to hit live is "
+                           "policy; a pattern measured from today's tests "
+                           "would only legalize what already happens",
+    # Sections whose consuming audit left with the design->backend swap: a
+    # value written here would be read by nothing. The template drops them
+    # with its own re-author; until then they still deserve an answer in the
+    # preview, because a user scaffolded by that template will see them.
+    "adapterPattern": "no audit ships for this section — its script left with "
+                      "the domain swap, and nothing would consume the value",
+    "reinventedComponents": "no audit ships for this section — its script left "
+                            "with the domain swap, and nothing would consume "
+                            "the value",
+    "unwiredRoles": "no audit ships for this section — its script left with "
+                    "the domain swap, and nothing would consume the value",
+    "unusedTokens": "no audit ships for this section — its script left with "
+                    "the domain swap, and nothing would consume the value",
+    "promotionCandidates": "no audit ships for this section — its script left "
+                           "with the domain swap, and nothing would consume "
+                           "the value",
 }
 
 
@@ -103,7 +166,7 @@ class Refused(Exception):
 
 
 # --------------------------------------------------------------------------- #
-# Import graph — resolved the way audit_layer_boundaries.py resolves it
+# Import graph — attributed to directories the way the audit matches them
 # --------------------------------------------------------------------------- #
 
 def _source_root(profile: dict) -> str | None:
@@ -113,17 +176,28 @@ def _source_root(profile: dict) -> str | None:
     return root.strip("/") or "."
 
 
-def _resolve(repo: Path, target: str, source: Path, prefix: str | None) -> str | None:
+def _resolve(repo: Path, target: str, source: Path, prefix: str | None,
+             psr4: psr4_mod.Psr4Map) -> tuple[str | None, str | None]:
+    """(repo-relative POSIX path or None, namespace root or None) for one import.
+
+    A bare namespace that composer.json maps resolves to a path AND names the
+    prefix that matched, because the layer-boundary audit matches that prefix
+    against the raw import — a rule proposed without it would never fire.
+    """
     if prefix and target.startswith(prefix):
-        return "lib/" + target[len(prefix):]
+        return "lib/" + target[len(prefix):], None
     if target.startswith((".", "/")):
         resolved = ((source.parent / target).resolve() if target.startswith(".")
                     else (repo / target.lstrip("/")).resolve())
         try:
-            return resolved.relative_to(repo.resolve()).as_posix()
+            return resolved.relative_to(repo.resolve()).as_posix(), None
         except ValueError:
-            return None
-    return None  # bare specifier: external, as the audit treats it
+            return None, None
+    if psr4:
+        hit = psr4.match(target)
+        if hit:
+            return hit
+    return None, None  # bare specifier: external, as the audit treats it
 
 
 def _group(rel: str, root: str) -> str | None:
@@ -135,57 +209,107 @@ def _group(rel: str, root: str) -> str | None:
     return parts[0] if len(parts) > 1 else None
 
 
-def import_graph(repo: Path, adapter, ctx, root: str):
-    """files_by_group, edges[(src_group, dst_group)] -> set(src files), raw imports."""
+def import_graph(repo: Path, adapter, ctx, root: str) -> dict | None:
+    """edges[(src_group, dst_group)] -> set(src files), plus namespace handles.
+
+    None when the adapter's imports cannot be attributed to directories at all
+    (no IMPORT_RE, or module-name imports with no path mapping) — the caller
+    turns that into a refusal reason, never into an empty graph.
+    """
     rx = getattr(adapter, "IMPORT_RE", None)
     if rx is None or getattr(adapter, "IMPORT_TARGETS", "path") != "path":
         return None
     prefix = adapter.package_prefix(ctx) if hasattr(adapter, "package_prefix") else None
+    psr4 = psr4_mod.load(repo)  # Psr4Error propagates: a composer.json that
+    # cannot be read is a refusal, never "no prefixes".
     files = I.adapter_files(repo / root if root != "." else repo, adapter)
     by_group: dict[str, list[str]] = defaultdict(list)
     edges: dict[tuple[str, str], set[str]] = defaultdict(set)
-    raw: dict[str, list[tuple[str, str | None]]] = {}
     for path in files:
         rel = path.relative_to(repo).as_posix()
         src = _group(rel, root)
         if src:
             by_group[src].append(rel)
-        targets = []
         for _line, target in I.import_targets(rx, path.read_text(errors="replace")):
-            resolved = _resolve(repo, target, path, prefix)
-            targets.append((target, resolved))
+            resolved, _ns = _resolve(repo, target, path, prefix, psr4)
             dst = _group(resolved, root) if resolved else None
             if src and dst and dst != src:
                 edges[(src, dst)].add(rel)
-        raw[rel] = targets
-    return by_group, edges, raw, prefix
+    base = "" if root == "." else root + "/"
+    ns_roots = {g: psr4.handles(base + g) for g in by_group}
+    return {"by_group": by_group, "edges": edges, "ns_roots": ns_roots}
+
+
+# --------------------------------------------------------------------------- #
+# Route measurement — shared by routeCoverage and cacheTtlCoverage
+# --------------------------------------------------------------------------- #
+
+def measure_routes(repo: Path, adapter) -> tuple[dict | None, str | None]:
+    """(measurement | None, reason). One measurement, two consumers, so the
+    two sections can never disagree about how this project's routes read."""
+    globs = [g for g in getattr(adapter, "FILE_GLOBS", ()) if "routes" in g]
+    if len(globs) != 1:
+        return None, (f"the {adapter.NAME!r} adapter's FILE_GLOBS names "
+                      f"{len(globs)} routes layout(s) ({globs}) — exactly one is "
+                      f"a fact this script can measure, and zero is none at all")
+    glob = globs[0]
+    files = [p for p in sorted(repo.glob(glob)) if p.is_file()]
+    if not files:
+        return None, (f"no file matches the adapter's routes layout {glob!r} — "
+                      f"there is no routing table here to read")
+    router_calls = 0
+    values: list[str] = []
+    actions: list[tuple[str, str]] = []
+    for path in files:
+        for line in path.read_text(errors="replace").splitlines():
+            router_calls += len(ROUTER_CALL_RE.findall(line))
+            values += USES_VALUE_RE.findall(line)
+            # Same per-line view audit_route_coverage has, so a pattern
+            # proposed here extracts there — no cross-line optimism.
+            actions += ACTION_RE.findall(line)
+    if router_calls == 0:
+        return None, (f"the files under {glob!r} carry no $router-> route calls "
+                      f"— this does not look like this stack's routing table")
+    if not values:
+        return None, (f"no quoted 'uses' entries under {glob!r} — this project's "
+                      f"routes spell handlers another way (closures, ::class "
+                      f"arrays); actionPattern is measured, never guessed")
+    if len(actions) != len(values):
+        odd = [v for v in values if not ACTION_SHAPE_RE.fullmatch(v)]
+        return None, (f"{len(values) - len(actions)} of {len(values)} 'uses' "
+                      f"entr(ies) do not spell Class@method (e.g. {odd[:3]!r}) — "
+                      f"one actionPattern cannot cover this routing table")
+    return {
+        "glob": glob,
+        "adapter": adapter.NAME,
+        "files": [p.relative_to(repo).as_posix() for p in files],
+        "router_calls": router_calls,
+        "actions": actions,
+    }, None
 
 
 # --------------------------------------------------------------------------- #
 # Proposers. Each returns (proposal | None, reason).
 # --------------------------------------------------------------------------- #
 
-def propose_layer_boundaries(graph, root):
+def propose_layer_boundaries(graph: dict | None, root: str):
     if graph is None:
         return None, ("the language adapter's imports are not file paths (or it has "
                       "no IMPORT_RE), so a directory layer rule cannot be measured")
-    by_group, edges, _raw, _ = graph
-    inbound: dict[str, Counter] = defaultdict(Counter)
+    by_group, edges, ns_roots = graph["by_group"], graph["edges"], graph["ns_roots"]
+    inbound: dict[str, dict[str, int]] = defaultdict(dict)
     for (src, dst), files in edges.items():
-        inbound[dst][src] += len(files)
+        inbound[dst][src] = inbound[dst].get(src, 0) + len(files)
     scored = []
     for layer, consumers in inbound.items():
-        strong = {c: n for c, n in consumers.items()}
-        total = sum(strong.values())
-        back = sum(len(edges.get((layer, c), ())) for c in strong)
+        total = sum(consumers.values())
+        back = sum(len(edges.get((layer, c), ())) for c in consumers)
         if total >= MIN_EDGES and back == 0 and len(by_group.get(layer, ())) >= 2:
-            scored.append((total, layer, strong))
+            scored.append((total, layer, dict(consumers)))
     if not scored:
         return None, (f"no source directory (with >= 2 files) is imported by >= {MIN_EDGES} "
                       f"files from other directories while importing none of them back — no "
-                      f"measured layer direction to propose. (Alias imports such as "
-                      f"'@/x' are invisible to the audit's resolver, so they are not "
-                      f"counted here either.)")
+                      f"measured layer direction to propose.")
     scored.sort(key=lambda t: (-t[0], t[1]))
     if len(scored) > 1 and scored[0][0] == scored[1][0]:
         return None, (f"{scored[0][1]!r} and {scored[1][1]!r} tie at {scored[0][0]} "
@@ -194,10 +318,17 @@ def propose_layer_boundaries(graph, root):
     total, layer, consumers = scored[0]
     base = "" if root == "." else root + "/"
     names = sorted(consumers)
+    banned = []
+    handles_used = []
+    for c in names:
+        banned.append(f"{base}{c}/**")
+        for ns in ns_roots.get(c, ()):
+            banned.append(ns)
+            handles_used.append(f"{c} = {ns}")
     rule = {
         "label": f"{base}{layer} must not import the directories that consume it",
         "fromGlob": f"{base}{layer}/**",
-        "mustNotImport": [f"{base}{c}/**" for c in names],
+        "mustNotImport": sorted(set(banned)),
         "why": "inferred: an observed one-way dependency, not a stated design rule",
     }
     counts = ", ".join(f"{c} ({consumers[c]} file(s))" for c in names)
@@ -205,6 +336,10 @@ def propose_layer_boundaries(graph, root):
                 f"file(s): {base}{layer} is imported by {total} file(s) from {counts}, "
                 f"and no file under {base}{layer} imports any of them. Proposed as an "
                 f"observed invariant; a human should confirm it is intended.")
+    if handles_used:
+        evidence += (" Namespace handles come from composer.json psr-4, matched "
+                     "against raw use targets the same way the audit matches "
+                     f"them: {', '.join(sorted(handles_used))}.")
     if len(scored) > 1:
         evidence += (" Runner-up: " + ", ".join(f"{s[1]} ({s[0]})" for s in scored[1:4])
                      + " — only one rule is enforced (rules[0]).")
@@ -214,150 +349,82 @@ def propose_layer_boundaries(graph, root):
             "evidence": evidence}, None
 
 
-def _screens_glob(adapter, profile):
-    declared = (profile.get("source") or {}).get("screensGlob")
-    if isinstance(declared, str) and declared and not I.placeholder(declared):
-        return declared, "source.screensGlob in the profile"
-    default = getattr(adapter, "ADAPTER_PATTERN_SCREENS_GLOB", None)
-    if default:
-        return default, f"the {adapter.NAME} adapter's default screens layout"
-    return None, None
-
-
-def _screens_dir(repo, adapter, profile, root, glob):
-    """(screensDir repo-rel, screen files) — the declared dir, else source.root,
-    else the one immediate child of source.root the glob actually matches."""
-    declared = (profile.get("source") or {}).get("screensDir")
-    candidates = [declared] if isinstance(declared, str) and declared \
-        and not I.placeholder(declared) else []
-    base = repo / (root if root != "." else "")
-    candidates.append(root)
-    if base.is_dir():
-        candidates += sorted(p.relative_to(repo).as_posix()
-                             for p in base.iterdir() if p.is_dir())
-    for cand in candidates:
-        found = {p.relative_to(repo).as_posix()
-                 for p in I.adapter_files(repo / cand, adapter, glob)}
-        if found:
-            return cand, found
-    return None, set()
-
-
-def propose_adapter_pattern(repo, adapter, profile, graph, root):
-    glob, origin = _screens_glob(adapter, profile)
-    if not glob:
-        return None, (f"no screens scope: the {adapter.NAME!r} adapter has no default "
-                      f"layout and source.screensGlob is unset — which files are "
-                      f"screens is a human decision")
-    if graph is None:
-        return None, "the adapter's imports are not file paths; nothing to measure"
-    _by_group, _edges, raw, prefix = graph
-    sdir, screens = _screens_dir(repo, adapter, profile, root, glob)
-    if not screens:
-        return None, (f"the screens scope {glob!r} ({origin}) matches no file under "
-                      f"{root}/ or any directory directly inside it — the layout does "
-                      f"not look like that, so there is no screen import set to measure")
-
-    def key(rel):
-        """Feature-relative layer ('*/data') inside the screens dir, else the
-        top-level source directory. Feature names are wildcarded, never named."""
-        if rel.startswith(sdir + "/"):
-            parts = rel[len(sdir) + 1:].split("/")
-            return f"*/{parts[1]}" if len(parts) >= 3 else None
-        return _group(rel, root)
-
-    screen_keys = {key(s) for s in screens}
-    from_screens: Counter = Counter()
-    from_others: dict[str, set] = defaultdict(set)
-    for rel, targets in raw.items():
-        for _t, resolved in targets:
-            dst = key(resolved) if resolved else None
-            if not dst or dst in screen_keys:
-                continue
-            if rel in screens:
-                from_screens[dst] += 1
-            elif key(rel) != dst:
-                from_others[dst].add(rel)
-    banned = sorted(k for k, files in from_others.items()
-                    if len(files) >= MIN_EDGES and from_screens[k] == 0)
-    if not banned:
-        seen = ", ".join(f"{k} ({len(v)} importer(s), {from_screens[k]} from screens)"
-                         for k, v in sorted(from_others.items())) or "none"
-        return None, (f"{len(screens)} screen file(s) under {sdir}/, but no layer is "
-                      f"imported by >= {MIN_EDGES} non-screen files and never by a "
-                      f"screen (measured: {seen}) — no seam to propose")
-    base = "" if root == "." else root + "/"
-    pkg_rel = sdir[len("lib/"):] if prefix and sdir.startswith("lib/") else None
-    entries = []
-    for k in banned:
-        if k.startswith("*/"):
-            layer = re.escape(k[2:])
-            alts = [r"(?:^|/)" + re.escape(sdir) + r"/[^/]+/" + layer + "/"]
-            if pkg_rel:
-                alts.insert(0, "^" + re.escape(prefix + pkg_rel) + r"/[^/]+/" + layer + "/")
-            alts.append(r"^(?:\.\./)+" + layer + "/")
-            label = f"screens reach {sdir}/<feature>/{k[2:]} only through an adapter"
+def propose_route_coverage(repo: Path, routes: dict):
+    missing, ambiguous, dirs = [], [], set()
+    # The same installed-code names scan skips: a controller class must be this
+    # project's own file, not one Composer brought in.
+    skip_parts = scan_mod.DEFAULT_SKIP_DIRS | scan_mod.UNAMBIGUOUS_SKIP_DIRS
+    for controller in sorted({c for c, _m in routes["actions"]}):
+        hits = [p for p in repo.glob(f"**/{controller}.php")
+                if p.is_file() and not skip_parts.intersection(p.relative_to(repo).parts)]
+        if not hits:
+            missing.append(controller)
+        elif len(hits) > 1:
+            ambiguous.append(f"{controller} -> "
+                             + ", ".join(sorted(h.relative_to(repo).as_posix()
+                                                for h in hits)))
         else:
-            alts = [r"(?:^|/)" + re.escape(base + k) + "/"]
-            if prefix:
-                alts.insert(0, "^" + re.escape(prefix + k) + "/")
-            label = f"screens reach {base}{k} only through an adapter"
-        entries.append({"label": label, "pattern": "|".join(alts)})
-    evidence = (f"{len(screens)} screen file(s) matched {glob!r} ({origin}) under "
-                f"{sdir}/; none of them imports " + ", ".join(
-                    f"{k} (imported by {len(from_others[k])} non-screen file(s))"
-                    for k in banned)
-                + ". Proposed as an observed invariant, not a known seam.")
-    value = {"screensDir": sdir, "bannedImports": entries}
-    if origin.startswith("source.screensGlob"):
-        value["screensGlob"] = glob
-    return {"section": "adapterPattern", "file": "arch", "path": ["adapterPattern"],
-            "value": value, "evidence": evidence}, None
+            dirs.add(hits[0].parent.relative_to(repo).as_posix())
+    if missing:
+        return None, (f"controller class file(s) not found for {missing} — a "
+                      f"controllerDirs that misses one of them would leave the "
+                      f"audit resolving actions against nothing")
+    if ambiguous:
+        return None, (f"controller class file(s) resolve to several locations "
+                      f"({'; '.join(ambiguous)}) — controllerDirs would be a guess")
+    evidence = (f"{len(routes['actions'])} route action(s), all spelled "
+                f"Class@method, across {len(routes['files'])} file(s) under "
+                f"{routes['glob']!r} — the {routes['adapter']} adapter's routes "
+                f"layout, carrying {routes['router_calls']} router call(s). Every "
+                f"referenced controller class resolves by name to exactly one "
+                f"file: {', '.join(sorted(dirs))}.")
+    return {"section": "routeCoverage", "file": "arch", "path": ["routeCoverage"],
+            "value": {"routesGlob": routes["glob"],
+                      "actionPattern": ACTION_PATTERN,
+                      "controllerDirs": sorted(dirs)},
+            "evidence": evidence}, None
 
 
-def propose_animated_widgets(repo, adapter, root):
-    rx = getattr(adapter, "ANIMATED_NODE_NAME_RE", None)
-    if rx is None:
-        return None, (f"the {adapter.NAME!r} adapter does not say how this stack names "
-                      f"animated nodes (no ANIMATED_NODE_NAME_RE)")
-    found: Counter = Counter()
-    where: dict[str, set] = defaultdict(set)
-    for path in I.adapter_files(repo / (root if root != "." else ""), adapter):
-        for m in rx.finditer(path.read_text(errors="replace")):
-            name = next(g for g in m.groups() if g)
-            found[name] += 1
-            where[name].add(path.relative_to(repo).as_posix())
-    if not found:
-        return None, ("no animated widget is used anywhere under the source root — an "
-                      "empty list would read as 'nothing to check'; leave it refused")
-    names = sorted(found)
-    evidence = ("animated widget names used in source: " + ", ".join(
-        f"{n} x{found[n]} in {len(where[n])} file(s)" for n in names)
-        + ". Add any project-defined animated wrapper a human knows of.")
-    return {"section": "animated_widgets", "file": "config",
-            "path": ["token_categories", "motion", "animated_widgets"],
-            "value": names, "evidence": evidence}, None
-
-
-def propose_color_names(adapter, ctx, profile):
-    src = (profile.get("tokens") or {}).get("source") or {}
-    if I.placeholder(src) or not src:
-        return None, ("tokens.source is still a TODO — which file is the token source "
-                      "is map-project's question, and names read from no source would "
-                      "be invented")
-    if not hasattr(adapter, "token_names"):
-        return None, f"the {adapter.NAME!r} adapter cannot enumerate tokens"
-    real = adapter.token_names(ctx)
-    if not real:
-        return None, ("the adapter could not enumerate any colour token from "
-                      "tokens.source (unresolved, or empty)")
-    return {"section": "color.names", "file": "config",
-            "path": ["token_categories", "color", "names"],
-            "value": {"tokens": sorted(real)},
-            "evidence": f"{len(real)} colour token(s) enumerated by the "
-                        f"{adapter.NAME} adapter from tokens.source "
-                        f"({src.get('path') or src.get('package')}); grouping them is "
-                        f"left to a human"}, None
+def propose_cache_ttl_coverage(repo: Path, routes: dict):
+    files = [p for p in sorted(repo.glob(CONFIG_GLOB)) if p.is_file()]
+    with_keys: dict[str, set[str]] = {}
+    for path in files:
+        keys: set[str] = set()
+        for line in path.read_text(errors="replace").splitlines():
+            keys |= {v for v in TTL_KEY_LOOSE_RE.findall(line) if "@" in v}
+        if keys:
+            with_keys[path.relative_to(repo).as_posix()] = keys
+    if not with_keys:
+        return None, (f"no action-keyed map under {CONFIG_GLOB!r} — either this "
+                      f"project keeps its TTLs outside config/ or it has none; "
+                      f"ttlConfigGlob is measured from config/, not hunted for "
+                      f"across the tree")
+    if len(with_keys) > 1:
+        return None, (f"an action-keyed map was found in {len(with_keys)} files "
+                      f"({', '.join(sorted(with_keys))}) — ttlConfigGlob would be "
+                      f"a choice between them, and this script does not get one")
+    rel, keys = next(iter(with_keys.items()))
+    loose = []
+    for line in (repo / rel).read_text(errors="replace").splitlines():
+        loose += [v for v in TTL_KEY_LOOSE_RE.findall(line) if "@" in v]
+    odd = [k for k in loose if not ACTION_SHAPE_RE.fullmatch(k)]
+    if odd:
+        return None, (f"action-shaped key(s) in {rel} do not spell Class@method "
+                      f"({odd[:3]!r}) — ttlKeyPattern would not cover this map")
+    action_keys = {f"{c}@{m}" for c, m in routes["actions"]}
+    covered = len(action_keys & set(loose))
+    evidence = (f"{len(loose)} action-keyed entr(ies) in {rel} beside "
+                f"{len(action_keys)} route action(s) from {routes['glob']!r}: "
+                f"{covered} of them have a TTL entry today. The key shape is "
+                f"measured from the map itself, re-verified line by line the way "
+                f"the audit reads it.")
+    return {"section": "cacheTtlCoverage", "file": "arch",
+            "path": ["cacheTtlCoverage"],
+            "value": {"routesGlob": routes["glob"],
+                      "actionPattern": ACTION_PATTERN,
+                      "ttlConfigGlob": rel,
+                      "ttlKeyPattern": TTL_KEY_PATTERN},
+            "evidence": evidence}, None
 
 
 # --------------------------------------------------------------------------- #
@@ -390,19 +457,23 @@ def collect(repo: Path):
         raise Refused(f"no usable language adapter: {exc}")
     profile = ctx.profile
     audits = profile.get("audits") or {}
-    files = {"arch": audits.get("archRulesFile"), "config": audits.get("configFile")}
+    files = {"arch": audits.get("archRulesFile")}
     root = _source_root(profile)
     if not root:
         raise Refused("source.root is unset or a TODO — onboard first (/onboard-new-client) "
                       "there is no tree to measure")
-    graph = import_graph(repo, adapter, ctx, root)
+    try:
+        graph = import_graph(repo, adapter, ctx, root)
+    except psr4_mod.Psr4Error as exc:
+        raise Refused(f"cannot read this project's psr-4 map: {exc}")
+    routes, routes_why = measure_routes(repo, adapter)
     results = [
         propose_layer_boundaries(graph, root),
-        propose_adapter_pattern(repo, adapter, profile, graph, root),
-        propose_animated_widgets(repo, adapter, root),
-        propose_color_names(adapter, ctx, profile),
+        ((None, routes_why) if routes is None else propose_route_coverage(repo, routes)),
+        ((None, f"the routes measurement failed first: {routes_why}")
+         if routes is None else propose_cache_ttl_coverage(repo, routes)),
     ]
-    names = ["layerBoundaries", "adapterPattern", "animated_widgets", "color.names"]
+    names = ["layerBoundaries", "routeCoverage", "cacheTtlCoverage"]
     proposals, skipped = [], {}
     for name, (prop, why) in zip(names, results):
         if prop is None:

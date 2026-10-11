@@ -1,6 +1,6 @@
 ---
 name: audit-layer-boundaries
-description: "Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package. Rules and directories come from this project's arch-rules.json. Ratcheted against a committed baseline: new violations fail, known ones are listed. Never changes your code; saves its report to .backend-suite/layer-boundaries-findings.json on every run. Use when asked whether the layering still holds, or before an extraction."
+description: "Mechanically check that no shared layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package. Rules and directories come from this project's arch-rules.json. Ratcheted against a committed baseline: new violations fail, known ones are listed. Never changes your code; saves its report to .backend-suite/layer-boundaries-findings.json on every run. Use when asked whether the layering still holds, or before an extraction."
 invocation: auto
 maturity: unverified
 ---
@@ -47,16 +47,18 @@ names no project's directory layout.
 |---|---|
 | `rules[].from` | Directory the rule applies to |
 | `rules[].fromGlob` | Alternative to `from` (the spelling `init.py` scaffolds): a glob, relative to the repo root, selecting the files the rule applies to. If both are set, `from` wins |
-| `rules[].mustNotImport` | Import root(s) that layer may not import — a single string or a list |
+| `rules[].mustNotImport` | Import root(s) that layer may not import — a single string or a list. On a PHP project a root may be a namespace prefix (`App\Http\`, matched by prefix against raw `use` targets) or a repo-rooted path (matched against `require`d files); both forms can appear in one rule |
 | `rules[].why` | Optional rationale shown in each violation message |
 | `baseline` | Path to the ratchet baseline (default `.backend-suite/baselines/layer-boundaries.json`) |
 
-Only the first rule (`rules[0]`) is currently enforced.
+Every rule in `rules` is enforced — an earlier version read `rules[0]` only,
+which made a second rule configuration that did nothing while the run printed
+clean.
 
-**Known limit:** TypeScript path aliases such as `@/x` are not resolved. An
-aliased import is not recognised as reaching the banned root, so a violation
-spelled through an alias is missed — do not read a clean run on an aliased
-codebase as proof.
+**Known limit:** a fully-qualified reference written inline in PHP
+(`new \App\Http\Thing()`) is not treated as an import — the `use` statement is
+the convention there; a violation spelled only through an inline FQN is missed,
+so do not read a clean run on such a codebase as proof.
 
 ## Step 1 — Run it
 
@@ -64,8 +66,9 @@ codebase as proof.
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_layer_boundaries.py"
 ```
 
-Both import spellings are caught — the absolute package form and the relative
-`../..` form — because real repositories mix them and catching only one would
+Every spelling the adapter declares is caught — the absolute package/module
+form and the relative form on Dart/JS stacks, `use` namespaces and `require`d
+paths on PHP — because real repositories mix them and catching only one would
 make the gate's green mean less than it appears to.
 
 ## Step 2 — Understand the ratchet before you read the count

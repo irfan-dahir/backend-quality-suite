@@ -11,16 +11,27 @@ Status legend: `[ ]` open · `[x]` done (with commit).
 
 ## Phase D re-authors (need `adapters/php.py` first)
 
-- [ ] `bin/audit_layer_boundaries_test.py` — dart/tsx fixtures → php fixture
-  (routes/ or app/ tree with a planted layering violation).
+- [x] (D4b, this commit) `bin/audit_layer_boundaries_test.py` — dart/tsx
+  fixtures → php fixture. The file never shipped at all (the design-suite
+  cases were purged without a replacement), so it is created fresh: namespace
+  roots firing on `use` targets, the `App\Http\` vs `App\HttpExtra\X`
+  precision case, path roots via `require`, TODO/empty-dir/missing-dir
+  refusals, and the ratchet (refuses to absorb, accepts with `--accept-new`).
+  Two real fixes surfaced by the test: `_root()` no longer appends `/` to a
+  namespace root (a `App\Http\` rule could never fire before), and
+  `--update-baseline` now mkdirs the baselines dir it writes into.
 - [ ] `bin/structural_refusals_test.py` — every refusal case pairs a live
   audit with `adapters.lang: tsx`; re-authored against php, dead-audit cases
   dropped.
 - [ ] `bin/survey_ui_roots_test.py` — the init-from-survey e2e (`audit_tokens`
   runs with no edits) → backend equivalent: init → a live php-backed audit runs.
-- [ ] `bin/propose_config_test.py` — proposes flutter layers/adapter-seam/
-  animated-widget sections → backend sections (routes file, cache TTLs,
-  error-shape policy…).
+- [x] (D4b, this commit) `bin/propose_config_test.py` — proposes flutter
+  layers/adapter-seam/animated-widget sections → backend sections (routes
+  file, cache TTLs). 8 cases over a php fixture: the three proposals with
+  their measured evidence (including the psr-4 namespace handle), human-fill
+  never overwritten, exit 2 when nothing is measurable, unreadable
+  composer.json refusal, `--apply` unknown section, and the never-proposed
+  listing.
 - [ ] `bin/audit_report_paths_test.py` — report-path mechanics
   (`--out` wins, defaults inside `.backend-suite/`, scaffolded .gitignore
   covers them) against adapter-backed audits.
@@ -41,8 +52,20 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   `ADAPTER_REFINEMENTS`) decides which language a *design* suite audits when
   server and UI stacks disagree. Backend suite: decide drop vs invert (route
   root, not UI root, decides).
-- [ ] `bin/propose_config.py` — proposal sections themselves (config template
-  keys) are design-domain.
+- [x] (D4b, this commit) `bin/propose_config.py` — proposal sections themselves
+  (config template keys) are design-domain. Full re-author: the three design
+  proposers (adapter seam, animated widgets, colour names) are gone;
+  `layerBoundaries` now attributes `use` targets through composer.json psr-4
+  (new `engine/psr4.py`) and bans both path globs and namespace roots, so the
+  proposed rule is one the audit can fire on; `routeCoverage` measures the
+  routes layout, a `Class@method`-only actionPattern (N-of-N over every
+  'uses' entry) and controllerDirs located by class file (vendor/ ignored);
+  `cacheTtlCoverage` reuses the routes measurement plus the single action-keyed
+  `config/` map. NOT_PROPOSED re-authored to the backend sections, with the
+  dead sections listed until the template drops them. Measured against the
+  jikan-rest probe: controllerDirs and `config/jikan.php` came out identical
+  to the hand-authored D3b config, and 76/103 TTL coverage matches D3b's
+  103 actions − 27 missing.
 - [ ] `bin/verify.py` docstring says "component"; suite terminology — fine,
   but its evidence examples are design-flavoured; light prose pass.
 
@@ -125,9 +148,10 @@ archetype rows + test swapped to `library`/`service`; eval fixtures renamed
   project.framework / docs.manifest, init_from_survey_test's control onto
   project.audience, source_roots_test's token-detection section removed with
   the function it tested.
-- [ ] `bin/propose_config.py` — design-audit-config + flutter/tsx sections:
-  full re-author (its test was already deleted in A2; the script still names
-  the deleted config file).
+- [x] (D4b, this commit) `bin/propose_config.py` — design-audit-config +
+  flutter/tsx sections: full re-author (its test was already deleted in A2;
+  the script still named the deleted config file). Done together with the
+  entry under Phase D re-authors; see there for the new proposer set.
 - [x] (D4a, this commit) `configFile` remnants: schema `audits.configFile`
   property, survey key entry (`PATH_VALUED_KEYS` — `PROPOSED_PROFILE_KEYS` no
   longer existed), `provenance.py` PATH_KEYS entry, plus the one real consumer:

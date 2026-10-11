@@ -20,6 +20,14 @@ Two import forms are both caught, since the repo mixes them:
     import 'package:example_app/features/archive/...';      (absolute)
     import '../../app/theme/app_theme.dart';                (relative)
 
+On a PHP project a rule's `mustNotImport` may name a namespace root
+(`App\Http\`, `Domain\Shipping\`) instead of, or alongside, a path root: a
+PSR-4 namespace carries the same prefix-comparable shape, so `use` targets
+are matched against the raw string, and `require`d paths keep matching by
+path. `bin/propose_config.py` proposes exactly those two forms, derived from
+the project's composer.json psr-4 map, so a proposed rule is one this script
+can actually enforce.
+
 ## No exceptions
 
 `lib/app/theme/{app_theme,ds_colors}.dart` used to be allowed here — every
@@ -42,7 +50,7 @@ without anyone deciding that. Pass --accept-new to say you mean it.
 
 Deterministic (an import is either present or not — no heuristic false
 positives), so any *new* finding is treated as blocking. Same portable-core
-pattern and zero dependencies as audit_adapter_pattern.py / audit_mock_api.py.
+pattern and zero dependencies as audit_mock_api.py.
 
 Usage:
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_layer_boundaries.py"
@@ -81,8 +89,16 @@ if I.placeholder(_RULES.get("baseline")):
 
 
 def _root(value: str) -> str:
-    """'lib/data/**' -> 'lib/data/' : a glob-shaped root is matched as a prefix."""
+    """'lib/data/**' -> 'lib/data/' : a glob-shaped root is matched as a prefix.
+
+    A namespace root (`App\\`, `Domain\\Shipping\\`) is already prefix-shaped
+    and is returned untouched: PHP `use` targets are matched against it by
+    prefix, and a trailing '/' would never match one (see adapters/php.py —
+    a rule may ban a path root, a namespace root, or both).
+    """
     value = value.split("*", 1)[0]
+    if "\\" in value:
+        return value
     return value if not value or value.endswith("/") else value + "/"
 
 
@@ -178,7 +194,9 @@ def _resolve(target: str, source: Path) -> str | None:
             + (f" (read: {', '.join(ALIASES.sources)})" if ALIASES.sources else "")
             + " — refusing rather than treating it as a third-party package.", AUDIT)
     # Bare specifier: repo-rooted only if it literally names a banned root
-    # (e.g. 'src/data/x' with a baseUrl); otherwise a third-party package.
+    # (e.g. 'src/data/x' with a baseUrl), or a namespace root a rule bans
+    # (e.g. 'Domain\Shipping\Repo' under a php rule — see _root); otherwise a
+    # third-party package.
     if target.startswith(BANNED_ROOTS):
         return target
     return None
@@ -283,6 +301,7 @@ def main() -> int:
         if refusal and not args.accept_new:
             print(refusal, file=sys.stderr)
             return 2
+        BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
         BASELINE_PATH.write_text(json.dumps(sorted(current), indent=2) + "\n")
         print(f"audit_layer_boundaries: baseline updated — {len(current)} known violation(s)")
         return 0

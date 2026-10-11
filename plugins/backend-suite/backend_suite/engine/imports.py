@@ -72,7 +72,12 @@ def adapter_files(root: Path, adapter, pattern: str | None = None) -> list[Path]
         found = root.glob(pattern)
     else:
         found = (p for s in sfx for p in root.rglob(f"*{s}"))
-    skip = {"node_modules", ".git", "build", "dist", ".dart_tool", ".next", ".nuxt"}
+    # vendor/ is Composer-installed third-party code, exactly as node_modules
+    # is to JS: the php adapter sources it for nothing, and walking it would
+    # bury a measurement under other people's trees. survey.py and the
+    # session-start hook skip it for the same reason.
+    skip = {"node_modules", "vendor", ".git", "build", "dist", ".dart_tool",
+            ".next", ".nuxt"}
     return sorted({p for p in found if p.is_file() and p.name.endswith(sfx)
                    and not skip.intersection(p.relative_to(root).parts)})
 
