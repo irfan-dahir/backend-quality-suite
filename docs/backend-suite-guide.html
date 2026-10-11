@@ -276,7 +276,7 @@
       <tbody>
         <tr><td>1</td><td class="cmd"><code>/survey</code></td><td class="what">Works out your stack, source folders, likely token files and documents — and lists what it couldn't work out.</td><td><code>.backend-suite/survey.json</code></td><td>Yes</td></tr>
         <tr><td>2</td><td class="cmd"><code>init.py --from-survey</code>, then <code>/map-project</code></td><td class="what">Creates the config, pre-filled from the survey, then suggests which doc is which and which file holds the real tokens. Every guess is marked <code>inferred</code> until you approve it with <code>/ratify</code>.</td><td><code>.backend-suite/</code> config</td><td>Yes</td></tr>
-        <tr><td>3</td><td class="cmd"><code>/bootstrap-design-docs</code></td><td class="what">Drafts missing context docs one at a time. Skipped if you have them.</td><td>Docs you accept</td><td>Yes, per doc</td></tr>
+        <tr><td>3</td><td class="cmd"><code>/bootstrap-api-docs</code></td><td class="what">Drafts missing context docs one at a time. Skipped if you have them.</td><td>Docs you accept</td><td>Yes, per doc</td></tr>
         <tr><td>4</td><td class="cmd"><code>/propose-config</code></td><td class="what">Proposes real values for <code>TODO</code> config sections from your code, with evidence. Proposes nothing when the evidence is weak.</td><td>Sections you approve</td><td>Yes, per section</td></tr>
         <tr><td>5</td><td class="cmd"><code>/repo-health</code></td><td class="what">Runs every audit once to record where you start.</td><td>Git-ignored reports in <code>.backend-suite/</code></td><td>No — report only</td></tr>
       </tbody>
@@ -351,7 +351,7 @@
       <thead><tr><th>If you say…</th><th>This is what runs</th></tr></thead>
       <tbody>
         <tr><td>“are there hardcoded colours in here?”</td><td class="cmd"><code>/audit-tokens</code></td></tr>
-        <tr><td>“how healthy is this project's design system?”</td><td class="cmd"><code>/design-debt</code></td></tr>
+        <tr><td>“how healthy is this project's design system?”</td><td class="cmd"><code>/quality-debt</code></td></tr>
         <tr><td>“run everything and tell me where we stand”</td><td class="cmd"><code>/repo-health</code></td></tr>
         <tr><td>“are the docs out of date?”</td><td class="cmd"><code>/review-docs</code></td></tr>
         <tr><td>“what is this project even built with?”</td><td class="cmd"><code>/survey</code></td></tr>
@@ -470,7 +470,7 @@
         <li><code>init.py</code> to scaffold <code>.backend-suite/</code></li>
         <li>Fill the five required profile sections</li>
         <li>Map your docs to roles</li>
-        <li><code>/audit-tokens</code>, then <code>/design-debt</code></li>
+        <li><code>/audit-tokens</code>, then <code>/quality-debt</code></li>
       </ol>
     </div>
     <div class="recipe">
@@ -479,7 +479,7 @@
       <ol>
         <li><code>/survey</code> — read the project first</li>
         <li><code>/map-project</code> — confirm what it guessed</li>
-        <li><code>/bootstrap-design-docs</code> — one doc at a time, you accept each</li>
+        <li><code>/bootstrap-api-docs</code> — one doc at a time, you accept each</li>
       </ol>
       <p class="who">Bootstrap is <b>⚠ use with review</b>. It reverse-engineers what exists; it does not know what you intended.</p>
     </div>
@@ -576,10 +576,10 @@ python3 "$CLAUDE_PLUGIN_ROOT/bin/installed_drift.py"</pre>
   <p class="sub">Every command, by the job you came here to do.</p>
   <div class="cheat"><!--gen:cheat-rows-->
     <div><h3>Audit · 16</h3><p>/audit-api-consistency · /audit-cache-ttl-coverage · /audit-claude-md-drift · /audit-contract-headers · /audit-doc-staleness · /audit-endpoint-parity · /audit-error-handling · /audit-error-shape · /audit-layer-boundaries · /audit-proposal-status · /audit-prose-flags · /audit-rate-limit · /audit-route-coverage · /audit-test-network-coupling · /audit-toolchain-gates · /audit-versioning</p></div>
-    <div><h3>Document · 6</h3><p>/bootstrap-design-docs · /capture-backlog · /log-decision · /ratify · /review-docs · /sync-docs</p></div>
+    <div><h3>Document · 6</h3><p>/bootstrap-api-docs · /capture-backlog · /log-decision · /ratify · /review-docs · /sync-docs</p></div>
     <div><h3>Generate · 2</h3><p>/propose-config · /wire-endpoint</p></div>
     <div><h3>Mock API · 2</h3><p>/audit-mock-api · /sync-mock-api</p></div>
-    <div><h3>Workflow · 10</h3><p>/cleanup-worktrees · /design-debt · /design-review-pr · /map-project · /onboard-new-client · /repo-health · /run-chain · /survey · /upgrade-apply · /upgrade-measure</p></div>
+    <div><h3>Workflow · 10</h3><p>/backend-review-pr · /cleanup-worktrees · /map-project · /onboard-new-client · /quality-debt · /repo-health · /run-chain · /survey · /upgrade-apply · /upgrade-measure</p></div>
     <div><h3>Other · 2</h3><p>/draft-pr-description · /generate-client-readiness</p></div>
   <!--gen:/cheat-rows-->
   </div>
@@ -609,14 +609,14 @@ const DATA=[/*gen:data*/
 ["/audit-test-network-coupling","Report-only audit for tests that can reach a live service — tests referencing a live host with no recorded-client marker, and real-client fallbacks that go live when a…","auto","review","backend-suite"],
 ["/audit-toolchain-gates","Report-only audit for the project's own test toolchain — required scripts absent from the manifest, scripts pointing at undeclared runner suites, and suites whose…","auto","review","backend-suite"],
 ["/audit-versioning","Report-only audit that the API's version statements agree — the versioned route file's name, the URL prefix it mounts under, and the controller namespace handlers…","auto","review","backend-suite"],
-["/design-debt","Use when asked for an overall picture of design health or design debt across audits.","auto","review","backend-suite"],
-["/design-review-pr","Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that…","auto","review","backend-suite"],
+["/backend-review-pr","Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that…","auto","review","backend-suite"],
 ["/draft-pr-description","Draft a PR title and description from the actual diff and commit history, following the project's own PR template.","auto","proven","house-style"],
+["/quality-debt","Use when asked for an overall picture of backend quality or quality debt across audits.","auto","review","backend-suite"],
 ["/repo-health","Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read.","auto","review","backend-suite"],
 ["/review-docs","Audit the project's documents against each other and against the codebase, reporting what is stale, out of sync, or missing.","auto","review","backend-suite"],
 ["/survey","Survey an unknown project — detected stack, candidate source roots, a document inventory with proposed roles, and an explicit list of what could not be determined.","auto","review","backend-suite"],
 ["/upgrade-measure","Use before upgrading the suite in a project, or on a suite PR before merging.","auto","review","backend-suite"],
-["/bootstrap-design-docs","Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or…","explicit","review","backend-suite"],
+["/bootstrap-api-docs","Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or…","explicit","review","backend-suite"],
 ["/capture-backlog","Draft backlog entries in the project backlog's own existing format, for review before anything is written.","explicit","review","backend-suite"],
 ["/cleanup-worktrees","Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work.","explicit","review","backend-suite"],
 ["/generate-client-readiness","Derive a client-facing production-readiness summary from the internal checklist and export it to PDF.","explicit","proven","house-style"],

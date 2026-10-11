@@ -15,7 +15,7 @@ Most audits write a findings envelope under `.backend-suite/findings/` as a matt
 of course — `repo_health.py` relies on exactly that. Running them twice in a
 consumer's tree to *decide whether to upgrade* would therefore leave that tree
 holding output from a version the project has not adopted, and would overwrite
-the envelopes `/design-debt` grades. The measurement would have changed the thing
+the envelopes `/quality-debt` grades. The measurement would have changed the thing
 it was measuring, and the decision it exists to inform would no longer be
 reversible.
 

@@ -18,7 +18,7 @@ so a model paraphrasing its own instructions was penalised for it. The plugin
 arm is the only arm that reads those instructions.
 
 The rewrite is the same frame the fixed `did-not-assume-the-service-archetype`
-grader (in `bootstrap-design-docs-undeclared-kind-stops-to-ask`; named
+grader (in `bootstrap-api-docs-undeclared-kind-stops-to-ask`; named
 `…-the-app-archetype` in the dart-era runs) uses: a claim only counts when the
 report ASSERTS it — sentence start,
 then a run of characters carrying no negator or hedge (`not`, `n't`, `never`,

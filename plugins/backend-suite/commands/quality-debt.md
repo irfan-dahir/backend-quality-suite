@@ -1,11 +1,11 @@
 ---
-name: design-debt
-description: "Use when asked for an overall picture of design health or design debt across audits. Grades findings already collected in .backend-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes."
+name: quality-debt
+description: "Use when asked for an overall picture of backend quality or quality debt across audits. Grades findings already collected in .backend-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes."
 invocation: auto
 maturity: unverified
 ---
 
-# /design-debt
+# /quality-debt
 
 > Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
 > `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
@@ -19,7 +19,7 @@ maturity: unverified
 > unwritten. Name it and report what needed it as outstanding work — never read a
 > stub's empty content as nothing to flag.
 
-You are reporting the project's design debt across every audit at once, so nobody
+You are reporting the project's quality debt across every audit at once, so nobody
 has to run four skills and hold four reports in their head.
 
 **You report; you never fix.** This skill exists to make the shape of the debt
@@ -29,7 +29,7 @@ visible, not to start paying it down.
 
 ## Step 0 — Preconditions
 
-`${CLAUDE_PLUGIN_ROOT}/bin/design_debt.py` is stdlib-only Python.
+`${CLAUDE_PLUGIN_ROOT}/bin/quality_debt.py` is stdlib-only Python.
 
 It reads `.backend-suite/findings/*.json` — it does **not** run any audit. That
 separation is deliberate: an audit's output is baselined byte-for-byte by
@@ -39,7 +39,7 @@ that baseline moved.
 ## Step 1 — Find out what data exists
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/design_debt.py" --stale-only
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/quality_debt.py" --stale-only
 ```
 
 This lists audits the project declares under `debt.audits` in
@@ -57,7 +57,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_proposal_status.py" --findings
 **An audit registered as DISABLED refuses with exit 2 and writes nothing.** That
 is not a broken tool and not something to work around — do not pass
 `--run-disabled`, and do not report the resulting absence as a clean category.
-`design_debt.py` already lists any disabled audit in its own section with the
+`quality_debt.py` already lists any disabled audit in its own section with the
 measured reason; repeat that in your report and leave it ungraded.
 
 An audit that has never run leaves no file at all. Reporting on the remaining
@@ -67,7 +67,7 @@ complete one — say what is missing, every time.
 ## Step 2 — Read the dashboard
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/design_debt.py"
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/quality_debt.py"
 ```
 
 ## Step 3 — Report
@@ -108,7 +108,7 @@ baselined ones are different problems.
 
 ## What you must never do
 
-- Compute, quote, or estimate a single overall design-health score
+- Compute, quote, or estimate a single overall quality score
 - Run an audit and report its numbers without writing findings first — a number
   read off a stale file is worse than no number
 - Report grades while staying silent about audits with no data

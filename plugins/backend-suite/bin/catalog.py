@@ -94,7 +94,7 @@ GROUPS = [
         "audit-mock-api", "audit-doc-staleness", "audit-proposal-status",
         "audit-layer-boundaries", "audit-prose-flags", "audit-claude-md-drift",
     ]),
-    ("Documentation lifecycle", ["review-docs", "sync-docs", "bootstrap-design-docs"]),
+    ("Documentation lifecycle", ["review-docs", "sync-docs", "bootstrap-api-docs"]),
     # What a project is, and what its config has stopped describing.
     ("Discovery", ["survey", "map-project"]),
     ("Building — a mutation on the project's own contract", [
@@ -107,15 +107,15 @@ GROUPS = [
     ("Capture — what a session produced", [
         "log-decision", "capture-backlog", "ratify",
     ]),
-    # `design-debt` reads an audit's collected findings and reports; it is grouped
+    # `quality-debt` reads an audit's collected findings and reports; it is grouped
     # here with the suite's own health rather than under "Audits" because its
     # subject is a project's standing debt, not a single sweep. Renaming this
     # group's design-era names is Phase C prose work (docs/SWAP-PLAN.md).
     ("Maintenance — a project's debt and the suite's own health", [
-        "design-debt", "repo-health", "cleanup-worktrees",
+        "quality-debt", "repo-health", "cleanup-worktrees",
         "upgrade-measure", "upgrade-apply",
     ]),
-    ("PR workflow", ["design-review-pr"]),
+    ("PR workflow", ["backend-review-pr"]),
 ]
 
 
@@ -482,7 +482,7 @@ def templates() -> tuple[str, list[str]]:
             problems.append(f"roles.json: role {role!r} declares "
                             f"{ref['plugin']}/{ref['template']}, which does not exist")
 
-    # An orphan template is a real finding, not tidiness: /bootstrap-design-docs
+    # An orphan template is a real finding, not tidiness: /bootstrap-api-docs
     # installs by role, so a template no role names is unreachable.
     # `pageTemplate` counts as declared: a role like `components` emits an index
     # plus one page per component, so a second template is reachable through the

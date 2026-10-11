@@ -168,7 +168,7 @@ def main() -> int:
             # A mapped file that does not exist is marked too. init.py registers
             # universal roles whose files a fresh project does not have yet, and
             # listing those unmarked beside written documents told
-            # /bootstrap-design-docs the project was already documented.
+            # /bootstrap-api-docs the project was already documented.
             if not (REPO / rel).exists():
                 mark = "\t(missing)"
                 missing += 1

@@ -16,7 +16,7 @@ profile/tier logic." It is a thin wrapper, nothing more:
     invocation with the caveat surfaced in the result, never silently
     upgraded to look structured when it is not);
   * nothing here resolves a profile, picks an adapter, or grades a finding.
-    That logic belongs to the audit scripts and to `design_debt.py`; this
+    That logic belongs to the audit scripts and to `quality_debt.py`; this
     server does not know it exists.
 
 ## Protocol

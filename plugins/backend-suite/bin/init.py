@@ -400,7 +400,7 @@ def main() -> int:
         print("  1. Fill in every TODO in the files just written — none of it was guessed for you.")
         print("  2. python3 \"${CLAUDE_PLUGIN_ROOT}/bin/doctor.py\"       # proves every declared path resolves")
     print("  3. python3 \"${CLAUDE_PLUGIN_ROOT}/bin/preflight.py\"    # shows which skills can run here")
-    print("  4. If you have no design docs yet: /bootstrap-design-docs")
+    print("  4. If you have no design docs yet: /bootstrap-api-docs")
     if not args.precommit:
         print("  5. Optional: mark fast, invariant audits \"preCommit\": true in hooks.map.json, "
               "then python3 \"${CLAUDE_PLUGIN_ROOT}/bin/install_precommit_hook.py\" to gate commits on them")

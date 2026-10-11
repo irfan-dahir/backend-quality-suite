@@ -39,7 +39,7 @@
           "description": "Regex against a Bash tool call's command. Fires on Bash only. This is the shape pr_reminders.py uses to catch `git commit` / `gh pr create`."
         },
         "command": {
-          "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded. IMPORTANT: an audit run at narrowed scope must not write to the artefact its whole-repo run owns. An audit whose --out defaults to a whole-repo report (e.g. audit_layer_boundaries.py's .backend-suite/layer-boundaries-findings.json), scoped by a hook to one directory and left to write there, replaces a full sweep with a partial one, and /design-debt then grades the project on a fraction of it. Redirect --out to a scratch path, and pass --findings only an explicit scratch path of its own — never the bare flag, whose default is the whole-repo envelope.",
+          "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded. IMPORTANT: an audit run at narrowed scope must not write to the artefact its whole-repo run owns. An audit whose --out defaults to a whole-repo report (e.g. audit_layer_boundaries.py's .backend-suite/layer-boundaries-findings.json), scoped by a hook to one directory and left to write there, replaces a full sweep with a partial one, and /quality-debt then grades the project on a fraction of it. Redirect --out to a scratch path, and pass --findings only an explicit scratch path of its own — never the bare flag, whose default is the whole-repo envelope.",
           "oneOf": [
             { "type": "string" },
             { "type": "array", "items": { "type": "string" } }

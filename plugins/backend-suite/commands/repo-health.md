@@ -28,14 +28,14 @@ You are producing one agent-readable JSON document summarising every audit's
 run-health on this project right now, so a session can `cat` it once instead of
 running N audit commands to find out what even works here.
 
-**You report; you never fix.** Same rule as `/design-debt` — this makes the
+**You report; you never fix.** Same rule as `/quality-debt` — this makes the
 project's audit posture visible, not a first step toward changing it.
 
 ---
 
-## Step 0 — How this differs from `/design-debt`
+## Step 0 — How this differs from `/quality-debt`
 
-`/design-debt` grades **existing** `.backend-suite/findings/*.json` files and never
+`/quality-debt` grades **existing** `.backend-suite/findings/*.json` files and never
 runs an audit — that separation protects `capture-baselines.sh`, whose whole job
 is noticing when an audit's own output moves.
 
@@ -52,8 +52,8 @@ each one even ran, separately from what it found:
     something this command can resolve
   * `crashed` — the process itself failed or timed out
 
-It writes the same `--findings` envelopes `/design-debt` reads, so running this
-also leaves `/design-debt` with fresh data.
+It writes the same `--findings` envelopes `/quality-debt` reads, so running this
+also leaves `/quality-debt` with fresh data.
 
 ## Step 1 — Run it
 
@@ -67,7 +67,7 @@ and duration, so a slow one is visible rather than blamed on the whole run.
 ## Step 2 — Report
 
 Present the dashboard, then interpret it. Four things to get right, mirroring
-`/design-debt`'s own rules because the same failure modes apply here:
+`/quality-debt`'s own rules because the same failure modes apply here:
 
 **A `refused` row is not a failure of the codebase — it is a gap in project
 configuration.** Say what is missing (the row's `message`), not just that the
@@ -80,7 +80,7 @@ present its `findingsCount: null` as zero.
 **A `crashed` row is never a pass.** Surface `exitCode` and `message` verbatim.
 
 **Do not compute a single overall score** across audits — same reasoning as
-`/design-debt`: a pass/fail count is not comparable across audits that check
+`/quality-debt`: a pass/fail count is not comparable across audits that check
 fundamentally different things, and inviting one invites optimising the number.
 
 ---

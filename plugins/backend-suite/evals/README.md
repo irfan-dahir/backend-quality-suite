@@ -197,7 +197,7 @@ refusal. And only the plugin arm has read the skill that supplies the
 vocabulary, so a topic-matching grader penalises the arm that behaved
 correctly, and the result reads as the plugin making the model worse.
 
-This is not hypothetical. `bootstrap-design-docs-undeclared-kind-stops-to-ask`
+This is not hypothetical. `bootstrap-api-docs-undeclared-kind-stops-to-ask`
 scored **Δ −0.22 in favour of the no-plugin arm**, and the entire delta was one
 grader — `(assum|default|treat)\w*[^.\n]{0,40}\bapp\b` — which fires on 13 of 17
 correct-refusal phrasings, including *"I did not assume the `app` archetype"*,

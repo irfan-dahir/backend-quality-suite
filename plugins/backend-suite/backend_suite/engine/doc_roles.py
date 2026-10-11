@@ -11,7 +11,7 @@ them:
 
 Both are the suite's governing failure wearing different hats: silence that reads
 as a pass. They live here rather than in `bin/resolve.py` because `doctor.py` and
-`design_debt.py` must agree with the resolver about what counts as coverage — a
+`quality_debt.py` must agree with the resolver about what counts as coverage — a
 second copy of this rule would be a second copy to drift.
 
 Stdlib only.

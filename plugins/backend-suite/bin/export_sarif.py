@@ -8,7 +8,7 @@
 
 One run per audit. Reads `.backend-suite/findings/*.json` (the common envelope,
 `backend_suite/engine/findings.py`); never runs an audit itself, for the same
-reason `design_debt.py` does not — an export must not be why an audit's output
+reason `quality_debt.py` does not — an export must not be why an audit's output
 moved. Writes only the file named by `--out` (or stdout).
 
 AN AUDIT THAT COULD NOT CHECK NEVER VANISHES. An empty SARIF run reads as "no

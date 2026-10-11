@@ -39,9 +39,9 @@ These **24** are marked `invocation: auto`: Claude may run them from plain langu
 | `/audit-test-network-coupling` | Report-only audit for tests that can reach a live service — tests referencing a live host with no recorded-client marker, and real-client fallbacks that go live when a… | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-toolchain-gates` | Report-only audit for the project's own test toolchain — required scripts absent from the manifest, scripts pointing at undeclared runner suites, and suites whose… | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-versioning` | Report-only audit that the API's version statements agree — the versioned route file's name, the URL prefix it mounts under, and the controller namespace handlers… | auto | ⚠️ use with review | `backend-suite` |
-| `/design-debt` | Use when asked for an overall picture of design health or design debt across audits. | auto | ⚠️ use with review | `backend-suite` |
-| `/design-review-pr` | Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that… | auto | ⚠️ use with review | `backend-suite` |
+| `/backend-review-pr` | Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that… | auto | ⚠️ use with review | `backend-suite` |
 | `/draft-pr-description` | Draft a PR title and description from the actual diff and commit history, following the project's own PR template. | auto | ✅ proven | `house-style` |
+| `/quality-debt` | Use when asked for an overall picture of backend quality or quality debt across audits. | auto | ⚠️ use with review | `backend-suite` |
 | `/repo-health` | Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read. | auto | ⚠️ use with review | `backend-suite` |
 | `/review-docs` | Audit the project's documents against each other and against the codebase, reporting what is stale, out of sync, or missing. | auto | ⚠️ use with review | `backend-suite` |
 | `/survey` | Survey an unknown project — detected stack, candidate source roots, a document inventory with proposed roles, and an explicit list of what could not be determined. | auto | ⚠️ use with review | `backend-suite` |
@@ -53,7 +53,7 @@ These **14** are marked `invocation: explicit`: they generate content, set proje
 
 | Slash command | What it does | Fires | Maturity | Plugin |
 |---|---|---|---|---|
-| `/bootstrap-design-docs` | Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or… | explicit | ⚠️ use with review | `backend-suite` |
+| `/bootstrap-api-docs` | Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or… | explicit | ⚠️ use with review | `backend-suite` |
 | `/capture-backlog` | Draft backlog entries in the project backlog's own existing format, for review before anything is written. | explicit | ⚠️ use with review | `backend-suite` |
 | `/cleanup-worktrees` | Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work. | explicit | ⚠️ use with review | `backend-suite` |
 | `/generate-client-readiness` | Derive a client-facing production-readiness summary from the internal checklist and export it to PDF. | explicit | ✅ proven | `house-style` |
@@ -129,13 +129,13 @@ Every slash command, by the job you came here to do. Names only.
 
 **Audit** (16) — `/audit-api-consistency` · `/audit-cache-ttl-coverage` · `/audit-claude-md-drift` · `/audit-contract-headers` · `/audit-doc-staleness` · `/audit-endpoint-parity` · `/audit-error-handling` · `/audit-error-shape` · `/audit-layer-boundaries` · `/audit-proposal-status` · `/audit-prose-flags` · `/audit-rate-limit` · `/audit-route-coverage` · `/audit-test-network-coupling` · `/audit-toolchain-gates` · `/audit-versioning`
 
-**Document** (6) — `/bootstrap-design-docs` · `/capture-backlog` · `/log-decision` · `/ratify` · `/review-docs` · `/sync-docs`
+**Document** (6) — `/bootstrap-api-docs` · `/capture-backlog` · `/log-decision` · `/ratify` · `/review-docs` · `/sync-docs`
 
 **Generate** (2) — `/propose-config` · `/wire-endpoint`
 
 **Mock API** (2) — `/audit-mock-api` · `/sync-mock-api`
 
-**Workflow** (10) — `/cleanup-worktrees` · `/design-debt` · `/design-review-pr` · `/map-project` · `/onboard-new-client` · `/repo-health` · `/run-chain` · `/survey` · `/upgrade-apply` · `/upgrade-measure`
+**Workflow** (10) — `/backend-review-pr` · `/cleanup-worktrees` · `/map-project` · `/onboard-new-client` · `/quality-debt` · `/repo-health` · `/run-chain` · `/survey` · `/upgrade-apply` · `/upgrade-measure`
 
 **Other** (2) — `/draft-pr-description` · `/generate-client-readiness`
 

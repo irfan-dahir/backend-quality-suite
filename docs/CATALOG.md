@@ -44,7 +44,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 |---|---|---|---|
 | `/review-docs` | auto | ⚪ unverified | Audit the project's documents against each other and against the codebase, reporting what is stale, out of sync, or missing. Reports read-only by default; applies mechanical auto-fixes and commits them only on your explicit confirmation. Use when asked whether documentation is up to date or if anything has drifted. |
 | `/sync-docs` | explicit | ⚪ unverified | Take new information — client feedback, a call summary, a product decision, a direction change — and update the correct project documents. Use when asked to record a decision or reflect a change in the docs. |
-| `/bootstrap-design-docs` | explicit | ⚪ unverified | Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or decline. The installer for a new project's documentation layer. Note: not yet verified against a real zero-docs project. |
+| `/bootstrap-api-docs` | explicit | ⚪ unverified | Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or decline. The installer for a new project's documentation layer. Note: not yet verified against a real zero-docs project. |
 
 ### Discovery
 
@@ -85,7 +85,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/design-debt` | auto | ⚪ unverified | Use when asked for an overall picture of design health or design debt across audits. Grades findings already collected in .backend-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes. |
+| `/quality-debt` | auto | ⚪ unverified | Use when asked for an overall picture of backend quality or quality debt across audits. Grades findings already collected in .backend-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes. |
 | `/repo-health` | auto | ⚪ unverified | Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read. Runs every audit fresh and reports one JSON posture: configured, clean, findings, refused. Never changes your code, but saves every audit's report files as it runs. |
 | `/cleanup-worktrees` | explicit | ⚪ unverified | Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work. Reports every git worktree (.claude/worktrees/ and ../suite-<topic>) and removes stale ones; refuses by name on locked, uncommitted, or unmerged ones. Dry-run by default; destructive under --apply. |
 | `/upgrade-measure` | auto | ⚪ unverified | Use before upgrading the suite in a project, or on a suite PR before merging. Runs both versions' audits on throwaway copies and diffs exit codes and finding counts, checks two revisions for consumer breaks, and lists which projects are on which version. Read-only: never writes to the measured project. |
@@ -95,7 +95,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/design-review-pr` | auto | ⚪ unverified | Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that could not check. Prints a markdown review; never edits code and never posts unless explicitly told to. Use when asked to design-review a PR or branch, or before opening a PR. |
+| `/backend-review-pr` | auto | ⚪ unverified | Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that could not check. Prints a markdown review; never edits code and never posts unless explicitly told to. Use when asked to backend-review a PR or branch, or before opening a PR. |
 
 ### Other
 

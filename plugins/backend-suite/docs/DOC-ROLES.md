@@ -298,7 +298,7 @@ status: stub
 
 `resolve.py` still prints the path — whoever fills the document needs it — and
 exits **5**. `doctor.py` lists stub roles and names the count in its healthy
-line; `design_debt.py` reports them as debt and excludes them from the
+line; `quality_debt.py` reports them as debt and excludes them from the
 written-document count. Declined and stub are different states on purpose: 4 is
 *deliberately has no such document*, 5 is *has one, nobody wrote it*.
 
@@ -318,7 +318,7 @@ is coverage the project does not have.
 A stub stops being a stub when **a human deletes the frontmatter block** — the
 block itself says so, and there is deliberately no command that clears the
 status without anyone reading the document. Delete it, then re-run `resolve.py
-<role>`: exit 5 becomes exit 0, and `design_debt.py` moves it from debt into the
+<role>`: exit 5 becomes exit 0, and `quality_debt.py` moves it from debt into the
 written count.
 
 Templates never carry `status: stub`. A template is not a document; the status

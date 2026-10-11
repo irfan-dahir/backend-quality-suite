@@ -1,6 +1,6 @@
 # Documentation templates
 
-`/bootstrap-design-docs` installs these into a project that has no documentation layer. They are
+`/bootstrap-api-docs` installs these into a project that has no documentation layer. They are
 the *shape* each document, not its content: a template says what belongs in an `API.md` and
 why, and leaves the project to fill in what its API actually is.
 
@@ -18,7 +18,7 @@ cannot express it and the second template would otherwise read as an orphan.
 
 **The count is not maintained by hand.** `roles.json` maps role to template, and `bin/catalog.py`
 fails CI if a declared template is missing or if a template no role declares is present — an orphan
-being a real finding, since `/bootstrap-design-docs` installs by role and cannot reach a template
+being a real finding, since `/bootstrap-api-docs` installs by role and cannot reach a template
 nothing names.
 
 That gate exists because this paragraph previously said "the four written are the ones the tooling
@@ -50,13 +50,13 @@ taste:
 |---|---|
 | `{{PROJECT_NAME}}` | Substituted at install time from the profile |
 | `{{FRAMEWORK}}` | From `profile.json`'s `project.framework` |
-| `<!-- DECIDE: question -->` | A real decision the project must make. `/bootstrap-design-docs` must surface every one of these and never resolve them itself |
+| `<!-- DECIDE: question -->` | A real decision the project must make. `/bootstrap-api-docs` must surface every one of these and never resolve them itself |
 | `<!-- DERIVED: how -->` | Content the bootstrap skill can reverse-engineer from the codebase and then ask the user to confirm |
 
 ## Inventory
 
 Roles come from `.backend-suite/docs.manifest.json`. A role with no template means
-`/bootstrap-design-docs` cannot scaffold it yet and must say so rather than skipping quietly.
+`/bootstrap-api-docs` cannot scaffold it yet and must say so rather than skipping quietly.
 This repo re-domained from a design suite to a backend/API suite; the design-era templates and
 their roles left with the design domain, and the two kinds a role applies to are `library` and
 `service` (see `roles.json`).
@@ -104,7 +104,7 @@ first templates were produced — they are generalisations of real files rather 
 is why they have opinions.
 
 Adding a role means adding it to `roles.json` too, or CI fails. That is deliberate: a template
-nothing declares is unreachable, because `/bootstrap-design-docs` installs by role.
+nothing declares is unreachable, because `/bootstrap-api-docs` installs by role.
 
 **Watch for structure the tooling depends on.** A template that reorganises a document into
 something more elegant can silently make it unreadable to the skills and audits that locate

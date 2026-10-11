@@ -76,7 +76,7 @@ Both versions' audits run against **throwaway copies** of the project tree, made
 under the system temp directory and named in the report. The project's own
 directory is read once, to copy it, and never written to. That is not a courtesy:
 most audits write a findings envelope by default, so measuring in place would
-overwrite the envelopes `/design-debt` grades, with output from a version the
+overwrite the envelopes `/quality-debt` grades, with output from a version the
 project has not adopted. The report says which copies it used — quote that line,
 so the reader can verify the claim rather than trusting it.
 

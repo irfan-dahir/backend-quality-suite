@@ -39,6 +39,14 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   over a php fixture (vendor/ beside composer.json, authored `src/build/`
   kept, SKIPPED counted, scanSkipDirs include/add overrides); the tsx
   span-cache half died with the tsx adapter and is not replaced.
+- [x] (D6, this commit) command renames — `design-debt` → `quality-debt`,
+  `design-review-pr` → `backend-review-pr`, `bootstrap-design-docs` →
+  `bootstrap-api-docs` (commands, scripts, the six `bootstrap-design-docs-*`
+  eval dirs, and every reference in tests/templates/docs/evals prose).
+  The audits' help text already said `/quality-debt`; the command files now
+  match. Design-domain prose in the renamed commands re-pointed ("design
+  health" → "backend quality", "design-review a PR" → "backend-review a
+  PR"). Catalogs regenerated (CATALOG.md, SKILLS.md, backend-suite-guide.html).
 - [x] (D5c, this commit) `bin/survey_source_roots_test.py` — re-authored from
   the purged `survey_ui_roots_test.py` (renamed: the UI ranking it pinned is
   gone). Pins the sourceRoots ranking (conventional root 0.8 / empty 0.2 /
@@ -78,10 +86,12 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   the `inline_error_without_shared_state` member match was dot-only, so it
   could never fire on the shipped adapter, and the mangling/dead-state
   details named Dart's spellings for every stack.)
-- [ ] `bin/scan_skip_and_tsx_cache_test.py` — scan-skip half is generic; the
-  tsx cache half dies with the tsx adapter.
-- [ ] `bin/audit_findings_envelope_test.py` — the `ApiConsistency` class
-  (dart component-contract fixture) — audit itself still ships.
+- [x] (D5a, this commit) `bin/scan_skip_test.py` — re-authored from
+  `scan_skip_and_tsx_cache_test.py` and renamed: the scan-skip half is
+  generic, the tsx span-cache half died with the tsx adapter.
+- [x] (D3a — already done; entry stale) `bin/audit_findings_envelope_test.py`
+  — the `ApiConsistency` class was re-authored onto the php fixture
+  (UserRepository::fetch over routes/api.php) in D3a; 21 cases green.
 - [ ] `bin/survey_test.py` — capability-seam legs: undeclared-capability
   routing case, the convergence (declared silences) case, the
   `capability-undetermined` refusal kind, and exit-0-on-clean. Current state
@@ -119,8 +129,11 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   jikan-rest probe: controllerDirs and `config/jikan.php` came out identical
   to the hand-authored D3b config, and 76/103 TTL coverage matches D3b's
   103 actions − 27 missing.
-- [ ] `bin/verify.py` docstring says "component"; suite terminology — fine,
-  but its evidence examples are design-flavoured; light prose pass.
+- [x] (D5c, this commit) `bin/verify.py` — light prose pass done with the
+  survey.py decision: evidence examples re-pointed to `audit-error-handling`,
+  the prose-component example is `review-docs`, and the borrowed-script
+  example is `log-decision` → `audit_proposal_status.py`. The "component"
+  terminology is fine (suite-neutral on purpose).
 
 ## Known-red until re-pointed (documented in CLAUDE.md)
 

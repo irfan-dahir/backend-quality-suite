@@ -280,7 +280,7 @@ def main() -> int:
                     ".backend-suite/claude_md_enforcement.json)")
     ap.add_argument("--claude-md", help="path to CLAUDE.md (default: <project root>/CLAUDE.md)")
     ap.add_argument("--findings", nargs="?", const=True, default=None,
-                    help="also write the common findings envelope for /design-debt "
+                    help="also write the common findings envelope for /quality-debt "
                          "(default .backend-suite/findings/claude-md-drift.json)")
     args = ap.parse_args()
 

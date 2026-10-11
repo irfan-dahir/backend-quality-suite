@@ -52,7 +52,7 @@ CHAIN = {
          "purpose": "First.", "onFail": "halt"},
         {"id": "two", "skill": "map-project", "checkpoint": False,
          "onFail": "halt"},
-        {"id": "three", "skill": "design-debt", "checkpoint": True,
+        {"id": "three", "skill": "quality-debt", "checkpoint": True,
          "onFail": "skip"},
     ],
 }

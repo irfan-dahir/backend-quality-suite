@@ -26,7 +26,7 @@
     },
     {
       "id": "context-docs",
-      "skill": "bootstrap-design-docs",
+      "skill": "bootstrap-api-docs",
       "purpose": "Reverse-engineer the project's context documents from what is built, proposing each document for accept or decline.",
       "skipIf": "The project already has the documents the mapped roles need.",
       "checkpoint": true,

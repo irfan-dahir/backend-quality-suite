@@ -25,7 +25,7 @@ in one repo.
 `{{PROJECT_NAME}}` / `TODO_PROJECT_NAME` in `profile.json`. Everything else —
 which language adapter, where the source tree lives, which doc roles are
 mapped, which architecture rules apply — is a real decision about the target
-project that only a human (or `/bootstrap-design-docs` reverse-engineering the
+project that only a human (or `/bootstrap-api-docs` reverse-engineering the
 codebase) can make. Run `doctor.py` after filling things in; it is expected to
 report every unresolved `TODO` path as a problem until you either fill it in or
 delete that section/role.

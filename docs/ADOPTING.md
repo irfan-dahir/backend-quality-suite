@@ -55,7 +55,7 @@ Which tools read which instruction, skill, hook and MCP files is in
 | Capability | Stack-dependent? |
 |---|---|
 | Doc roles, `resolve.py`, `doctor.py` | **No.** Pure JSON + paths |
-| `/review-docs`, `/sync-docs`, `/bootstrap-design-docs` | **No.** Read documents, not source |
+| `/review-docs`, `/sync-docs`, `/bootstrap-api-docs` | **No.** Read documents, not source |
 | `audit-doc-staleness`, `audit-proposal-status`, `audit-claude-md-drift`, `audit-prose-flags` | **No.** They read docs and config, not source |
 | `audit-mock-api`, `/sync-mock-api` | **No** — once a mock-API contract is configured |
 | PR drafting, client-readiness reporting | **No** |
@@ -296,7 +296,7 @@ say how many. Verify the action version and permissions against GitHub's
 current code-scanning docs before relying on this snippet.
 
 For a PR comment rather than code-scanning alerts, see
-[`/design-review-pr`](../plugins/backend-suite/commands/design-review-pr.md).
+[`/backend-review-pr`](../plugins/backend-suite/commands/backend-review-pr.md).
 
 ---
 

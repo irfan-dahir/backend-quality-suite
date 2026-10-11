@@ -257,7 +257,7 @@
     },
     "debt": {
       "type": "object",
-      "description": "Configuration for /design-debt. `audits` is what makes a never-run audit visible: the dashboard reads .backend-suite/findings/, and an audit that has never run leaves no file there, so inferring the expected set from what exists on disk would render its absence invisible.",
+      "description": "Configuration for /quality-debt. `audits` is what makes a never-run audit visible: the dashboard reads .backend-suite/findings/, and an audit that has never run leaves no file there, so inferring the expected set from what exists on disk would render its absence invisible.",
       "properties": {
         "audits": {
           "type": "array",

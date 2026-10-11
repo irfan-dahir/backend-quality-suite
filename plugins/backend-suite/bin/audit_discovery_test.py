@@ -7,7 +7,7 @@ tightly coupled to sibling modules there via a directory-relative `sys.path`
 insert, so moving it into `bin/` would have severed that locality for no
 architectural gain. `discover()` was widened to also glob one level into
 `backend_suite/engine/*/` instead. Every derived surface (`repo_health.py`,
-`design_debt.py`, `mcp/audit_server.py`, the oracle) reads this function, so
+`quality_debt.py`, `mcp/audit_server.py`, the oracle) reads this function, so
 an audit invisible to it is invisible everywhere at once — this is the count
 this repo's RFC-0003 has been quoting as "18" while the code said 17.
 

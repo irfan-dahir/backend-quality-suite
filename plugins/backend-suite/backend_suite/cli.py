@@ -61,7 +61,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "doctor": ("doctor.py", "check the profile and environment; report what is untrusted"),
     "ratify": ("ratify.py", "record a profile field as a human decision"),
     "repo-health": ("repo_health.py", "run every audit fresh; one JSON posture document"),
-    "design-debt": ("design_debt.py", "roll audit findings into per-category grades"),
+    "quality-debt": ("quality_debt.py", "roll audit findings into per-category grades"),
     "harness": ("harness.py", "preview/apply/check generated per-harness files (AGENTS.md, MCP configs, skills)"),
     "chain": ("chain.py", "run or resume a multi-step playbook"),
     "scaffold-doc": ("scaffold_doc.py", "scaffold one project document from its template"),

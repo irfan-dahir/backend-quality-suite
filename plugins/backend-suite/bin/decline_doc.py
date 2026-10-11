@@ -17,7 +17,7 @@ which is the failure the state was invented to prevent.
 
 Declining is not the same as never having looked. An absent role means nobody
 has considered it, and the suite is supposed to keep saying so; a declined role
-means the question was answered. Neither counts as coverage, and `design_debt`
+means the question was answered. Neither counts as coverage, and `quality_debt`
 counts declines in neither direction.
 
 Usage:

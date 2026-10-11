@@ -5,9 +5,9 @@ Running four audits and holding four reports in your head is the problem this
 solves. It reads `.backend-suite/findings/*.json` — the common envelope written by
 `backend_suite/engine/findings.py` — and grades each audit's categories.
 
-    python3 bin/design_debt.py                 grade what has been collected
-    python3 bin/design_debt.py --json          same, machine-readable
-    python3 bin/design_debt.py --stale-only    just say which audits need re-running
+    python3 bin/quality_debt.py                 grade what has been collected
+    python3 bin/quality_debt.py --json          same, machine-readable
+    python3 bin/quality_debt.py --stale-only    just say which audits need re-running
 
 PER-CATEGORY GRADES, NO COMPOSITE — a decision, not an omission. One number across
 audits invites moving the number instead of fixing the codebase, and there is no

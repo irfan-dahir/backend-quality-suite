@@ -1,15 +1,15 @@
 ---
-name: design-review-pr
-description: "Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that could not check. Prints a markdown review; never edits code and never posts unless explicitly told to. Use when asked to design-review a PR or branch, or before opening a PR."
+name: backend-review-pr
+description: "Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that could not check. Prints a markdown review; never edits code and never posts unless explicitly told to. Use when asked to backend-review a PR or branch, or before opening a PR."
 invocation: auto
 maturity: unverified
 ---
 
-# /design-review-pr
+# /backend-review-pr
 
 > **What it writes.** Prints a markdown review to stdout (or the file named by
 > `--out`). Audit envelopes go to a temporary directory, so
-> `.backend-suite/findings/` — `/design-debt`'s data — is left alone. But it
+> `.backend-suite/findings/` — `/quality-debt`'s data — is left alone. But it
 > *runs* every live audit, and an audit that saves its own raw report on every
 > run (e.g. `/audit-mock-api`) still writes that report, exactly as when run by
 > hand. It never edits source, never stages, never commits, and **never posts
@@ -26,7 +26,7 @@ scoped to the diff. It is not a first step toward editing anything.
 ## Step 1 — Run it
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/design_review_pr.py" <base-ref>
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/backend_review_pr.py" <base-ref>
 ```
 
 `<base-ref>` is what the PR merges into — usually `main` or `origin/main`. The

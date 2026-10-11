@@ -1,4 +1,4 @@
-# Eval cases: `/bootstrap-design-docs` and `/map-project`
+# Eval cases: `/bootstrap-api-docs` and `/map-project`
 
 Eleven cases covering the two highest-blast-radius skills in the suite. Both ship
 `maturity: unverified`; these cases are what a promotion off `unverified` would

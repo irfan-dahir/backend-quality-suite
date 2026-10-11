@@ -129,7 +129,7 @@ class EnvelopeNamesAreDiscoverable(unittest.TestCase):
 
         Asserted over `discover()` rather than over the seven, so adding a
         nineteenth audit without an envelope fails here instead of being noticed
-        the next time someone runs /design-debt and sees two-thirds of a picture.
+        the next time someone runs /quality-debt and sees two-thirds of a picture.
         """
         missing = [s.stem for s in A.discover() if not A.supports_findings_flag(s)]
         self.assertEqual(missing, [])

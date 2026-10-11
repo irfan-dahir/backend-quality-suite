@@ -172,7 +172,7 @@ can stop and pick up in a later session by running the same command again.
 |---|---|---|---|---|
 | 1 | `/survey` | Works out your stack, where the source lives, and which documents you have. It also lists what it *couldn't* work out — read that list. | `.backend-suite/survey.json` | Yes |
 | 2 | `init.py --from-survey`, then `/map-project` | Creates the `.backend-suite/` config, pre-filled from the survey. Then suggests which document is your API doc, what kind of project this is (service or library), and which files hold your contract. | `.backend-suite/` config files | Yes, for each half |
-| 3 | `/bootstrap-design-docs` | Drafts missing context documents from what is already built, one at a time. You accept or decline each one. Skipped if you already have the documents. | The documents you accept | Yes, per document |
+| 3 | `/bootstrap-api-docs` | Drafts missing context documents from what is already built, one at a time. You accept or decline each one. Skipped if you already have the documents. | The documents you accept | Yes, per document |
 | 4 | `/propose-config` | Reads your code and proposes real values for config sections setup left as `TODO` (source globs, layer rules, doc roles), each with the evidence behind it. Proposes nothing where the evidence is weak. | Only the sections you approve, marked `inferred` | Yes, per section |
 | 5 | `/repo-health` | Runs every audit once and records where the project starts: which audits work, which find things, which refuse. | Reports inside `.backend-suite/` only (git-ignored) | No — it only reports |
 
@@ -190,7 +190,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/chain.py" status understand-existing-project
 
 ## Which stacks it can read
 
-The documentation skills (`/review-docs`, `/sync-docs`, `/bootstrap-design-docs`,
+The documentation skills (`/review-docs`, `/sync-docs`, `/bootstrap-api-docs`,
 `/survey`, the resolver, `audit-proposal-status`, `audit-doc-staleness`) work on
 any project. Audits that read **source code** need an adapter for your language,
 set as `adapters.lang` in `.backend-suite/profile.json`.
@@ -475,7 +475,7 @@ the output is good.
 ### 7. If you have no documents yet
 
 Then the audits have almost nothing to check against, and that is the honest
-state of play. Ask Claude for `/bootstrap-design-docs`, which proposes documents
+state of play. Ask Claude for `/bootstrap-api-docs`, which proposes documents
 one at a time for you to accept or decline. Expect to do real work in it: the
 templates mark decisions as **DECIDE**, and a `DECIDE` is genuinely yours to
 make.
@@ -544,7 +544,7 @@ and the first full run will be large. The order that works:
 2. Run `repo_health.py` once to see the shape of the problem — but do not act on
    it. It is a census, not a task list.
 3. Write down what is already true, rather than what you wish were true.
-   `/bootstrap-design-docs` reverse-engineers a first draft from what is built.
+   `/bootstrap-api-docs` reverse-engineers a first draft from what is built.
    A document that describes the API you have is checkable; one that describes
    the API you wish you had reports every endpoint as a violation.
 4. Baseline the existing findings as accepted debt, and gate only on new ones —
@@ -554,7 +554,7 @@ and the first full run will be large. The order that works:
 **Greenfield.** You have the opposite problem: nothing to audit yet, and a short
 window in which conventions are still cheap to set. Here the documents come
 first, because they are what later audits measure against:
-`/bootstrap-design-docs` proposes each one for you to accept or decline, and a
+`/bootstrap-api-docs` proposes each one for you to accept or decline, and a
 `DECIDE` marker in a template is genuinely yours to make.
 `/onboard-new-client` is the ordered playbook for this path rather than a new
 capability. `/run-chain` walks a playbook one checkpoint at a time so it survives
@@ -590,7 +590,7 @@ Some things people actually want, and what answers them:
 | What you want | Say something like |
 |---|---|
 | Know what documentation has gone stale | "is anything in our docs out of sync with the code?" (`/review-docs`) |
-| One overall picture of the project | "what's our quality debt?" (`/design-debt`), or `/repo-health` for the raw audit posture |
+| One overall picture of the project | "what's our quality debt?" (`/quality-debt`), or `/repo-health` for the raw audit posture |
 | Check the mock API has not drifted | "is the mock API in sync?" (`/audit-mock-api`, or the `mock-api-auditor` agent) |
 | Connect a stub to a mocked endpoint | `/wire-endpoint` |
 | Check a proposal's header still matches its body | "is any RFC's status stale?" (`/audit-proposal-status`) |
@@ -685,7 +685,7 @@ different things:
 | ⛔ disabled | Switched off entirely. Tells you nothing about your project |
 | ⚠️ unclear | It failed in a way the dashboard could not interpret. Run it directly |
 
-`/design-debt` is the softer version: it reads whatever findings have already
+`/quality-debt` is the softer version: it reads whatever findings have already
 been collected and grades them per category, with no overall score. There is no
 composite number on purpose — you cannot honestly average a doc-staleness count
 against a mock-API drift count, and one number invites moving the number.
@@ -901,7 +901,7 @@ baselines before and verify after, as in
 [Job 3](#job-3--prove-a-big-refactor-changed-nothing).
 
 **Monthly — the whole picture.** `repo_health.py` for the raw posture,
-`/design-debt` for the graded read. Monthly rather than weekly because the number
+`/quality-debt` for the graded read. Monthly rather than weekly because the number
 you are watching moves on the scale of months, and looking at it weekly invites
 managing the number.
 
@@ -1058,7 +1058,7 @@ the tool being lazy. It is the tool declining to guess with your data.
 
 Stated plainly, so nothing here is a surprise later.
 
-- **It will not write your documents for you.** `/bootstrap-design-docs` makes
+- **It will not write your documents for you.** `/bootstrap-api-docs` makes
   it faster; the decisions are still yours. On a project with no documentation,
   the suite finds very little, because there is nothing to check against.
 - **It will not fix your code.** Audits report. A repair path exists only where
@@ -1118,7 +1118,7 @@ claude plugin marketplace remove backend-quality-suite
 
 Two things do not live under `.backend-suite/` and are worth a `git status` to
 catch: the findings directory an audit writes to, and any documents
-`/bootstrap-design-docs` created. The documents are yours — they are ordinary
+`/bootstrap-api-docs` created. The documents are yours — they are ordinary
 markdown describing your project, with no dependency on the suite, and they keep
 working as documents after everything above is gone. That is deliberate: the
 suite reads your documents, it does not own them.

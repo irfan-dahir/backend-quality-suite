@@ -33,11 +33,11 @@ flags an agent would have to already know to pass — and reports, per audit:
                        run before a 2-second one and an agent diffing two
                        dashboards should be able to tell which entry is stale.
 
-## Relationship to /design-debt (design_debt.py) — read this before extending either
+## Relationship to /quality-debt (quality_debt.py) — read this before extending either
 
 They look similar and answer different questions on purpose:
 
-  design_debt.py     grades EXISTING `.backend-suite/findings/*.json` files.
+  quality_debt.py     grades EXISTING `.backend-suite/findings/*.json` files.
                       Never runs an audit — deliberately, so the dashboard
                       itself can never be the reason a baselined audit's
                       output changes. Answers "how much debt, by category,
@@ -49,29 +49,29 @@ They look similar and answer different questions on purpose:
                       whether it ran at all, separately from what it found.
                       Answers "if I did nothing else right now, which audits
                       would even work on this project" — a question
-                      design_debt.py cannot answer, because a project that
+                      quality_debt.py cannot answer, because a project that
                       has literally never run any audit has no findings
                       files for it to read, and it does not execute code to
                       go find out.
 
-Concretely: `design_debt.py` treats a config problem and "nobody has run this
+Concretely: `quality_debt.py` treats a config problem and "nobody has run this
 yet" identically — both are just an absent file. This treats a config error
 as a distinct, reportable status (`refused`) it cannot see any other way
 without executing the audit.
 
 This is genuinely additive, not a second aggregator competing with the first:
-it writes the same `--findings` envelopes design_debt.py already reads, so
-running this also means `/design-debt` has fresh data afterward.
+it writes the same `--findings` envelopes quality_debt.py already reads, so
+running this also means `/quality-debt` has fresh data afterward.
 
-## Why this is not folded into design_debt.py as a flag
+## Why this is not folded into quality_debt.py as a flag
 
-`--dashboard` on `design_debt.py` would have to secretly start running code
+`--dashboard` on `quality_debt.py` would have to secretly start running code
 from a script whose entire documented contract — restated three times in its
 own docstring and its skill file — is that it never does. That contract is
 load-bearing for `capture-baselines.sh`: an audit's baselined output must only
 move when something *reviews and re-baselines* it, never as a side effect of
 someone asking "what's my design debt". A flag that runs audits would make
-`python3 design_debt.py` and `python3 design_debt.py --dashboard` have
+`python3 quality_debt.py` and `python3 quality_debt.py --dashboard` have
 different truthfulness properties depending on a flag easy to forget, which
 is the sort of footgun this whole suite exists to design out.
 

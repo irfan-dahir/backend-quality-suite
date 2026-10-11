@@ -10,7 +10,7 @@ maturity: unverified
 > **What it writes.** This audit never edits source, but every plain run
 > (no flag needed) saves its raw report to `.backend-suite/layer-boundaries-findings.json` (override with `--out`),
 > and `--findings` additionally writes the envelope under `.backend-suite/findings/`.
-> Those files are what `/design-debt` and the MCP server read, so they are
+> Those files are what `/quality-debt` and the MCP server read, so they are
 > written deliberately. Keep them out of git — they quote your source.
 
 > Documents are referenced by role, e.g. `{{doc:api-standard}}` — resolve with

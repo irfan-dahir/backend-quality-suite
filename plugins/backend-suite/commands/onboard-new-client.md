@@ -33,7 +33,7 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "<project>"` to create t
 **Decision point:** does the client already have a codebase, or is this greenfield? A codebase means Step 2 can reverse-engineer; greenfield means the docs come from the plan instead, and Step 2 scaffolds starting structures.
 
 ### Step 2 — Context documents (only if the project has none yet)
-If `{{doc:api}}`/`{{doc:decisions}}` don't exist yet, run **`/bootstrap-design-docs`** to reverse-engineer them from the existing codebase (or scaffold a starting structure from the plan if the codebase is also new). **Skip this step entirely** if the project already has these docs — this is for genuinely greenfield projects only.
+If `{{doc:api}}`/`{{doc:decisions}}` don't exist yet, run **`/bootstrap-api-docs`** to reverse-engineer them from the existing codebase (or scaffold a starting structure from the plan if the codebase is also new). **Skip this step entirely** if the project already has these docs — this is for genuinely greenfield projects only.
 
 **Decision point:** is this a zero-docs project, or does it already have an API doc suite? If the latter, skip straight to Step 3. Expect to do real work here: the templates mark decisions as **DECIDE**, and a `DECIDE` is genuinely yours to make.
 

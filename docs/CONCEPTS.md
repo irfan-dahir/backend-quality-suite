@@ -50,7 +50,7 @@ already decided.
 "**Building the context layer**" is the phrase for the first real work on a new
 project: getting those documents to exist and to be true. Until they do, the
 audits have nothing to audit *against*, and the suite is close to useless. That
-is not a limitation to work around — it is the deal. `/bootstrap-design-docs`
+is not a limitation to work around — it is the deal. `/bootstrap-api-docs`
 exists to make it faster, not to skip it.
 
 ### Who actually reads it

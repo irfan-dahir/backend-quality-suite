@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Tests for design_review_pr.py against throwaway git repositories.
+"""Tests for backend_review_pr.py against throwaway git repositories.
 
 What must hold: findings on changed lines come first; findings in untouched
 files are counted, never silently dropped; every audit that could not check is
 listed; a review in which nothing checked exits 2, not 0; and nothing is ever
 posted unless `--post` is passed (proved with a fake `gh` on PATH).
 
-    python3 plugins/backend-suite/bin/design_review_pr_test.py
+    python3 plugins/backend-suite/bin/backend_review_pr_test.py
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from pathlib import Path
 BIN = Path(__file__).resolve().parent
 sys.path.insert(0, str(BIN))
 
-import design_review_pr as R  # noqa: E402
+import backend_review_pr as R  # noqa: E402
 
 GIT = ["git", "-c", "user.email=t@example.invalid", "-c", "user.name=t",
        "-c", "commit.gpgsign=false"]
@@ -71,7 +71,7 @@ def envelopes(directory: Path) -> Path:
 
 
 def cli(*args: str, env: dict | None = None):
-    return subprocess.run([sys.executable, str(BIN / "design_review_pr.py"), *args],
+    return subprocess.run([sys.executable, str(BIN / "backend_review_pr.py"), *args],
                           capture_output=True, text=True, env=env)
 
 
@@ -138,7 +138,7 @@ class Review(unittest.TestCase):
             self.assertIn(proc.returncode, (0, 1), proc.stderr)
             self.assertIn("docs/old.md", proc.stdout)
             self.assertFalse((repo / ".backend-suite/findings").exists(),
-                             "diff-scoped run must not overwrite /design-debt's envelopes")
+                             "diff-scoped run must not overwrite /quality-debt's envelopes")
 
     def test_only_refusals_is_exit_2_and_listed(self):
         with tempfile.TemporaryDirectory() as tmp:

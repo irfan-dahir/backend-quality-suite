@@ -375,7 +375,7 @@ def main() -> int:
     ap.add_argument("--list", action="store_true",
                     help="print every (script, flag) pair harvested, check nothing")
     ap.add_argument("--findings", nargs="?", const=True, default=None,
-                    help="also write the common findings envelope for /design-debt "
+                    help="also write the common findings envelope for /quality-debt "
                          "(default .backend-suite/findings/prose-flags.json)")
     args = ap.parse_args()
 

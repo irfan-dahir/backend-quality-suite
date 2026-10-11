@@ -240,11 +240,11 @@ def main() -> int:
     # also covered by the .gitignore bin/init.py scaffolds there; a .gitignore
     # only governs its own directory, so a report anywhere else could not be.
     # Not under findings/: that directory holds the common envelopes
-    # /design-debt reads, and a raw report there would be read as a malformed one.
+    # /quality-debt reads, and a raw report there would be read as a malformed one.
     parser.add_argument("--out", default=f"{MARKER}/layer-boundaries-findings.json",
                         help="where the raw report is written (default: %(default)s)")
     parser.add_argument("--findings", nargs="?", const=True, default=None,
-                        help="also write the common findings envelope for /design-debt "
+                        help="also write the common findings envelope for /quality-debt "
                              "(bare flag uses the default path)")
     parser.add_argument(
         "--update-baseline",

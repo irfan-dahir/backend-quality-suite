@@ -169,7 +169,7 @@ def main() -> int:
     print()
     print("This document is a stub until someone writes it:")
     print(f"  - delete the frontmatter block at the top of {rel} once it is authored;")
-    print(f"  - until then resolve.py exits 5 for {role!r} and design_debt.py counts it as debt.")
+    print(f"  - until then resolve.py exits 5 for {role!r} and quality_debt.py counts it as debt.")
     return 0
 
 

@@ -180,19 +180,19 @@ def main() -> int:
                "--all --check exits 1 when a mapped file is missing")
         manifest_path.write_text(original)
 
-        print("check: doctor and design_debt count the stub as debt, not coverage")
+        print("check: doctor and quality_debt count the stub as debt, not coverage")
         (root / ".backend-suite" / "profile.json").write_text(json.dumps(
             {"docs": {"manifest": ".backend-suite/docs.manifest.json"}}))
         doctor = run(BIN / "doctor.py", root)
         expect("flows" in doctor.stdout and "STUB" in doctor.stdout,
                "doctor names the stub role")
-        debt = run(BIN / "design_debt.py", root, "--json")
+        debt = run(BIN / "quality_debt.py", root, "--json")
         payload = json.loads(debt.stdout).get("docs", {})
-        expect(payload.get("stubs") == ["flows"], "design_debt lists the stub")
+        expect(payload.get("stubs") == ["flows"], "quality_debt lists the stub")
         # Four roles mapped, three written: the alias fixture's `entry-point`
         # is a fourth written document, and the stub is still excluded.
         expect(payload.get("written") == 3 and payload.get("mapped") == 4,
-               "design_debt excludes the stub from the written count")
+               "quality_debt excludes the stub from the written count")
 
     print()
     if FAILURES:

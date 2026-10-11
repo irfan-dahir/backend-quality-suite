@@ -212,7 +212,7 @@ from it.
 **If it doesn't**, you need to build the context layer first:
 
 ```
-/bootstrap-design-docs
+/bootstrap-api-docs
 ```
 
 This scaffolds the documents from templates. Two markers appear throughout:
@@ -224,7 +224,7 @@ Every `DECIDE` is genuinely yours. Working through them *is* building the contex
 layer, and it's the highest-value hour you'll spend on this — not overhead before
 the real work.
 
-> `/bootstrap-design-docs` is marked ⚪ **unverified** in the catalogue: nobody
+> `/bootstrap-api-docs` is marked ⚪ **unverified** in the catalogue: nobody
 > has confirmed an end-to-end run of it. It may work fine. Read what it produces
 > rather than trusting it.
 

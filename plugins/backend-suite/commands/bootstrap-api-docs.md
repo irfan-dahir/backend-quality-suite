@@ -1,11 +1,11 @@
 ---
-name: bootstrap-design-docs
+name: bootstrap-api-docs
 description: "Bootstrap a project's documentation layer one document at a time, by reverse-engineering what is already built and proposing each document for the human to accept or decline. The installer for a new project's documentation layer. Note: not yet verified against a real zero-docs project."
 invocation: explicit
 maturity: unverified
 ---
 
-# /bootstrap-design-docs
+# /bootstrap-api-docs
 
 > Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
 > `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
@@ -164,7 +164,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/scaffold_doc.py" <role>
 It writes the template with `status: stub` frontmatter and registers the role in
 `docs.manifest.json`. Then tell the human plainly what state the project is now
 in: the document **exists and is empty**, `resolve.py` exits 5 for that role, and
-`/design-debt` counts it as debt until the frontmatter block is deleted by
+`/quality-debt` counts it as debt until the frontmatter block is deleted by
 whoever authors it.
 
 If you already have enough reverse-engineered material to fill sections of it,

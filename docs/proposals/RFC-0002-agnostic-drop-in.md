@@ -301,7 +301,7 @@ every downstream audit — so the machine proposes it with its reasoning and
 acting on an unratified guess.
 
 An unknown or unsupported kind is a **refusal**, not a default to `app`. Guessing
-`app` on a library is what makes `/bootstrap-design-docs` emit an empty flows
+`app` on a library is what makes `/bootstrap-api-docs` emit an empty flows
 document today — the "clean vs. couldn't look" ambiguity the governing principle
 forbids.
 
@@ -416,7 +416,7 @@ Declined and stubbed are different states and need different codes:
 | **5** | stub | the document exists and is registered, but is **unwritten** |
 
 A stub is detected by `status: stub` frontmatter written at scaffold time and
-removed by whoever fills the document. `doctor.py` and `/design-debt` count
+removed by whoever fills the document. `doctor.py` and `/quality-debt` count
 stubs as outstanding work, not as coverage.
 
 **These three mechanisms — `status: stub`, exit 5, and stub-aware debt
@@ -488,7 +488,7 @@ and `CapabilityError` on a missing or stale snapshot rather than a clean report.
 | 2 | Version contract: `supportedProfileVersions`, checked in `doctor.py`/`resolve.py` | `profileVersion` is `const: 1` and **nothing** compares plugin↔profile version; skew degrades into a silently narrower audit | S |
 | 3 | Upward profile discovery (nearest `.backend-suite/`), optional workspace index | `resolve.py:58` hardcodes the repo-root profile; one adapter, one `source.root`. This repo itself has two plugins and no profile | M |
 | 4 | `schemaSyncedFrom` version+sha stamp, `sync_schema.py`, org sweep over `doctor --json` | The 2-repo drift check does not scale to 50. The sweep also derives `PROJECT_NAMES` (at the time a hardcoded one-name tuple at `audit_skill_paths.py:108`, since replaced by a hashed denylist), closing ROADMAP B3 and B5 | M |
-| 5 | `exceptions.json` entries require `reason`/`reviewedBy`/`expires`; counts surfaced in `/design-debt` | No expiry, reviewer, or cap today — an exception list is how audits get silenced permanently | M |
+| 5 | `exceptions.json` entries require `reason`/`reviewedBy`/`expires`; counts surfaced in `/quality-debt` | No expiry, reviewer, or cap today — an exception list is how audits get silenced permanently | M |
 
 Governance belongs in `house-style` (org floor) over `backend-suite`
 (universal). The existing two-plugin split is the right seam; no third layer.
@@ -614,7 +614,7 @@ diffs, not days.
 | `CONCEPTS.md` | Needs a new section distinguishing **survey** (derived) from **context layer** (authored). Without it the vocabulary collides on "context" |
 | RFC-0001 | Unaffected and still gated. §3b's provenance vocabulary is adjacent to RFC-0001's verification tiers but deliberately separate: one is "who decided this", the other "who checked it" |
 | Roadmap Workstream B | B2 (`/onboard-new-client` made real) is substantially this RFC. B3/B5 fall out of §3g #4 |
-| `/bootstrap-design-docs` | Needs rescoping to archetypes before it can be trusted; today it is app-shaped and `unverified` |
+| `/bootstrap-api-docs` | Needs rescoping to archetypes before it can be trusted; today it is app-shaped and `unverified` |
 | Security | Improved: §3g #1 shipped in #93. No new external surface |
 
 **Phasing.** Ship in this order, each independently useful:
@@ -701,7 +701,7 @@ Amended 2026-09-15, after the archetype × role scaffolding question surfaced:
 6. **A stub gets exit code 5, and counts as debt** (§3d-ii). A registered but
    unwritten document currently resolves as exit 0 and reads as coverage.
    `status: stub` frontmatter, exit 5, and stub-aware counting in `doctor.py`
-   and `/design-debt` are the three mechanisms that must exist before bulk
+   and `/quality-debt` are the three mechanisms that must exist before bulk
    scaffolding could ever be reconsidered.
 
 Amended again 2026-09-15, after three lifecycle/value research tracks:

@@ -390,7 +390,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", help="also write findings as JSON here")
     parser.add_argument("--findings", nargs="?", const=True, default=None,
-                        help="also write the common findings envelope for /design-debt "
+                        help="also write the common findings envelope for /quality-debt "
                              "(default .backend-suite/findings/api-consistency.json)")
     args = parser.parse_args()
 

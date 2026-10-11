@@ -331,7 +331,7 @@ def main() -> int:
     parser.add_argument("--dir", help="override the scanned tree (default: source.root)")
     parser.add_argument("--out", help="also write findings as JSON here")
     parser.add_argument("--findings", nargs="?", const=True, default=None,
-                        help="also write the common findings envelope for /design-debt "
+                        help="also write the common findings envelope for /quality-debt "
                              "(bare flag uses the default path)")
     args = parser.parse_args()
 

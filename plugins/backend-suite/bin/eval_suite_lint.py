@@ -517,7 +517,7 @@ def lint_empty_ranges(units: list[str], name: str) -> list[str]:
 
     Measured 2026-09-18: eight graders across five bootstrap cases were in this
     state, four of them the weight-5 headline assertion of their own case. The
-    whole of `bootstrap-design-docs-anti-loop-guard` -- four graders, 17 of its
+    whole of `bootstrap-api-docs-anti-loop-guard` -- four graders, 17 of its
     points, the entire reason the case exists -- had never once been evaluated.
     It does not move a delta, because it fails both arms equally, so nothing in
     a results summary distinguishes it from a case the plugin simply failed.

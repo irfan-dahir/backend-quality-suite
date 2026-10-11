@@ -292,7 +292,7 @@ def main() -> int:
                               "stale_framing fires (default 14)")
     parser.add_argument("--today", help="override today's date (YYYY-MM-DD), for tests")
     parser.add_argument("--findings", nargs="?", const=True, default=None,
-                        help="also write the common findings envelope for /design-debt "
+                        help="also write the common findings envelope for /quality-debt "
                              "(default .backend-suite/findings/proposal-status.json)")
     args = parser.parse_args()
 

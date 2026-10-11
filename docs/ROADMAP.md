@@ -53,7 +53,7 @@ avoids all of it.** As of 2026-08-10 that work is uncommitted and includes:
 | Area | Files |
 |---|---|
 | A unified findings model | `engine/findings.py`, plus 13 audit scripts modified to emit it |
-| Aggregation | `design_debt.py`, `/design-debt` — one per-category debt view |
+| Aggregation | `quality_debt.py`, `/quality-debt` — one per-category debt view |
 | Composition | `engine/chains.py`, `bin/chain.py`, `/run-chain`, `chain.schema.json` |
 | Triggering | `hooks/audit_on_edit.py`, `hooks.map.schema.json` |
 | Critique and capture | `design-critic`, `session-decisions`, `log-decision`, `capture-backlog` |

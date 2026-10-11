@@ -16,7 +16,7 @@
     },
     {
       "id": "doc-suite",
-      "skill": "bootstrap-design-docs",
+      "skill": "bootstrap-api-docs",
       "purpose": "Scaffold the doc-role suite the declared projectKind expects (api, api-standard, production-readiness, ...), reverse-engineered from the codebase where the content already exists.",
       "decisionPoint": "Is this a zero-docs project? A project whose expected roles already have documents skips this entirely.",
       "skipIf": "The expected roles for this projectKind already have documents.",
@@ -34,7 +34,7 @@
     },
     {
       "id": "baseline-debt",
-      "skill": "design-debt",
+      "skill": "quality-debt",
       "purpose": "Record where the project starts, so later runs show direction of travel rather than a number with nothing to compare against.",
       "checkpoint": false,
       "onFail": "skip"
