@@ -109,8 +109,15 @@ class RealRender(unittest.TestCase):
     def test_every_disabled_audit_is_named_with_a_reason(self):
         registry, problems = sc.disabled_detail()
         self.assertEqual(problems, [])
-        self.assertTrue(registry, "the disabled registry is empty — if that is real, this "
-                                  "test should be updated deliberately, not silently")
+        # Deliberately updated (repo re-domaining), not silently weakened: the
+        # registry was emptied when both of its design audits were deleted. An
+        # entry here is a measured disabled audit the page must name with its
+        # reason; with the registry empty the naming requirement is vacuous —
+        # and the loop below re-engages the moment a real entry returns.
+        self.assertEqual(registry, {},
+                         "the disabled registry is empty. If a real entry has "
+                         "returned, assert the page names it here rather than "
+                         "deleting this assertion.")
         for stem, entry in registry.items():
             self.assertIn(entry["reason"].split("(")[0].strip(), self.text)
 
@@ -151,7 +158,7 @@ class Refusals(unittest.TestCase):
 
     def test_an_agent_with_a_writing_tool_is_a_problem(self):
         original = sc.agent_tools
-        sc.agent_tools = lambda: dict(original(), **{"design-critic": "Read, Edit"})
+        sc.agent_tools = lambda: dict(original(), **{"mock-api-auditor": "Read, Edit"})
         try:
             _, problems = sc.render(catalog.collect()[0])
         finally:
@@ -287,9 +294,24 @@ class HtmlGuide(unittest.TestCase):
         self.assertEqual(sc.main(["--html", "--check"]), 0)
 
     def test_a_disabled_audit_the_page_never_names_is_a_problem(self):
-        stripped = self.template.replace("/audit-accessibility", "/audit-redacted")
-        _, problems = sc.render_html(self.data, stripped)
-        self.assertTrue(any("never names it" in p for p in problems), problems)
+        # Planted at the audits() seam rather than read from the real registry:
+        # the registry is legitimately empty since the re-domaining, and a check
+        # that only fires when something happens to be in it would be a check
+        # that never fires. The control is that the SAME planted row, named in
+        # the page, produces no problem.
+        original = sc.audits
+        sc.audits = lambda: ([{"name": "audit_redacted", "slug": "audit-redacted",
+                               "state": "disabled", "reason": "measured at 0.4",
+                               "script": "bin/audit_redacted.py"}], [])
+        try:
+            _, problems = sc.render_html(self.data, self.template)
+            self.assertTrue(any("never names it" in p for p in problems), problems)
+            named = self.template.replace(
+                "<!--gen:n-commands-->", "<code>/audit-redacted</code><!--gen:n-commands-->", 1)
+            _, control = sc.render_html(self.data, named)
+            self.assertFalse(any("never names it" in p for p in control), control)
+        finally:
+            sc.audits = original
 
 
 if __name__ == "__main__":

@@ -58,8 +58,6 @@ def main() -> int:
 
     print("check: the allowlist actually loaded has the entries this gate depends on")
     allowlist = sr.load_allowlist()
-    expect("repair_tokens.py" in allowlist,
-           "repair_tokens.py is a bare-script allowlist entry")
     expect("generate_openapi.py" in allowlist,
            "generate_openapi.py is a bare-script allowlist entry")
     expect("generate_openapi.py --check" not in allowlist,
@@ -72,11 +70,11 @@ def main() -> int:
                f"{invocation}: r2 attestation is substantive, not a rubber stamp")
 
     print("check: coverage respects bare-vs-flagged invocation keying")
-    expect(sr._covered("repair_tokens.py", "--out t.patch", allowlist),
-           "a bare-script entry covers every flag of that script")
     expect(sr._covered("generate_openapi.py", "", allowlist),
            "generate_openapi.py with no flag is covered (writes only its own "
            "single derived artifact — see the entry's r1)")
+    expect(sr._covered("generate_openapi.py", "--out t.patch", allowlist),
+           "a bare-script entry covers every flag of that script")
     expect(sr._covered("generate_openapi.py", "--check", allowlist),
            "generate_openapi.py --check is covered too")
     expect(not sr._covered("sync_mock_api.py", "", allowlist),

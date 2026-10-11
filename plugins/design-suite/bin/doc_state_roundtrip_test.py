@@ -79,21 +79,21 @@ def main() -> int:
         print("check: control — an authored document resolves 0 before anything is written")
         base = run(RESOLVE, root, "decisions")
         expect(base.returncode == 0, "an authored, mapped document exits 0")
-        unknown = run(RESOLVE, root, "design")
+        unknown = run(RESOLVE, root, "rfc")
         expect(unknown.returncode == 2,
                "a role that is neither scaffolded nor declined exits 2, not 4 or 5")
 
         print("check: scaffold_doc writes state that resolve.py reads as a stub (exit 5)")
-        wrote = run(SCAFFOLD, root, "design")
+        wrote = run(SCAFFOLD, root, "rfc")
         expect(wrote.returncode == 0, f"scaffold_doc exits 0: {wrote.stderr.strip()[:200]}")
         # Registration is half the round trip: an unregistered stub resolves to
         # nothing at all, which reads as a role nobody has looked at.
-        mapped = (manifest(root).get("roles") or {}).get("design")
+        mapped = (manifest(root).get("roles") or {}).get("rfc")
         expect(isinstance(mapped, str), f"the role is registered in the manifest, got {mapped!r}")
         expect(mapped is not None and (root / mapped).is_file(),
                "the registered path is the file it actually wrote")
 
-        got = run(RESOLVE, root, "design")
+        got = run(RESOLVE, root, "rfc")
         expect(got.returncode == 5,
                f"the reader sees the written stub as exit 5, got {got.returncode}")
         expect(got.stdout.strip() == mapped,
@@ -104,12 +104,12 @@ def main() -> int:
                "the authored neighbour still exits 0 after a stub is scaffolded")
 
         print("check: decline_doc writes state that resolve.py reads as declined (exit 4)")
-        reason = "single-file repository, motion lives in the design system"
-        declined = run(DECLINE, root, "motion", "--reason", reason, "--by", "lead")
+        reason = "this project publishes no public roadmap; the backlog carries the same information"
+        declined = run(DECLINE, root, "public-roadmap", "--reason", reason, "--by", "lead")
         expect(declined.returncode == 0,
                f"decline_doc exits 0: {declined.stderr.strip()[:200]}")
 
-        got = run(RESOLVE, root, "motion")
+        got = run(RESOLVE, root, "public-roadmap")
         expect(got.returncode == 4,
                f"the reader sees the written decline as exit 4, got {got.returncode}")
         expect(reason in got.stdout,
@@ -119,13 +119,13 @@ def main() -> int:
         print("check: the two states stay distinct")
         # If the writers shared a key, or the reader checked one before the
         # other, a scaffolded role could start answering 4 and a declined one 5.
-        expect(run(RESOLVE, root, "design").returncode == 5,
+        expect(run(RESOLVE, root, "rfc").returncode == 5,
                "the scaffolded role still answers 5 after a decline was recorded")
         expect(run(RESOLVE, root, "decisions").returncode == 0,
                "the authored document still answers 0 after both writes")
 
         print("check: a writer refuses to overwrite the other's state")
-        clash = run(SCAFFOLD, root, "motion")
+        clash = run(SCAFFOLD, root, "public-roadmap")
         expect(clash.returncode == 1,
                "scaffolding a declined role is refused — writing over it would "
                "silently reverse a recorded decision")

@@ -49,7 +49,7 @@ class HarnessTest(unittest.TestCase):
         after = snapshot(self.p)
         changed = {k for k in after if before.get(k) != after[k]}
         self.assertEqual(changed, planned)
-        self.assertIn(".agents/skills/audit-tokens/SKILL.md", planned)
+        self.assertIn(".agents/skills/survey/SKILL.md", planned)
 
     def test_user_content_preserved_and_idempotent(self):
         run(self.p, "--apply")
@@ -81,7 +81,7 @@ class HarnessTest(unittest.TestCase):
         self.assertEqual(run(self.p, "--check").returncode, 1)
         run(self.p, "--apply")
         self.assertEqual(run(self.p, "--check").returncode, 0)
-        s = self.p / ".agents/skills/audit-tokens/SKILL.md"
+        s = self.p / ".agents/skills/survey/SKILL.md"
         s.write_text(s.read_text() + "drift\n")
         self.assertEqual(run(self.p, "--check").returncode, 1)
         (self.p / ".vscode/mcp.json").write_text('{ // comment\n "servers": {} }')
@@ -116,10 +116,10 @@ class HarnessTest(unittest.TestCase):
         for s in skills:
             t = s.read_text()
             self.assertNotIn("CLAUDE_PLUGIN_ROOT", t, s)
-        add = (self.p / ".agents/skills/add-asset/SKILL.md").read_text()
+        add = (self.p / ".agents/skills/upgrade-apply/SKILL.md").read_text()
         self.assertNotIn("disable-model-invocation", add)
-        self.assertIn("only when the user directly asks", add)
-        aud = (self.p / ".agents/skills/audit-tokens/SKILL.md").read_text()
+        self.assertIn("only when explicitly asked", add)
+        aud = (self.p / ".agents/skills/survey/SKILL.md").read_text()
         self.assertNotIn("only when the user directly asks", aud)
 
     def test_claude_files_only_with_flag(self):

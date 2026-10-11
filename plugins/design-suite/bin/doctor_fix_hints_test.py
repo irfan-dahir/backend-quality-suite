@@ -104,7 +104,7 @@ def main() -> int:
     print("check: a fixHint naming a vetted plugin script is NOT flagged")
     out = run({"entries": [
         {"name": "good-fix", "glob": "*.dart", "command": ["echo", "hi"],
-         "fixHint": "${CLAUDE_PLUGIN_ROOT}/bin/repair_tokens.py"},
+         "fixHint": "${CLAUDE_PLUGIN_ROOT}/bin/generate_openapi.py"},
     ]})
     expect(out.returncode == 0,
            "doctor exits 0 when the fixHint names an allowlisted script")

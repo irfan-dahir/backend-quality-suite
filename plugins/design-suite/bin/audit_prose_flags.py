@@ -403,7 +403,7 @@ def main() -> int:
     # adding an envelope (findings.py's ADDITIVE rule).
     records: list[dict] = []
     with tempfile.TemporaryDirectory() as tmp:
-        probe = build_fixture.build("app", Path(tmp) / "probe", force=True)
+        probe = build_fixture.build("service", Path(tmp) / "probe", force=True)
         helps: dict[Path, str | None] = {}
         handling: dict[Path, tuple[str, str]] = {}
         for md, lineno, script, flag in pairs:
