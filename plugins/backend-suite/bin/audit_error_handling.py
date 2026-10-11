@@ -396,6 +396,7 @@ def main() -> int:
             "error_handling",
             F.from_records("error_handling", findings,
                            category_key="check", severity_key="severity"),
+            scanned=len(files),
         )
 
     critical = [f for f in findings if f["severity"] == "critical"]
