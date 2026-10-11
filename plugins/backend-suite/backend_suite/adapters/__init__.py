@@ -94,10 +94,10 @@ def for_project(repo: Path):
 
 # Source suffixes of stacks the suite knows exist but has no language adapter for
 # yet, so a file of one under the scan root is counted as "present and unscanned"
-# rather than simply not noticed. Empty for now: the one shipped adapter (php)
-# globs every PHP suffix it knows about, and a suffix belongs here only when a
-# stack audits it through a DIFFERENT adapter — adding an adapter widens the
-# derived set below without editing this line.
+# rather than simply not noticed. Empty for now: every suffix the shipped
+# adapters (php, node) glob is already covered, and a suffix belongs here only
+# when a stack audits it through a DIFFERENT adapter — adding an adapter widens
+# the derived set below without editing this line.
 KNOWN_UNADAPTED_SUFFIXES = ()
 
 

@@ -97,12 +97,16 @@ def no_conventional_root(tmp: Path) -> Path:
 
 
 def frontend_only(tmp: Path) -> Path:
+    """A Dart project: pubspec.yaml maps to the `dart` adapter, which this
+    plugin does not ship (the design-suite-era UI adapter left with the re-domain).
+    This is the fixture for the "mapped adapter is not present" control — a
+    package.json fixture can no longer serve, because `node` now ships and is
+    mapped to that stack."""
     root = tmp / "frontend_only"
-    write(root, "package.json",
-          json.dumps({"name": "fixture/web", "dependencies": {"react": "18"}}))
-    (root / "src").mkdir(parents=True)
+    write(root, "pubspec.yaml", "name: fixture_web\n")
+    (root / "lib").mkdir(parents=True)
     for i in range(10):
-        write(root, f"src/C{i}.tsx", "export const C = () => null;\n")
+        write(root, f"lib/C{i}.dart", "class C {}\n")
     return root
 
 
@@ -145,10 +149,10 @@ def main() -> int:
         print("CONTROL: a stack whose adapter does not ship leaves the lang a TODO")
         r = survey(frontend_only(t))
         expect(r["stack"]["candidateAdapter"] is None,
-               "tsx is mapped but not present — no adapter proposed")
+               "dart is mapped but not present — no adapter proposed")
         reasons = " ".join(u["why"] for u in r["couldNotDetermine"]
                            if u["field"] == "adapters.lang")
-        expect("tsx" in reasons and "not present in this plugin" in reasons,
+        expect("dart" in reasons and "not present in this plugin" in reasons,
                f"the gap names the missing adapter (got {reasons!r})")
 
         print("e2e: init --from-survey seeds the php profile, and a live audit runs")
