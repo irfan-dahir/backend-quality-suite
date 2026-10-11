@@ -324,6 +324,78 @@ def check_no_provenance_prose(fixture: Path) -> None:
                f"{fixture.name}: profile carries a verifiedAgainst")
 
 
+def check_express(fixture: Path) -> None:
+    """An Express fixture has no .backend-suite/ at all."""
+    expect(not (fixture / ".backend-suite").is_dir(),
+           f"{fixture.name}: has .backend-suite/ — should be zero-state")
+    expect((fixture / "package.json").is_file(),
+           f"{fixture.name}: missing package.json")
+    expect((fixture / "src" / "app.ts").is_file(),
+           f"{fixture.name}: missing src/app.ts")
+    expect((fixture / "src" / "controllers" / "HealthController.ts").is_file(),
+           f"{fixture.name}: missing HealthController")
+    expect((fixture / "src" / "controllers" / "OrderController.ts").is_file(),
+           f"{fixture.name}: missing OrderController")
+    expect((fixture / "src" / "domain" / "Order.ts").is_file(),
+           f"{fixture.name}: missing domain/Order")
+
+
+def check_nestjs(fixture: Path) -> None:
+    """A NestJS fixture has no .backend-suite/ at all."""
+    expect(not (fixture / ".backend-suite").is_dir(),
+           f"{fixture.name}: has .backend-suite/ — should be zero-state")
+    expect((fixture / "package.json").is_file(),
+           f"{fixture.name}: missing package.json")
+    expect((fixture / "nest-cli.json").is_file(),
+           f"{fixture.name}: missing nest-cli.json")
+    expect((fixture / "src" / "main.ts").is_file(),
+           f"{fixture.name}: missing src/main.ts")
+    expect((fixture / "src" / "app.module.ts").is_file(),
+           f"{fixture.name}: missing app.module.ts")
+    expect((fixture / "src" / "orders" / "orders.controller.ts").is_file(),
+           f"{fixture.name}: missing orders controller")
+    expect((fixture / "src" / "orders" / "orders.service.ts").is_file(),
+           f"{fixture.name}: missing orders service")
+    expect((fixture / "src" / "orders" / "orders.entity.ts").is_file(),
+           f"{fixture.name}: missing orders entity")
+    expect((fixture / "src" / "auth" / "jwt-auth.guard.ts").is_file(),
+           f"{fixture.name}: missing auth guard")
+
+
+def check_symfony(fixture: Path) -> None:
+    """A Symfony fixture has no .backend-suite/ at all."""
+    expect(not (fixture / ".backend-suite").is_dir(),
+           f"{fixture.name}: has .backend-suite/ — should be zero-state")
+    expect((fixture / "composer.json").is_file(),
+           f"{fixture.name}: missing composer.json")
+    expect((fixture / "src" / "Kernel.php").is_file(),
+           f"{fixture.name}: missing Kernel.php")
+    expect((fixture / "config" / "routes.yaml").is_file(),
+           f"{fixture.name}: missing routes.yaml")
+    expect((fixture / "config" / "services.yaml").is_file(),
+           f"{fixture.name}: missing services.yaml")
+    expect((fixture / "config" / "security.yaml").is_file(),
+           f"{fixture.name}: missing security.yaml")
+    expect((fixture / "src" / "Controller" / "DefaultController.php").is_file(),
+           f"{fixture.name}: missing DefaultController")
+    expect((fixture / "src" / "Controller" / "OrderController.php").is_file(),
+           f"{fixture.name}: missing OrderController")
+    expect((fixture / "src" / "Service" / "OrderService.php").is_file(),
+           f"{fixture.name}: missing OrderService")
+    expect((fixture / "src" / "Form" / "OrderType.php").is_file(),
+           f"{fixture.name}: missing OrderType")
+    expect((fixture / "src" / "Entity" / "Order.php").is_file(),
+           f"{fixture.name}: missing Entity/Order")
+    expect((fixture / "src" / "Repository" / "OrderRepository.php").is_file(),
+           f"{fixture.name}: missing OrderRepository")
+    expect((fixture / "src" / "Security" / "OrderVoter.php").is_file(),
+           f"{fixture.name}: missing OrderVoter")
+    expect((fixture / "src" / "Twig" / "AppExtension.php").is_file(),
+           f"{fixture.name}: missing Twig/AppExtension")
+    expect((fixture / "templates" / "base.html.twig").is_file(),
+           f"{fixture.name}: missing base template")
+
+
 CHECKS = {
     "zero-state": check_zero_state,
     "service": check_service,
@@ -331,6 +403,9 @@ CHECKS = {
     "library-declared": check_library_declared,
     "undeclared-kind": check_undeclared_kind,
     "pre-ratified": check_pre_ratified,
+    "express": check_express,
+    "nestjs": check_nestjs,
+    "symfony": check_symfony,
 }
 
 

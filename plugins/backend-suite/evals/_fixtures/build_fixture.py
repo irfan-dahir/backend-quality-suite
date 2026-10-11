@@ -86,6 +86,10 @@ APP_MANIFEST = "composer.json"
 DS_MANIFEST = "composer.json"
 DS_COMPONENT_GLOB = "src/*.php"
 
+# Node.js fixtures
+NODE_APP_MANIFEST = "package.json"
+NODE_DS_MANIFEST = "package.json"
+
 
 def _run(args: list[str], cwd: Path | None = None) -> None:
     """Run one of the real tools, or die naming it.
@@ -424,6 +428,446 @@ def build_pre_ratified(root: Path) -> None:
     _edit_json(root / ".backend-suite/profile.json", mutate)
 
 
+def _symfony_sources(root: Path) -> None:
+    """A Symfony application with routes, controllers, services, forms, entities, voters, and Twig."""
+    _write(root, "README.md", "# Example Symfony App\n\nA small Symfony HTTP API.\n")
+    _write(root, "composer.json",
+           "{\n"
+           '  "name": "example/symfony-app",\n'
+           '  "description": "A small Symfony HTTP API.",\n'
+           '  "require": {\n'
+           '    "php": "^8.1",\n'
+           '    "symfony/framework-bundle": "^6.4",\n'
+           '    "symfony/orm-pack": "^2.0",\n'
+           '    "symfony/form": "^6.4",\n'
+           '    "symfony/security-bundle": "^6.4",\n'
+           '    "symfony/twig-bundle": "^6.4"\n'
+           "  },\n"
+           '  "autoload": {\n'
+           '    "psr-4": {\n'
+           '      "App\\\\": "src/"\n'
+           "    }\n"
+           "  }\n"
+           "}\n")
+    # Routing config
+    _write(root, "config/routes.yaml",
+           "index:\n"
+           "    path: /\n"
+           "    controller: App\\Controller\\DefaultController::index\n"
+           "orders:\n"
+           "    path: /orders\n"
+           "    controller: App\\Controller\\OrderController::index\n")
+    _write(root, "config/services.yaml",
+           "services:\n"
+           "    _defaults:\n"
+           "        autowire: true\n"
+           "        autoconfigure: true\n")
+    _write(root, "config/security.yaml",
+           "security:\n"
+           "    firewalls:\n"
+           "        main:\n"
+           "            lazy: true\n"
+           "    access_control: []\n")
+    # Kernel
+    _write(root, "src/Kernel.php",
+           "<?php\n"
+           "\n"
+           "namespace App;\n"
+           "\n"
+           "use Symfony\\Component\\HttpKernel\\Kernel;\n"
+           "\n"
+           "class Kernel extends Kernel\n"
+           "{\n"
+           "}\n")
+    # Controller with #[Route] attribute
+    _write(root, "src/Controller/DefaultController.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Controller;\n"
+           "\n"
+           "use Symfony\\Component\\Routing\\Annotation\\Route;\n"
+           "\n"
+           "class DefaultController\n"
+           "{\n"
+           "    #[Route('/', name: 'index')]\n"
+           "    public function index()\n"
+           "    {\n"
+           "        return ['service' => 'symfony'];\n"
+           "    }\n"
+           "}\n")
+    _write(root, "src/Controller/OrderController.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Controller;\n"
+           "\n"
+           "use App\\Entity\\Order;\n"
+           "use Symfony\\Component\\Routing\\Annotation\\Route;\n"
+           "\n"
+           "class OrderController\n"
+           "{\n"
+           "    #[Route('/orders', name: 'orders', methods: ['GET'])]\n"
+           "    public function index()\n"
+           "    {\n"
+           "        return [];\n"
+           "    }\n"
+           "}\n")
+    # Service with #[AsService]
+    _write(root, "src/Service/OrderService.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Service;\n"
+           "\n"
+           "use Symfony\\Component\\DependencyInjection\\Attribute\\AsService;\n"
+           "\n"
+           "#[AsService]\n"
+           "class OrderService\n"
+           "{\n"
+           "    public function getOrders(): array\n"
+           "    {\n"
+           "        return [];\n"
+           "    }\n"
+           "}\n")
+    # Form Type
+    _write(root, "src/Form/OrderType.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Form;\n"
+           "\n"
+           "use Symfony\\Component\\Form\\AbstractType;\n"
+           "use Symfony\\Component\\Form\\FormBuilderInterface;\n"
+           "use Symfony\\Component\\OptionsResolver\\OptionsResolver;\n"
+           "\n"
+           "class OrderType extends AbstractType\n"
+           "{\n"
+           "    public function buildForm(FormBuilderInterface \$builder, array \$options): void\n"
+           "    {\n"
+           "        \$builder->add('name');\n"
+           "    }\n"
+           "\n"
+           "    public function configureOptions(OptionsResolver \$resolver): void\n"
+           "    {\n"
+           "        \$resolver->setDefaults(['data_class' => 'App\\Entity\\Order']);\n"
+           "    }\n"
+           "}\n")
+    # Doctrine Entity
+    _write(root, "src/Entity/Order.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Entity;\n"
+           "\n"
+           "use Doctrine\\ORM\\Mapping as ORM;\n"
+           "\n"
+           "#[ORM\\Entity]\n"
+           "#[ORM\\Table(name: 'orders')]\n"
+           "class Order\n"
+           "{\n"
+           "    #[ORM\\Id]\n"
+           "    #[ORM\\GeneratedValue]\n"
+           "    #[ORM\\Column]\n"
+           "    private ?int \$id = null;\n"
+           "\n"
+           "    #[ORM\\Column(length: 255)]\n"
+           "    private string \$name;\n"
+           "\n"
+           "    public function getId(): ?int { return \$this->id; }\n"
+           "    public function getName(): string { return \$this->name; }\n"
+           "    public function setName(string \$name): self { \$this->name = \$name; return \$this; }\n"
+           "}\n")
+    # Doctrine Repository
+    _write(root, "src/Repository/OrderRepository.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Repository;\n"
+           "\n"
+           "use App\\Entity\\Order;\n"
+           "use Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository;\n"
+           "use Doctrine\\Persistence\\ManagerRegistry;\n"
+           "\n"
+           "class OrderRepository extends ServiceEntityRepository\n"
+           "{\n"
+           "    public function __construct(ManagerRegistry \$registry)\n"
+           "    {\n"
+           "        parent::__construct(\$registry, Order::class);\n"
+           "    }\n"
+           "}\n")
+    # Security Voter
+    _write(root, "src/Security/OrderVoter.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Security;\n"
+           "\n"
+           "use Symfony\\Component\\Security\\Core\\Authorization\\Voter\\Voter;\n"
+           "use Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface;\n"
+           "\n"
+           "class OrderVoter extends Voter\n"
+           "{\n"
+           "    protected function voteOnAttribute(string \$attribute, \$subject, TokenInterface \$token): bool\n"
+           "    {\n"
+           "        return true;\n"
+           "    }\n"
+           "}\n")
+    # Twig Extension
+    _write(root, "src/Twig/AppExtension.php",
+           "<?php\n"
+           "\n"
+           "namespace App\\Twig;\n"
+           "\n"
+           "use Twig\\Extension\\AbstractExtension;\n"
+           "use Twig\\TwigFunction;\n"
+           "\n"
+           "class AppExtension extends AbstractExtension\n"
+           "{\n"
+           "    public function getFunctions(): array\n"
+           "    {\n"
+           "        return [new TwigFunction('my_function', fn() => 'hello')];\n"
+           "    }\n"
+           "}\n")
+    # Template
+    _write(root, "templates/base.html.twig",
+           "{% block body %}{% endblock %}\n")
+
+
+# --------------------------------------------------------------------------- #
+# Node.js source shapes
+# --------------------------------------------------------------------------- #
+
+def _express_sources(root: Path) -> None:
+    """An Express application with routes, controllers, and a domain."""
+    _write(root, "README.md", "# Example Express Service\n\nA small HTTP API: routes, controllers and a domain.\n")
+    _write(root, NODE_APP_MANIFEST,
+            '{\n'
+            '  "name": "example/express-service",\n'
+            '  "description": "A small HTTP API: routes, controllers and a domain.",\n'
+            '  "dependencies": {\n'
+            '    "express": "^4.18.0",\n'
+            '    "zod": "^3.22.0"\n'
+            "  },\n"
+            '  "devDependencies": {\n'
+            '    "@types/express": "^4.17.0",\n'
+            '    "typescript": "^5.0.0"\n'
+            "  }\n"
+            '}\n')
+    # Routing: Express app with routes
+    _write(root, "src/app.ts",
+            "import express from 'express';\n"
+            "import { OrderController } from './controllers/OrderController';\n"
+            "import { HealthController } from './controllers/HealthController';\n"
+            "import { z } from 'zod';\n"
+            "\n"
+            "const app = express();\n"
+            "app.use(express.json());\n"
+            "\n"
+            "app.get('/health', (req, res) => new HealthController().index(req, res));\n"
+            "app.get('/orders', (req, res) => new OrderController().index(req, res));\n"
+            "app.get('/orders/:id', (req, res) => new OrderController().show(req, res));\n"
+            "\n"
+            "export default app;\n")
+    _write(root, "src/controllers/HealthController.ts",
+            "import { Request, Response } from 'express';\n"
+            "\n"
+            "export class HealthController\n"
+            "{\n"
+            "    index(req: Request, res: Response): void\n"
+            "    {\n"
+            "        res.json({ service: 'express' });\n"
+            "    }\n"
+            "}\n")
+    _write(root, "src/controllers/OrderController.ts",
+            "import { Request, Response } from 'express';\n"
+            "import { Order } from '../domain/Order';\n"
+            "import { z } from 'zod';\n"
+            "\n"
+            "export class OrderController\n"
+            "{\n"
+            "    index(req: Request, res: Response): void\n"
+            "    {\n"
+            "        res.json([]);\n"
+            "    }\n"
+            "\n"
+            "    show(req: Request, res: Response): void\n"
+            "    {\n"
+            "        res.json(new Order(req.params.id));\n"
+            "    }\n"
+            "}\n")
+    _write(root, "src/domain/Order.ts",
+            "export class Order\n"
+            "{\n"
+            "    constructor(public readonly id: string)\n"
+            "    {\n"
+            "    }\n"
+            "}\n")
+
+
+def _nestjs_sources(root: Path) -> None:
+    """A NestJS application with controllers, services, modules, guards, and DTOs."""
+    _write(root, "README.md", "# Example NestJS App\n\nA small NestJS HTTP API.\n")
+    _write(root, NODE_APP_MANIFEST,
+            '{\n'
+            '  "name": "example/nestjs-app",\n'
+            '  "description": "A small NestJS HTTP API.",\n'
+            '  "dependencies": {\n'
+            '    "@nestjs/common": "^10.0.0",\n'
+            '    "@nestjs/core": "^10.0.0",\n'
+            '    "@nestjs/platform-express": "^10.0.0",\n'
+            '    "reflect-metadata": "^0.2.0",\n'
+            '    "rxjs": "^7.8.0",\n'
+            '    "zod": "^3.22.0",\n'
+            '    "@nestjs/swagger": "^7.0.0",\n'
+            '    "@nestjs/passport": "^10.0.0",\n'
+            '    "passport": "^0.7.0",\n'
+            '    "passport-jwt": "^4.0.0",\n'
+            '    "class-validator": "^0.14.0",\n'
+            '    "class-transformer": "^0.5.0"\n'
+            "  },\n"
+            '  "devDependencies": {\n'
+            '    "@nestjs/cli": "^10.0.0",\n'
+            '    "typescript": "^5.0.0"\n'
+            "  }\n"
+            '}\n')
+    # nest-cli.json
+    _write(root, "nest-cli.json",
+            '{\n'
+            '  "$schema": "https://json.schemastore.org/nest-cli",\n'
+            '  "collection": "@nestjs/schematics",\n'
+            '  "sourceRoot": "src",\n'
+            '  "compilerOptions": {\n'
+            '    "deleteOutDir": true\n'
+            "  }\n"
+            '}\n')
+    # Main entry
+    _write(root, "src/main.ts",
+            "import { NestFactory } from '@nestjs/core';\n"
+            "import { AppModule } from './app.module';\n"
+            "\n"
+            "async function bootstrap() {\n"
+            "    const app = await NestFactory.create(AppModule);\n"
+            "    await app.listen(3000);\n"
+            "}\n"
+            "bootstrap();\n")
+    # App Module
+    _write(root, "src/app.module.ts",
+            "import { Module } from '@nestjs/common';\n"
+            "import { OrdersModule } from './orders/orders.module';\n"
+            "\n"
+            "@Module({\n"
+            "    imports: [OrdersModule],\n"
+            "})\n"
+            "export class AppModule {}\n")
+    # Orders Module
+    _write(root, "src/orders/orders.module.ts",
+            "import { Module } from '@nestjs/common';\n"
+            "import { OrdersController } from './orders.controller';\n"
+            "import { OrdersService } from './orders.service';\n"
+            "\n"
+            "@Module({\n"
+            "    controllers: [OrdersController],\n"
+            "    providers: [OrdersService],\n"
+            "})\n"
+            "export class OrdersModule {}\n")
+    # Controller
+    _write(root, "src/orders/orders.controller.ts",
+            "import { Controller, Get, Param, UseGuards, Inject } from '@nestjs/common';\n"
+            "import { OrdersService } from './orders.service';\n"
+            "import { Order } from './orders.entity';\n"
+            "import { JwtAuthGuard } from '../auth/jwt-auth.guard';\n"
+            "import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';\n"
+            "\n"
+            "@ApiTags('orders')\n"
+            "@Controller('orders')\n"
+            "export class OrdersController\n"
+            "{\n"
+            "    constructor(private readonly service: OrdersService) {}\n"
+            "\n"
+            "    @Get()\n"
+            "    @UseGuards(JwtAuthGuard)\n"
+            "    @ApiOperation({ summary: 'List all orders' })\n"
+            "    @ApiResponse({ status: 200, description: 'List of orders', type: [Order] })\n"
+            "    index(): Order[]\n"
+            "    {\n"
+            "        return this.service.findAll();\n"
+            "    }\n"
+            "\n"
+            "    @Get(':id')\n"
+            "    @UseGuards(JwtAuthGuard)\n"
+            "    show(@Param('id') id: string): Order\n"
+            "    {\n"
+            "        return this.service.findOne(id);\n"
+            "    }\n"
+            "}\n")
+    # Service
+    _write(root, "src/orders/orders.service.ts",
+            "import { Injectable, Inject } from '@nestjs/common';\n"
+            "import { Order } from './orders.entity';\n"
+            "\n"
+            "@Injectable()\n"
+            "export class OrdersService\n"
+            "{\n"
+            "    private readonly cache = new Map<string, Order>();\n"
+            "\n"
+            "    findAll(): Order[]\n"
+            "    {\n"
+            "        return [];\n"
+            "    }\n"
+            "\n"
+            "    findOne(id: string): Order\n"
+            "    {\n"
+            "        return new Order(id);\n"
+            "    }\n"
+            "}\n")
+    # Entity
+    _write(root, "src/orders/orders.entity.ts",
+            "import { ApiProperty } from '@nestjs/swagger';\n"
+            "import { IsString, IsNotEmpty } from 'class-validator';\n"
+            "import { z } from 'zod';\n"
+            "\n"
+            "export const orderSchema = z.object({\n"
+            "    id: z.string(),\n"
+            "});\n"
+            "\n"
+            "export class Order\n"
+            "{\n"
+            "    @ApiProperty()\n"
+            "    @IsString()\n"
+            "    @IsNotEmpty()\n"
+            "    id: string;\n"
+            "\n"
+            "    constructor(id: string)\n"
+            "    {\n"
+            "        this.id = id;\n"
+            "    }\n"
+            "}\n")
+    # Auth Guard
+    _write(root, "src/auth/jwt-auth.guard.ts",
+            "import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';\n"
+            "import { Observable } from 'rxjs';\n"
+            "\n"
+            "@Injectable()\n"
+            "export class JwtAuthGuard implements CanActivate\n"
+            "{\n"
+            "    canActivate(\n"
+            "        context: ExecutionContext,\n"
+            "    ): boolean | Promise<boolean> | Observable<boolean>\n"
+            "    {\n"
+            "        return true;\n"
+            "    }\n"
+            "}\n")
+
+
+def _build_express(root: Path) -> None:
+    """An Express application fixture with routing, models, validation, middleware."""
+    _express_sources(root)
+
+
+def _build_nestjs(root: Path) -> None:
+    """A NestJS application fixture with routing, DI, validation, guards, OpenAPI."""
+    _nestjs_sources(root)
+
+
+def build_symfony(root: Path) -> None:
+    """A Symfony application fixture with all capabilities."""
+    _symfony_sources(root)
+
+
 FIXTURES = {
     "zero-state": build_zero_state,
     "service": build_service,
@@ -431,6 +875,9 @@ FIXTURES = {
     "library-declared": build_library_declared,
     "undeclared-kind": build_undeclared_kind,
     "pre-ratified": build_pre_ratified,
+    "symfony": build_symfony,
+    "express": _build_express,
+    "nestjs": _build_nestjs,
 }
 
 

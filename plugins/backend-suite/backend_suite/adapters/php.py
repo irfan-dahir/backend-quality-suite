@@ -685,6 +685,199 @@ LARAVEL_ROUTING_SIGNATURES = (
 )
 
 
+# --------------------------------------------------------------------------- #
+# Symfony capability signatures
+# --------------------------------------------------------------------------- #
+
+# Symfony routing signatures - covers annotations, YAML, XML routing configs
+# PHP 8 attributes: #[Route], #[Get], #[Post], etc.
+# Doctrine annotations: @Route, @Get, @Post, etc.
+# YAML routing: config/routes.yaml, config/routes/*.yaml
+# XML routing: config/routes.xml, config/routes/*.xml
+
+_SYMFONY_ROUTE_ATTR = r"(?:@|#\[)(?:Route|Get|Post|Put|Patch|Delete|Head|Options|Fallback|Method)\b"
+_SYMFONY_ROUTE_GROUP = r"(?:#\[Route\(|@Route\()"
+_SYMFONY_YAML_ROUTING = r"(?:config/routes\.yaml|config/routes/.*\.yaml|routing\.yaml)"
+_SYMFONY_XML_ROUTING = r"(?:config/routes\.xml|config/routes/.*\.xml|routing\.xml)"
+_SYMFONY_CONTROLLER_ATTR = r"(?:#\[|@)(?:AsController|Controller)\b"
+_SYMFONY_ROUTE_PREFIX = r"(?:#\[Route\(|@Route\()\s*['\"][^'\"]*['\"]\s*,"
+_SYMFONY_ROUTE_NAME = r"(?:name\s*=>\s*['\"][^'\"]*['\"])"
+
+SYMFONY_ROUTING_SIGNATURES = (
+    # PHP 8 attribute routing
+    re.compile(r"#\[Route\b"),
+    re.compile(r"#\[(?:Get|Post|Put|Patch|Delete|Head|Options|Fallback|Method)\b"),
+    # Doctrine annotation routing
+    re.compile(r"@Route\b"),
+    re.compile(r"@(?:Get|Post|Put|Patch|Delete|Head|Options|Fallback|Method)\b"),
+    # Route with name/prefix/methods
+    re.compile(_SYMFONY_ROUTE_PREFIX),
+    re.compile(_SYMFONY_ROUTE_NAME),
+    # Controller attributes
+    re.compile(_SYMFONY_CONTROLLER_ATTR),
+    # YAML routing config files
+    re.compile(_SYMFONY_YAML_ROUTING),
+    # XML routing config files
+    re.compile(_SYMFONY_XML_ROUTING),
+)
+
+# Symfony Dependency Injection (service container)
+_SYMFONY_SERVICE = r"(?:#\[|@)(?:Service|AsService)\b"
+_SYMFONY_AUTOWIRE = r"(?:#\[|@)Autowire\b"
+_SYMFONY_AUTOCONFIGURE = r"(?:#\[|@)Autoconfigure\b"
+_SYMFONY_PARAMETER = r"(?:#\[|@)Parameter\b"
+_SYMFONY_BIND = r"(?:#\[|@)Bind\b"
+_SYMFONY_TAG = r"(?:#\[|@)Tag\b"
+_SYMFONY_TAGS = r"(?:#\[|@)Tags\b"
+_SYMFONY_CONFIGURE = r"(?:#\[|@)Configure\b"
+_SYMFONY_DECORATE = r"(?:#\[|@)Decorate\b"
+_SYMFONY_FACTORY = r"(?:#\[|@)Factory\b"
+
+SYMFONY_DI_SIGNATURES = (
+    # Service configuration
+    re.compile(_SYMFONY_SERVICE),
+    re.compile(_SYMFONY_AUTOWIRE),
+    re.compile(_SYMFONY_AUTOCONFIGURE),
+    re.compile(_SYMFONY_PARAMETER),
+    re.compile(_SYMFONY_BIND),
+    re.compile(_SYMFONY_TAG),
+    re.compile(_SYMFONY_TAGS),
+    re.compile(_SYMFONY_CONFIGURE),
+    re.compile(_SYMFONY_DECORATE),
+    re.compile(_SYMFONY_FACTORY),
+    # YAML/XML service configs
+    re.compile(r"services\.yaml|services\.xml|services\.php"),
+    re.compile(r"config/services\.yaml|config/services\.xml"),
+    # Dependency injection extension
+    re.compile(r"class\s+\w+\s+extends\s+Extension\b"),
+    re.compile(r"load\s*\(\s*array\s+\$configs\s*,\s*ContainerBuilder\s+\$container\b"),
+    # Compiler passes
+    re.compile(r"class\s+\w+\s+implements\s+CompilerPassInterface\b"),
+    re.compile(r"process\s*\(\s*ContainerBuilder\s+\$container\b"),
+)
+
+# Symfony Forms
+_SYMFONY_FORM_TYPE = r"class\s+\w+\s+extends\s+AbstractType\b"
+_SYMFONY_FORM_BUILDER = r"\$builder->(?:add|create|get|remove)\s*\("
+_SYMFONY_FORM_OPTIONS = r"configureOptions\s*\("
+_SYMFONY_FORM_DATA_CLASS = r"setDataClass\s*\("
+_SYMFONY_FORM_VALIDATION = r"use\s+Symfony\\Component\\Validator\\Constraints"
+_SYMFONY_FORM_SUBMIT = r"\$form->(?:handleRequest|isSubmitted|isValid)\s*\("
+_SYMFONY_FORM_EVENTS = r"(?:PRE_SET_DATA|POST_SET_DATA|PRE_SUBMIT|SUBMIT|POST_SUBMIT)"
+
+SYMFONY_FORMS_SIGNATURES = (
+    re.compile(_SYMFONY_FORM_TYPE),
+    re.compile(_SYMFONY_FORM_BUILDER),
+    re.compile(_SYMFONY_FORM_OPTIONS),
+    re.compile(_SYMFONY_FORM_DATA_CLASS),
+    re.compile(_SYMFONY_FORM_VALIDATION),
+    re.compile(_SYMFONY_FORM_SUBMIT),
+    re.compile(_SYMFONY_FORM_EVENTS),
+    re.compile(r"use\s+Symfony\\Component\\Form\\AbstractType\b"),
+    re.compile(r"use\s+Symfony\\Component\\Form\\FormBuilderInterface\b"),
+    re.compile(r"use\s+Symfony\\Component\\OptionsResolver\\OptionsResolver\b"),
+)
+
+# Symfony Doctrine ORM
+_SYMFONY_ENTITY = r"(?:#\[|@)Entity\b"
+_SYMFONY_TABLE = r"(?:#\[|@)Table\b"
+_SYMFONY_ID = r"(?:#\[|@)Id\b"
+_SYMFONY_GENERATED_VALUE = r"(?:#\[|@)GeneratedValue\b"
+_SYMFONY_COLUMN = r"(?:#\[|@)Column\b"
+_SYMFONY_ONE_TO_ONE = r"(?:#\[|@)OneToOne\b"
+_SYMFONY_ONE_TO_MANY = r"(?:#\[|@)OneToMany\b"
+_SYMFONY_MANY_TO_ONE = r"(?:#\[|@)ManyToOne\b"
+_SYMFONY_MANY_TO_MANY = r"(?:#\[|@)ManyToMany\b"
+_SYMFONY_JOIN_COLUMN = r"(?:#\[|@)JoinColumn\b"
+_SYMFONY_JOIN_TABLE = r"(?:#\[|@)JoinTable\b"
+_SYMFONY_REPOSITORY = r"(?:#\[|@)EntityRepository\b"
+_SYMFONY_DOCTRINE_REPOSITORY = r"class\s+\w+\s+extends\s+ServiceEntityRepository\b"
+_SYMFONY_ENTITY_MANAGER = r"EntityManagerInterface"
+_SYMFONY_DOCTRINE_QUERY = r"(?:createQueryBuilder|createQuery|getRepository)\s*\("
+
+SYMFONY_DOCTRINE_SIGNATURES = (
+    re.compile(_SYMFONY_ENTITY),
+    re.compile(_SYMFONY_TABLE),
+    re.compile(_SYMFONY_ID),
+    re.compile(_SYMFONY_GENERATED_VALUE),
+    re.compile(_SYMFONY_COLUMN),
+    re.compile(_SYMFONY_ONE_TO_ONE),
+    re.compile(_SYMFONY_ONE_TO_MANY),
+    re.compile(_SYMFONY_MANY_TO_ONE),
+    re.compile(_SYMFONY_MANY_TO_MANY),
+    re.compile(_SYMFONY_JOIN_COLUMN),
+    re.compile(_SYMFONY_JOIN_TABLE),
+    re.compile(_SYMFONY_REPOSITORY),
+    re.compile(_SYMFONY_DOCTRINE_REPOSITORY),
+    re.compile(_SYMFONY_ENTITY_MANAGER),
+    re.compile(_SYMFONY_DOCTRINE_QUERY),
+    re.compile(r"use\s+Doctrine\\ORM\\Mapping\\as\s+ORM\b"),
+    re.compile(r"use\s+Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\b"),
+    re.compile(r"use\s+Doctrine\\ORM\\EntityManagerInterface\b"),
+)
+
+# Symfony Security
+_SYMFONY_FIREWALL = r"firewall"
+_SYMFONY_ACCESS_CONTROL = r"access_control"
+_SYMFONY_VOTER = r"class\s+\w+\s+extends\s+Voter\b"
+_SYMFONY_VOTER_INTERFACE = r"implements\s+VoterInterface\b"
+_SYMFONY_SECURITY_VOTER = r"use\s+Symfony\\Component\\Security\\Core\\Authorization\\Voter\b"
+_SYMFONY_AUTHENTICATION = r"use\s+Symfony\\Component\\Security\\Http\\Authentication"
+_SYMFONY_USER_INTERFACE = r"implements\s+UserInterface\b"
+_SYMFONY_PASSWORD_AUTH = r"PasswordAuthenticatedInterface"
+_SYMFONY_ROLE_HIERARCHY = r"role_hierarchy"
+_SYMFONY_SECURITY_YAML = r"security\.yaml"
+_SYMFONY_SECURITY_XML = r"security\.xml"
+_SYMFONY_IS_GRANTED = r"isGranted\s*\("
+_SYMFONY_DENY_ACCESS = r"denyAccessUnlessGranted\s*\("
+
+SYMFONY_SECURITY_SIGNATURES = (
+    re.compile(_SYMFONY_FIREWALL),
+    re.compile(_SYMFONY_ACCESS_CONTROL),
+    re.compile(_SYMFONY_VOTER),
+    re.compile(_SYMFONY_VOTER_INTERFACE),
+    re.compile(_SYMFONY_SECURITY_VOTER),
+    re.compile(_SYMFONY_AUTHENTICATION),
+    re.compile(_SYMFONY_USER_INTERFACE),
+    re.compile(_SYMFONY_PASSWORD_AUTH),
+    re.compile(_SYMFONY_ROLE_HIERARCHY),
+    re.compile(_SYMFONY_SECURITY_YAML),
+    re.compile(_SYMFONY_SECURITY_XML),
+    re.compile(_SYMFONY_IS_GRANTED),
+    re.compile(_SYMFONY_DENY_ACCESS),
+    re.compile(r"use\s+Symfony\\Component\\Security\\Core\\User\\UserInterface\b"),
+)
+
+# Symfony Twig
+_SYMFONY_TWIG_EXTENSION = r"class\s+\w+\s+extends\s+AbstractExtension\b"
+_SYMFONY_TWIG_FUNCTION = r"new\s+TwigFunction\s*\("
+_SYMFONY_TWIG_FILTER = r"new\s+TwigFilter\s*\("
+_SYMFONY_TWIG_GLOBAL = r"getGlobals\s*\("
+_SYMFONY_TWIG_TEMPLATE = r"\.html\.twig"
+_SYMFONY_TWIG_RENDER = r"render\s*\(\s*['\"][^'\"]*\.twig"
+_SYMFONY_TWIG_INCLUDE = r"include\s*\(\s*['\"][^'\"]*\.twig"
+_SYMFONY_TWIG_EXTENDS = r"extends\s+['\"][^'\"]*\.twig"
+_SYMFONY_TWIG_BLOCK = r"{%\s*block\s+\w+\s*%}"
+
+SYMFONY_TWIG_SIGNATURES = (
+    re.compile(_SYMFONY_TWIG_EXTENSION),
+    re.compile(_SYMFONY_TWIG_FUNCTION),
+    re.compile(_SYMFONY_TWIG_FILTER),
+    re.compile(_SYMFONY_TWIG_GLOBAL),
+    re.compile(_SYMFONY_TWIG_TEMPLATE),
+    re.compile(_SYMFONY_TWIG_RENDER),
+    re.compile(_SYMFONY_TWIG_INCLUDE),
+    re.compile(_SYMFONY_TWIG_EXTENDS),
+    re.compile(_SYMFONY_TWIG_BLOCK),
+    re.compile(r"use\s+Twig\\Extension\\AbstractExtension\b"),
+    re.compile(r"use\s+Twig\\TwigFunction\b"),
+    re.compile(r"use\s+Twig\\TwigFilter\b"),
+)
+
+
+# Base capability signatures (original, for backward compatibility)
+
+
 # Base capability signatures (original, for backward compatibility)
 CAPABILITY_SIGNATURES = {
     "routing": (
@@ -692,6 +885,49 @@ CAPABILITY_SIGNATURES = {
         "a PHP backend either declares its routes in a routes file (or an "
         "attributes-annotated controller) or has none; these are the "
         "constructions that mean the former",
+    ),
+}
+
+# Symfony capability signatures
+SYMFONY_CAPABILITY_SIGNATURES = {
+    "symfony_routing": (
+        SYMFONY_ROUTING_SIGNATURES,
+        "a Symfony project declares routes via PHP 8 attributes (#[Route]), "
+        "Doctrine annotations (@Route), YAML (config/routes.yaml), or XML "
+        "(config/routes.xml). These patterns cover the full Symfony routing "
+        "surface including controller routing and route groups.",
+    ),
+    "symfony_di": (
+        SYMFONY_DI_SIGNATURES,
+        "a Symfony project uses the service container with service definitions, "
+        "autowiring, autoconfiguration, parameters, tags, compiler passes, and "
+        "dependency injection extensions. These patterns cover the full Symfony "
+        "DI surface.",
+    ),
+    "symfony_forms": (
+        SYMFONY_FORMS_SIGNATURES,
+        "a Symfony project uses the Form component with form types, form "
+        "builders, validation constraints, data mappers, and form events. "
+        "These patterns cover the full Symfony Forms surface.",
+    ),
+    "symfony_doctrine": (
+        SYMFONY_DOCTRINE_SIGNATURES,
+        "a Symfony project uses Doctrine ORM with entities, repositories, "
+        "entity manager, and query builders. These patterns cover the full "
+        "Symfony Doctrine ORM surface including mappings, relationships, and "
+        "custom repositories.",
+    ),
+    "symfony_security": (
+        SYMFONY_SECURITY_SIGNATURES,
+        "a Symfony project uses the Security component with firewalls, access "
+        "control, voters, authentication, and authorization. These patterns "
+        "cover the full Symfony Security surface including YAML/XML config.",
+    ),
+    "symfony_twig": (
+        SYMFONY_TWIG_SIGNATURES,
+        "a Symfony project uses Twig templating with custom extensions, "
+        "functions, filters, globals, and template inheritance. These patterns "
+        "cover the full Symfony Twig surface.",
     ),
 }
 
@@ -773,6 +1009,13 @@ LARAVEL_CAPABILITY_SIGNATURES = {
     ),
 }
 
+# All capability signatures merged
+ALL_CAPABILITY_SIGNATURES = {
+    **CAPABILITY_SIGNATURES,
+    **LARAVEL_CAPABILITY_SIGNATURES,
+    **SYMFONY_CAPABILITY_SIGNATURES,
+}
+
 CAPABILITIES = (
     Capability(
         name="routing",
@@ -814,6 +1057,43 @@ CAPABILITIES = (
         why="Policy/Gate authorization audit support. Requires source.root to "
             "find policy classes.",
     ),
+    # Symfony capabilities
+    Capability(
+        name="symfony_routing",
+        profile_field="source.routesFile",
+        why="Symfony routing via PHP 8 attributes, annotations, YAML, or XML. "
+            "Requires source.routesFile to find routing config.",
+    ),
+    Capability(
+        name="symfony_di",
+        profile_field="source.root",
+        why="Symfony service container and dependency injection. Requires "
+            "source.root to find service definitions and compiler passes.",
+    ),
+    Capability(
+        name="symfony_forms",
+        profile_field="source.root",
+        why="Symfony Form component with form types, validation, and events. "
+            "Requires source.root to find form classes.",
+    ),
+    Capability(
+        name="symfony_doctrine",
+        profile_field="source.root",
+        why="Symfony Doctrine ORM with entities, repositories, and queries. "
+            "Requires source.root to find entity and repository classes.",
+    ),
+    Capability(
+        name="symfony_security",
+        profile_field="source.root",
+        why="Symfony Security component with firewalls, voters, and access "
+            "control. Requires source.root to find security config and voters.",
+    ),
+    Capability(
+        name="symfony_twig",
+        profile_field="source.root",
+        why="Symfony Twig templating with extensions, functions, and filters. "
+            "Requires source.root to find Twig extensions and templates.",
+    ),
 )
 
 
@@ -830,6 +1110,12 @@ CAPABILITIES = (
 LARAVEL_ONLY_CAPABILITIES = frozenset({
     "laravel_routing", "eloquent_models", "form_requests", "api_resources",
     "policies",
+})
+
+# Symfony capabilities - only offered when project reads as Symfony
+SYMFONY_ONLY_CAPABILITIES = frozenset({
+    "symfony_routing", "symfony_di", "symfony_forms", "symfony_doctrine",
+    "symfony_security", "symfony_twig",
 })
 
 
@@ -893,17 +1179,49 @@ def _looks_laravel(ctx: AdapterContext) -> bool:
     return False
 
 
+def _looks_symfony(ctx: AdapterContext) -> bool:
+    """Whether this tree reads as a Symfony application."""
+    root = Path(str(ctx.repo))
+
+    composer = root / "composer.json"
+    if composer.is_file():
+        try:
+            manifest = json.loads(composer.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            manifest = {}
+        for section in ("require", "require-dev"):
+            for package in (manifest.get(section) or {}):
+                if package == "symfony/framework-bundle" or package.startswith("symfony/"):
+                    return True
+
+    # Check for Kernel.php which is a strong indicator
+    if (root / "src" / "Kernel.php").is_file() or (root / "app" / "Kernel.php").is_file():
+        return True
+
+    # Check for config/routes.yaml or config/routes.xml
+    config_dir = root / "config"
+    if config_dir.is_dir():
+        for path in config_dir.glob("routes.*"):
+            if path.suffix in (".yaml", ".yml", ".xml"):
+                return True
+
+    return False
+
+
 def capabilities(ctx: AdapterContext) -> list:
     """What this adapter can be asked about. See base.LanguageCapabilityProtocol.
 
     Laravel-specific capabilities are offered only to projects that read as
-    Laravel (see `_looks_laravel`). On any other PHP tree they are simply not
-    asked — a library is neither measured nor excused for Eloquent models it
-    never claimed to have.
+    Laravel (see `_looks_laravel`). Symfony-specific capabilities are offered
+    only to projects that read as Symfony. On any other PHP tree they are
+    simply not asked — a library is neither measured nor excused for
+    capabilities it never claimed to have.
     """
     caps = list(CAPABILITIES)
     if not _looks_laravel(ctx):
         caps = [c for c in caps if c.name not in LARAVEL_ONLY_CAPABILITIES]
+    if not _looks_symfony(ctx):
+        caps = [c for c in caps if c.name not in SYMFONY_ONLY_CAPABILITIES]
     return caps
 
 
@@ -916,11 +1234,11 @@ def detect_capability(ctx: AdapterContext, name: str) -> CapabilityEvidence:
     the adapter at a workspace stub and every capability reads as absent,
     which is a clean report about a tree nobody looked at.
     """
-    signatures = LARAVEL_CAPABILITY_SIGNATURES.get(name)
+    signatures = ALL_CAPABILITY_SIGNATURES.get(name)
     if signatures is None:
         raise CapabilityError(name, NAME,
                               f"no signature set for this capability; known: "
-                              f"{sorted(LARAVEL_CAPABILITY_SIGNATURES)}")
+                              f"{sorted(ALL_CAPABILITY_SIGNATURES)}")
     patterns, why = signatures
 
     repo = Path(str(ctx.repo))

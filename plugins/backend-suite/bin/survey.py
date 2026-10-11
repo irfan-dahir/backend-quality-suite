@@ -123,7 +123,10 @@ MANIFESTS = {
     # below, and init_from_survey left `adapters.lang` unset on a stack the
     # plugin could in fact audit. `adapter_reachability()` is the control that
     # stops this silently happening to the next adapter.
-    "package.json": ("javascript/typescript", "tsx", ["src", "app", "lib"], "a root package.json is the Node package manifest"),
+    # Mapped to `node` (the shipped Node.js/TypeScript backend adapter), not
+    # the design-suite-era `tsx` UI adapter, which this plugin does not ship.
+    # The refinement table below is keyed on the old name and is now inert.
+    "package.json": ("javascript/typescript", "node", ["src", "app", "lib"], "a root package.json is the Node package manifest"),
     "pyproject.toml": ("python", None, ["src"], "a root pyproject.toml is the Python project manifest"),
     "setup.py": ("python", None, ["src"], "a root setup.py is a Python distutils manifest"),
     "go.mod": ("go", None, ["."], "a root go.mod is the Go module manifest"),

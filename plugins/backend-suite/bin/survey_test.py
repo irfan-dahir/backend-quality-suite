@@ -407,14 +407,15 @@ def main() -> int:
         # The defect this controls for: `adapters/tsx.py` shipped, availableAdapters
         # listed it, and MANIFESTS still mapped package.json to no adapter — so
         # every JS/TS project was told "no adapter in this plugin" while the plugin
-        # was printing the adapter's name two lines below. `php` now ships for
-        # data-API projects; the same two controls hold it reachable, via
-        # composer.json in the MANIFESTS table.
+        # was printing the adapter's name two lines below. `php` ships for
+        # PHP/Laravel projects, `node` for JavaScript/TypeScript backends; the
+        # same two controls hold both reachable, via composer.json and
+        # package.json in the MANIFESTS table.
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import survey as S  # noqa: E402
 
-        expect(S.language_adapters() == ["php"],
-               "the registry's language adapters are discovered — php ships")
+        expect(S.language_adapters() == ["node", "php"],
+               "the registry's language adapters are discovered — node and php ship")
         expect(S.adapter_reachability() == [],
                "every language adapter that ships is named by some root manifest — "
                "an adapter no manifest can reach can never be proposed")
@@ -426,12 +427,12 @@ def main() -> int:
         report = json.loads(run("--stdout", "--project-root", str(node)).stdout)
         expect(report["stack"]["stack"] == "javascript/typescript",
                "a root package.json still decides the stack")
-        expect(report["stack"]["candidateAdapter"] is None,
-               "no adapter is proposed on a stack this plugin ships none for")
+        expect(report["stack"]["candidateAdapter"] == "node",
+               "the shipped node adapter is proposed on a package.json project")
         fields = {item["field"] for item in report["couldNotDetermine"]}
-        expect("adapters.lang" in fields,
-               "adapters.lang is reported as undeterminable when the mapped "
-               "adapter does not ship")
+        expect("adapters.lang" not in fields,
+               "adapters.lang is determinable when a shipped adapter is mapped "
+               "to the stack")
 
         phpfix = tmpdir / "phpfix"
         (phpfix / "src").mkdir(parents=True)

@@ -93,6 +93,23 @@ $router->post('/session', function () {
 });
 """
 
+# The node leg's fixture, same shape as the php one: one planted debug call,
+# one planted plaintext secret, and the correct shape for each living in the
+# same file. The negatives are what make a pass mean anything.
+NODE_FIXTURE = """// synthetic node fixture for the seam proof — positives and negatives both planted
+import express from 'express';
+const app = express();
+app.get('/health', (req, res) => {
+  console.log('hit');
+  const password = process.env.DB_PASSWORD;
+  res.json({ message: 'ok' });
+});
+app.post('/session', (req, res) => {
+  const legacy = password = 'hunter2long';
+  res.json({ message: 'ok' });
+});
+"""
+
 
 def main() -> int:
     problems: list[str] = []
@@ -175,14 +192,56 @@ def main() -> int:
             print(f"shipped php adapter over a php fixture: "
                   f"{len(php_findings)} finding(s), 2 expected")
 
+        # 6. The same leg for the THIRD shipped language: node, discovered by
+        #    the registry, sweeping a node fixture through its own checks and
+        #    globs. php proves the seam holds for a second language; node
+        #    proves it holds for a third, which is what stops the seam from
+        #    quietly becoming "php and its friends".
+        if "node" not in names:
+            problems.append("the node adapter is missing from the registry — this "
+                            "file's shipped-language leg exists to prove a second "
+                            "real language loads and sweeps; its absence is a "
+                            "regression, not a skip")
+        else:
+            node = load("node")
+            with tempfile.TemporaryDirectory() as raw:
+                fixture = Path(raw)
+                (fixture / "src").mkdir()
+                (fixture / "src" / "app.ts").write_text(NODE_FIXTURE)
+                ctx = AdapterContext(repo=fixture, profile={}, exceptions={})
+                node_findings = scan_tree(fixture, fixture, node.checks(ctx),
+                                          globs=node.FILE_GLOBS)
+
+                if not any(f["kind"] == "debug_statement"
+                           and "console.log" in f["snippet"]
+                           for f in node_findings):
+                    problems.append("node leg: no debug_statement finding for the "
+                                    "planted console.log() call")
+                if not any(f["kind"] == "plaintext_secret"
+                           and "hunter2long" in f["snippet"]
+                           for f in node_findings):
+                    problems.append("node leg: no plaintext_secret finding for the "
+                                    "planted literal")
+                # The negative control, same as the php leg's: process.env.X is
+                # a config REFERENCE, the correct shape, and must never be flagged.
+                if any("DB_PASSWORD" in f["snippet"] for f in node_findings):
+                    problems.append("node leg: process.env.DB_PASSWORD was flagged — "
+                                    "a naive secret matcher that cannot tell a "
+                                    "literal from a config reference")
+                if any(f["file"] != "src/app.ts" for f in node_findings):
+                    problems.append("node leg: a finding landed outside the "
+                                    "adapter's FILE_GLOBS")
+                print(f"shipped node adapter over a node fixture: "
+                      f"{len(node_findings)} finding(s), 2 expected")
+
     if problems:
         print("\nSEAM BROKEN:")
         for p in problems:
             print(f"  ✗ {p}")
         return 1
-    print("\nSeam holds: the engine ran a second language with no engine "
-          "changes, and the shipped php adapter loads and sweeps through the "
-          "same seam.")
+    print("\nSeam holds: the engine ran two more languages (stublang, node) with "
+          "no engine changes, and both shipped adapters (php, node) load and "
+          "sweep through the same seam.")
     return 0
 
 
