@@ -30,19 +30,19 @@
 # never appear in an adoption path.
 #
 # `undeclared-kind` is the right existing fixture, not a compromise:
-#   * it is `app` with `projectKind` removed, so every profile value is still
-#     the `TODO:` string `init.py` writes — the state `build_app_configured`'s
-#     docstring names as the reason the plain `app` fixture is left alone:
-#     "four `map-project-*` cases exist to watch `/map-project` propose exactly
-#     those fields". Nothing about "propose fields on an underspecified
-#     project" is lost; one more field is underspecified, not one fewer.
+#   * it is `service` with `projectKind` removed, so every profile value is
+#     still the `TODO:` string `init.py` writes — the scaffolded-but-
+#     underspecified state the four `map-project-*` cases exist to watch
+#     `/map-project` propose exactly those fields. Nothing about "propose
+#     fields on an underspecified project" is lost; one more field is
+#     underspecified, not one fewer.
 #   * its `.backend-suite/profile.json` contains ZERO occurrences of `approved`,
 #     `declared`, `"by"`, `"on"`, `verifiedAgainst`, `"value"`, `"evidence"`
 #     and `inferred`, and an empty `provenance.fields` — so all nine file
 #     graders are live rather than pre-satisfied, and none of them had to be
 #     weakened to make the case passable.
 #   * it is the one scaffolded fixture no other `map-project-*` case uses
-#     (`app` → chat-yes, `pre-ratified` → preserves-ratified, `docs-site` →
+#     (`service` → chat-yes, `pre-ratified` → preserves-ratified, `library` →
 #     refuses-tied), and its own docstring calls it the default rather than an
 #     edge case: "both real consumer projects are in exactly this state today".
 #

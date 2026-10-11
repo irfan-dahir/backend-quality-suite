@@ -65,7 +65,7 @@ fi
 # and rmtree()ing the shell's own working directory leaves this script running
 # in a deleted inode — every relative path after that point behaves differently
 # on different platforms. A scratch build sidesteps the question entirely.
-scratch="$(mktemp -d "${TMPDIR:-/tmp}/ds-eval-fixture-XXXXXX")"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/bq-eval-fixture-XXXXXX")"
 trap 'rm -rf "$scratch"' EXIT
 python3 "$builder" "$fixture" --dir "$scratch/f" --force
 # Dotfiles included: `.backend-suite/` IS the fixture for most of these cases.

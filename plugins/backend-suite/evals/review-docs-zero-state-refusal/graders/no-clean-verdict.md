@@ -17,8 +17,10 @@ was no review". It also matched `commands/review-docs.md` itself in 6 places,
 so a model paraphrasing its own instructions was penalised for it. The plugin
 arm is the only arm that reads those instructions.
 
-The rewrite is the same frame the fixed `did-not-assume-the-app-archetype`
-grader uses: a claim only counts when the report ASSERTS it — sentence start,
+The rewrite is the same frame the fixed `did-not-assume-the-service-archetype`
+grader (in `bootstrap-design-docs-undeclared-kind-stops-to-ask`; named
+`…-the-app-archetype` in the dart-era runs) uses: a claim only counts when the
+report ASSERTS it — sentence start,
 then a run of characters carrying no negator or hedge (`not`, `n't`, `never`,
 `cannot`, `no`, `nothing`, `rather`, `instead`, `unless`, `whether`, `if`,
 `would`, `could`, `refuse*`, `declin*`), then the claim. `no findings` is split

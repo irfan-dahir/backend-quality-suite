@@ -5,7 +5,7 @@
   "project": {
     "name": "TODO_PROJECT_NAME",
     "audience": "TODO: who uses this product? Feeds copy and accessibility judgement — e.g. 'general consumer, adults 18+' or 'internal ops tool, technical users'.",
-    "framework": "TODO: free text read by prompts, e.g. 'Flutter, Material 3' or 'React + Tailwind'. Include deliberate non-features (e.g. 'light-only') so audits do not report them as gaps.",
+    "framework": "TODO: free text read by prompts, e.g. 'Lumen ^10, PHP ^8.1' or 'Laravel ^11'. Include deliberate non-features (e.g. 'GET-only routes') so audits do not report them as gaps.",
     "singleLocale": "TODO or delete: set only if this project is deliberately single-locale, e.g. 'en-US'. Prevents a skill from proposing i18n scaffolding."
   },
   "adapters": {

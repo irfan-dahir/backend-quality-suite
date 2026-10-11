@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Materialise the `design-system-declared` fixture into the CURRENT WORKING DIRECTORY.
+# Materialise the `library-declared` fixture into the CURRENT WORKING DIRECTORY.
 #
 # Why this file exists rather than a case pointing straight at build_fixture.py:
 # `context.scaffold_script` is rejected outright if it escapes the case

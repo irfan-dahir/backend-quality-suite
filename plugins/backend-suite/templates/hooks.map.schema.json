@@ -39,7 +39,7 @@
           "description": "Regex against a Bash tool call's command. Fires on Bash only. This is the shape pr_reminders.py uses to catch `git commit` / `gh pr create`."
         },
         "command": {
-          "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded. IMPORTANT: an audit run at narrowed scope must not write to the artefact its whole-repo run owns. audit_tokens.py defaults --out to .backend-suite/tokens-findings.json; a hook that scopes it to one directory and lets it write there replaces a full sweep with a partial one, and /design-debt then grades the project on a fraction of it. Redirect --out (and never pass --findings) in a scoped entry.",
+          "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded. IMPORTANT: an audit run at narrowed scope must not write to the artefact its whole-repo run owns. An audit whose --out defaults to a whole-repo report (e.g. audit_layer_boundaries.py's .backend-suite/layer-boundaries-findings.json), scoped by a hook to one directory and left to write there, replaces a full sweep with a partial one, and /design-debt then grades the project on a fraction of it. Redirect --out to a scratch path, and pass --findings only an explicit scratch path of its own — never the bare flag, whose default is the whole-repo envelope.",
           "oneOf": [
             { "type": "string" },
             { "type": "array", "items": { "type": "string" } }
@@ -48,7 +48,7 @@
         "scopeMode": {
           "type": "string",
           "enum": ["file", "dir"],
-          "description": "What scopeArg passes: the changed file, or its containing directory. Every audit in bin/ takes --dir and cannot audit a single file, so \"dir\" is what those entries need.",
+          "description": "What scopeArg passes: the changed file, or its containing directory. Only audits that take --dir (currently audit_error_handling, audit_proposal_status, audit_doc_staleness) can be scoped at all, and they cannot audit a single file — so \"dir\" is what those entries need. An entry naming a script without --dir must not use this scopeMode: the runner would pass a flag the script rejects, and a save would break noisily instead of auditing anything.",
           "default": "file"
         },
         "scopeArg": {

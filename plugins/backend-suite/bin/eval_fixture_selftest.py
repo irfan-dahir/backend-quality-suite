@@ -103,7 +103,7 @@ def profile_of(fixture: Path) -> dict:
 def check_zero_state(fixture: Path) -> None:
     expect(not (fixture / ".backend-suite").exists(),
            "zero-state: has no .backend-suite/ at all")
-    expect(any(fixture.rglob("*.dart")),
+    expect(any(fixture.rglob("*.php")),
            "zero-state: has real source files (an empty dir is a different fixture)")
 
     proc = resolve_rootless(fixture, build_fixture.AUTHORED_ROLE)
@@ -158,27 +158,31 @@ def check_service(fixture: Path) -> None:
 def check_library(fixture: Path) -> None:
     expect(not (fixture / ".backend-suite").exists(),
            "library: undeclared variant has no .backend-suite/")
-    # Package-shaped is asserted on SHAPE, not on language. This used to read
-    # `package.json exists AND no lib/**/*.dart`, which made "is a package" and
-    # "is TypeScript" the same assertion — so the fixture could not become the
-    # Dart promotion target `_fixtures/app` needs without this failing for a
-    # reason that had nothing to do with the property it names. What actually
-    # matters is that it publishes components and has no screens or routes.
+    # Package-shaped is asserted on SHAPE, not on a particular directory
+    # layout. This used to read `package.json exists AND no lib/**/*.dart`,
+    # which made "is a package" and "is TypeScript" the same assertion — so the
+    # fixture could not change language without this failing for a reason that
+    # had nothing to do with the property it names. What actually matters is
+    # that it publishes a library API and has no routes or controllers.
     expect((fixture / build_fixture.DS_MANIFEST).is_file(),
            "library: carries a package manifest")
     expect(any(fixture.glob(build_fixture.DS_COMPONENT_GLOB)),
-           "library: exports components — what a package library is for")
-    screens = sorted(p.name for p in fixture.rglob("*")
-                     if p.is_file() and ("screen" in p.name or "route" in p.name))
+           "library: publishes its API from src/ — what a package library is for")
+    # Probed on the repo-relative PATH, not the file name: `routes/api.php` is
+    # named `api.php`, and a name-only probe would read a service as a library.
+    screens = sorted(p.relative_to(fixture).as_posix() for p in fixture.rglob("*")
+                     if p.is_file() and ("screen" in p.name or "route" in
+                                         p.relative_to(fixture).as_posix()))
     expect(not screens,
-           f"library: has no screens or routes to mistake it for an app "
+           f"library: has no routes or controllers to mistake it for a service "
            f"(found {screens})")
-    # Control: the same probe DOES find screens in the `app` fixture, so the
+    # Control: the same probe DOES find routes in the `service` fixture, so the
     # emptiness above is a fact about this fixture and not a broken measurement.
     with tempfile.TemporaryDirectory() as tmp:
         svc = build_fixture.build("service", Path(tmp) / "service", force=True)
-        expect(any("screen" in p.name for p in svc.rglob("*") if p.is_file()),
-               "library: the same screen probe finds screens in `service` (control)")
+        expect(any("route" in p.relative_to(svc).as_posix()
+                   for p in svc.rglob("*") if p.is_file()),
+               "library: the same route probe finds routes in `service` (control)")
     proc = resolve_rootless(fixture, "api")
     expect(proc.returncode == 2,
            f"library: every bin/*.py refuses here too (got {proc.returncode})")

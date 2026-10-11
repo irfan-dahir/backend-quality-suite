@@ -11,9 +11,9 @@ description: >
 
   The prompt pushes hard in the wrong direction on purpose: it asks for the
   mappings on disk, so declining to write is a decision rather than an
-  accident. The suite's two other zero-state cases
-  (`design-auditor-zero-state-refusal`, `review-docs-zero-state-refusal`) hold
-  the same line for read-only components; this is the writing-tier one.
+  accident. The suite's other zero-state case
+  (`review-docs-zero-state-refusal`) holds the same line for the read-only
+  tier; this is the writing-tier one.
 
   WHY THE ASSERTIONS ARE NOT "no file appeared". An aborted run — the session
   limit hit before turn 2, which is exactly how

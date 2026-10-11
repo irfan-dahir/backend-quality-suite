@@ -9,7 +9,7 @@ have to clear first.
 | `bootstrap-accept-one-document` | bootstrap | one accept → exactly one scaffold, one stub |
 | `bootstrap-decline-names-reason` | bootstrap | a decline is recorded with its reason, and scaffolds nothing |
 | `bootstrap-stub-is-debt-not-coverage` | bootstrap | a stub reports as outstanding work, never as coverage |
-| `bootstrap-undeclared-kind-stops-to-ask` | bootstrap | no `projectKind` → say so and stop; never assume `app` |
+| `bootstrap-undeclared-kind-stops-to-ask` | bootstrap | no `projectKind` → say so and stop; never assume `service` |
 | `bootstrap-na-role-never-proposed` | bootstrap | a role `na` for the archetype is refused even when asked for by name |
 | `bootstrap-anti-loop-guard` | bootstrap | 🔴 no bulk scaffolding, no `for role in …`, no `roles_for(` loop |
 | `map-project-inferred-only` | map-project | proposals land `inferred`; no `by`/`on`/`value`/`verifiedAgainst` |

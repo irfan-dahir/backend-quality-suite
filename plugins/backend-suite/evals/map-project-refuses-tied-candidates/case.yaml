@@ -86,7 +86,7 @@ graders:
   - name: report-does-not-present-a-tiebreak-as-a-finding
     type: regex
     weight: 3
-    pattern: "(?:^|(?<=[.!?\\n]))\\s*(?:this\\s+is\\s+the\\s+(?:design|entry.point|token|decisions)\\s+(?:doc|document|source)\\b)"
+    pattern: "(?:^|(?<=[.!?\\n]))\\s*(?:this\\s+is\\s+the\\s+(?:entry.point|decisions|api|backlog)\\s+(?:doc|document|source)\\b)"
     match: not_contains
     flags: "i"
     target: last_message

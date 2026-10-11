@@ -2,10 +2,10 @@ schema_version: "1.0"
 name: bootstrap-undeclared-kind-stops-to-ask
 description: >
   No declared projectKind means the skill says it does not know and stops to
-  ask. Guessing `app` for a package is the assumption archetypes.py refuses to
-  make, and it would put screen-shaped documents into a repository with no
-  screens. The prompt pushes hard toward guessing, so a pass cannot be
-  accidental.
+  ask. Guessing `service` for a package is the assumption archetypes.py refuses
+  to make, and it would put a deployment document into a repository that is
+  consumed, not deployed. The prompt pushes hard toward guessing, so a pass
+  cannot be accidental.
 tags: [bootstrap-design-docs, archetype, refusal]
 runs: 1
 context:
@@ -64,19 +64,20 @@ graders:
     flags: "i"
     target: last_message
 
-  # It offers the vocabulary rather than picking from it.
+  # It offers the vocabulary rather than picking from it — both kinds, since
+  # offering one would be picking it.
   - name: report-offers-the-kinds-to-choose-from
     type: regex
     weight: 2
-    pattern: "design-system"
+    pattern: "service[\\s\\S]{0,160}library|library[\\s\\S]{0,160}service"
     match: contains
     flags: "i"
     target: last_message
 
   # --- NEGATIVE CONTROL -------------------------------------------------
   # The specific wrong answer, named. The prompt invites "sensible defaults";
-  # a report that assumes an app archetype fails here even if it happened to
-  # scaffold nothing.
+  # a report that assumes the `service` archetype fails here even if it
+  # happened to scaffold nothing.
   #
   # This pattern must stay POLARITY-AWARE. The previous one,
   # `(assum|default|treat)\w*[^.\n]{0,40}\bapp\b`, matched the mere
@@ -88,18 +89,20 @@ graders:
   # penalised the plugin arm for explaining its refusal in the skill's own
   # vocabulary, while the unaided arm passed only by happening to phrase the
   # same correct behaviour differently. Every other grader agreed across
-  # both arms.
+  # both arms. (`app` in that history is the pre-rename name of the archetype
+  # now called `service`, on the dart-era fixture; the pattern targets
+  # whichever name is the wrong answer today.)
   #
   # So it now requires an affirmative first-person frame — a subject, then
   # the verb, with no negator in between. Known and accepted gap: a headless
-  # affirmative ("Defaulting to app.") is not caught, because no regex can
-  # distinguish it from "Rather than defaulting to app". Catching that needs
-  # an `llm` grader of the kind design-auditor-undeclared-kind uses; the
-  # behavioural graders above are what actually hold the line.
-  - name: did-not-assume-the-app-archetype
+  # affirmative ("Defaulting to service.") is not caught, because no regex can
+  # distinguish it from "Rather than defaulting to service". Catching that
+  # needs an `llm` grader; the behavioural graders above are what actually
+  # hold the line.
+  - name: did-not-assume-the-service-archetype
     type: regex
     weight: 4
-    pattern: "\\b(?:I|we)(?:['\u2019](?:m|ve|ll|d))?(?:\\s+(?:just|simply|therefore|then|also|thus|so|have|has|had|am|are|will|would))*\\s+(?:assume[ds]?|assuming|default(?:ed|ing|s)?|treat(?:ed|ing|s)?)\\b[^.\\n]{0,40}\\bapp\\b"
+    pattern: "\\b(?:I|we)(?:['\u2019](?:m|ve|ll|d))?(?:\\s+(?:just|simply|therefore|then|also|thus|so|have|has|had|am|are|will|would))*\\s+(?:assume[ds]?|assuming|default(?:ed|ing|s)?|treat(?:ed|ing|s)?)\\b[^.\\n]{0,40}\\bservice\\b"
     match: not_contains
     flags: "i"
     target: last_message

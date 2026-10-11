@@ -157,12 +157,22 @@ archetype rows + test swapped to `library`/`service`; eval fixtures renamed
   longer existed), `provenance.py` PATH_KEYS entry, plus the one real consumer:
   the `audit_config` loader in `adapters/__init__.py` and its only reader
   (`AdapterContext.minimums()`, accessibility machinery with no callers).
-- [ ] Eval fixture CONTENT: `_app_sources` / `_design_system_sources` still
-  build a Flutter-shaped tree (widgets, pubspec) under the renamed
-  service/library fixtures; the bootstrap/map-project eval cases' prose and
-  graders are still design-domain. Re-author to PHP/API content in Phase D,
-  together with the case prose that mentions deleted cases
-  (promote-component/design-auditor) and stale `build_fixture.py` comments.
-- [ ] dot-templates content: `arch-rules.json.template` (widget layering),
-  `exceptions`/`known-traps`/`hooks.map`/`verification-glossary` examples —
-  names are generic, contents are design-era.
+- [x] (D4c, this commit) Eval fixture CONTENT: `_app_sources` /
+  `_design_system_sources` now build a PHP/API tree (composer.json,
+  `routes/`, controllers, a src/ package with no routes) under the
+  service/library fixtures; eval-case prose and graders re-authored to the
+  live vocabulary (deployment is the role `na` for `library`; kinds are
+  service|library), deleted-case references (promote-component,
+  design-auditor) dropped or explicitly framed as history, the
+  `review-docs-app-stub-and-decline` shim's deleted `app` fixture fixed,
+  README fixture table rebuilt to the 6 live fixtures and the polarity
+  paragraph re-measured (1 of 10, was 4 of 12).
+- [x] (D4c, this commit) dot-templates content: `arch-rules` (live sections
+  only — apiConsistency, contractHeaders, errorHandling with its 8
+  snake_case vocabulary keys, layerBoundaries path globs + php namespace
+  TODOs), `hooks.map` (one live entry: audit_error_handling, preCommit
+  false), `exceptions` (errorHandling.intentionalDeadStates +
+  apiConsistency exemptions), `gitignore` (dead-audit entries purged,
+  +`scratch/`, mock-api-findings kept for the drift test); `known-traps` /
+  `verification-glossary` verified already generic; hooks.map schema
+  descriptions de-staled.

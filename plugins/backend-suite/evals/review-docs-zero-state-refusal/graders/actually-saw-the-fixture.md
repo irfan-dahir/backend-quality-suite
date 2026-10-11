@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: "main\\.dart|pubspec\\.yaml"
+pattern: "composer\\.json|routes/api\\.php"
 match: contains
 target: last_message
 ---

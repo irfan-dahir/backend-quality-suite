@@ -136,13 +136,11 @@ from the tools it stands in for.
 | Fixture | State it produces |
 |---|---|
 | `zero-state` | No `.backend-suite/` at all — every `bin/*.py` exits 2 via `project_root()` |
-| `app` | Scaffolded `app`: one authored doc (exit 0), one real decline with a reason (exit 4), one stub (exit 5). Its screens carry `_StatCell`, a shape-duplicate `_MetricTile`, and the domain-coupled `_OrderSummaryRow` |
-| `app-configured` | The same, with profile and arch-rules actually filled in — the `/promote-component` cases need a project whose Step 0 audit can resolve |
-| `design-system` | Package-shaped Dart repo, undeclared. Same language as `app`, because it is `app`'s promotion target |
-| `design-system-declared` | The same, with `projectKind: design-system` |
-| `docs-site` | Declared `docs-site` — owns no role exclusively, so there is nothing to fall through to |
-| `undeclared-kind` | `app` with `projectKind` removed. **Both real consumers are in this state today** |
-| `pre-ratified` | `app` plus one provenance field at `state: approved` with `by`/`on`/`verifiedAgainst` |
+| `service` | Scaffolded `service` — a php API tree (composer.json, `routes/`, controllers): one authored doc (exit 0), one real decline with a reason (exit 4), one stub (exit 5) |
+| `library` | Package-shaped php repo (composer.json, `src/`, no routes), undeclared. The interesting question is whether a skill reads the shape or assumes `service` |
+| `library-declared` | The same, with `projectKind: library` |
+| `undeclared-kind` | `service` with `projectKind` removed. **Both real consumers are in this state today** |
+| `pre-ratified` | `service` plus one provenance field at `state: approved` with `by`/`on`/`verifiedAgainst` |
 
 Every fixture's scaffolded `profile.json` has its `_readme` / `_comment` /
 `_example` keys stripped. Those keys are prose read by nothing, but the
@@ -234,14 +232,15 @@ form, with the measurement in its body.
 
    One exception, and only one: a pattern anchored to a **literal structured
    report field** may legitimately match the skill's report template, because
-   emitting that template line verbatim *is* the violation.
-   `Overall Recommendation:\s*PASS` is the example — it matches
-   `agents/design-auditor.md` and is correct as written (0 of 6 correct-refusal
-   phrasings).
+   emitting that template line verbatim *is* the violation. The example
+   measured on this suite was `Overall Recommendation:\s*PASS` against a report
+   template (0 of 6 correct-refusal phrasings fired on it); that agent and its
+   graders have since been deleted, so no live grader claims the exception
+   today. It is kept as the one allowance the rule has.
 
 Where a regex genuinely cannot separate the act from the topic, **use an `llm`
 grader with an explicit `PASS only if` clause** —
-`design-auditor-undeclared-kind/graders/criteria.md` is the model — rather than
+`review-docs-zero-state-refusal/graders/criteria.md` is the model — rather than
 shipping a pattern you know is wrong. Never weaken the assertion to make it
 green: the point is that it asserts the right thing, not that it is passing.
 
@@ -250,11 +249,11 @@ green: the point is that it asserts the right thing, not that it is passing.
 The obvious gate — flag any `not_contains` pattern that matches its own skill's
 markdown — was assessed and rejected on measurement, not on cost. It is cheap
 to build: the case-to-skill mapping is already there in the directory name that
-rule 1 above enforces. It is the false-positive rate that fails. Run against the
-suite as it now stands, it flags **4 of the 12 prose negative controls, and all
-4 are correct** — three `Overall Recommendation:\s*PASS` graders matching the
-report template they are deliberately quoting, and `no-clean-verdict` matching
-two lines of narrative past-tense prose in `review-docs.md`. Zero true
-positives, four false ones. A gate whose every finding is wrong teaches people
-to ignore it, so this stays prose here and an entry in `known-traps.json`
-(`polarity-blind-negative-control`), which is where judgment-call traps live.
+rule 1 above enforces. It is the false-positive rate that fails. Re-measured
+against the suite as it now stands, it flags **1 of the 10 prose negative
+controls**: `no-clean-verdict` matching two lines of narrative past-tense prose
+in `review-docs.md` ("reported clean for weeks"). Zero true positives, one
+false one — every finding this gate could raise is wrong. A gate whose every
+finding is wrong teaches people to ignore it, so this stays prose here and an
+entry in `known-traps.json` (`polarity-blind-negative-control`), which is where
+judgment-call traps live.

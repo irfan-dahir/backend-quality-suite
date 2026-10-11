@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build one eval fixture — a throwaway consumer project in a known state.
 
-    python3 plugins/backend-suite/evals/_fixtures/build_fixture.py app --dir /tmp/x
+    python3 plugins/backend-suite/evals/_fixtures/build_fixture.py service --dir /tmp/x
     python3 .../build_fixture.py --list
 
 This is the `context.scaffold_script` end of an eval case: a case names a
@@ -75,16 +75,16 @@ RATIFIED_FIELD = "source.root"
 # builder and the thing asserting the builder's output must not drift into
 # describing different trees. It also keeps these literals out of `bin/`, where
 # audit_skill_paths.py correctly reports a hardcoded project path as a defect —
-# in bin/ a path like `lib/screens/…` is an assumption about a CONSUMER's
+# in bin/ a path like `app/Http/…` is an assumption about a CONSUMER's
 # layout, which is the thing the universal plugin may never make. Here it is
 # not an assumption at all: it is this builder's own output, three functions up.
 #
-# Package manifests, the library's component directory, and the package name
-# the service fixture resolves it under.
-APP_MANIFEST = "pubspec.yaml"
-DS_MANIFEST = "pubspec.yaml"
-DS_COMPONENT_GLOB = "lib/src/components/*.dart"
-DS_PACKAGE = "example_design_system"
+# Package manifests and the directory the library fixture publishes its API
+# from — both stacks' package manifest is composer.json, which is part of why
+# the archetype vocabulary could be measured on one language pair.
+APP_MANIFEST = "composer.json"
+DS_MANIFEST = "composer.json"
+DS_COMPONENT_GLOB = "src/*.php"
 
 
 def _run(args: list[str], cwd: Path | None = None) -> None:
@@ -122,356 +122,143 @@ def _edit_json(path: Path, mutate) -> None:
 # --------------------------------------------------------------------------- #
 
 def _app_sources(root: Path) -> None:
-    _write(root, "README.md", "# Example App\n\nA small product with screens and routes.\n")
-    # The path dependency on ../design-system is what makes the two fixtures a
-    # PAIR rather than two unrelated trees. `/promote-component`'s Step 4 is
-    # "bump the design-system package refs in the project's manifest", and a
-    # manifest with no such ref gives that step nothing to edit. When the app
-    # fixture is built alone the path dangles, which is harmless: nothing in
-    # this suite runs `pub get`.
-    _write(root, "pubspec.yaml",
-           "name: example_app\n"
-           "environment:\n  sdk: '>=3.0.0 <4.0.0'\n"
-           "dependencies:\n"
-           "  flutter:\n    sdk: flutter\n"
-           "  example_design_system:\n    path: ../design-system\n")
-    _write(root, "lib/main.dart",
-           "void main() => runApp(const ExampleApp());\n")
-    # The three screens. Each carries, at the bottom of its own file, the
-    # PRIVATE widget the /promote-component cases are pointed at.
-    #
-    # Private and screen-local rather than public under lib/widgets/, because
-    # that is the shape the tooling and the command both actually model: the
-    # detector in audit_promotion_candidates.py matches
-    # `class _Name extends StatelessWidget`, and Step 4 of the command
-    # ("delete the private widget, import the real one") describes exactly this
-    # arrangement. A public widget in its own file is already half-promoted and
-    # would make Step 4 vacuous.
-    _write(root, "lib/screens/home_screen.dart",
-           "// A screen with the three standard states, so a reader can tell this is an app.\n"
-           "import '../theme/app_theme.dart';\n"
-           "\n"
-           "class HomeScreen {\n"
-           "  Widget build() => Column(children: [\n"
-           "        Loading(),\n"
-           "        ErrorView(),\n"
-           "        Content(),\n"
-           "        const _StatCell(label: 'Orders', value: '128', icon: Icons.receipt),\n"
-           "      ]);\n"
-           "}\n"
-           "\n"
-           "// THE PROMOTION CANDIDATE. Generic by construction: a label, a value,\n"
-           "// an icon and a tap. No project type appears in its signature or its\n"
-           "// body, which is what makes it promotable — it would survive being\n"
-           "// renamed to anything at all.\n"
-           "class _StatCell extends StatelessWidget {\n"
-           "  const _StatCell({\n"
-           "    required this.label,\n"
-           "    required this.value,\n"
-           "    required this.icon,\n"
-           "    this.onTap,\n"
-           "  });\n"
-           "\n"
-           "  final String label;\n"
-           "  final String value;\n"
-           "  final IconData icon;\n"
-           "  final VoidCallback? onTap;\n"
-           "\n"
-           "  @override\n"
-           "  Widget build(BuildContext context) => InkWell(\n"
-           "        onTap: onTap,\n"
-           "        child: Padding(\n"
-           "          padding: AppTheme.spacing.md,\n"
-           "          child: Row(children: [\n"
-           "            Icon(icon),\n"
-           "            Column(children: [Text(value), Text(label)]),\n"
-           "          ]),\n"
-           "        ),\n"
-           "      );\n"
+    _write(root, "README.md", "# Example Service\n\nA small HTTP API: routes, controllers and a domain.\n")
+    _write(root, APP_MANIFEST,
+           "{\n"
+           '  "name": "example/service",\n'
+           '  "description": "A small HTTP API: routes, controllers and a domain.",\n'
+           '  "require": {\n'
+           '    "php": "^8.1"\n'
+           "  },\n"
+           '  "autoload": {\n'
+           '    "psr-4": {\n'
+           '      "App\\\\": "app/"\n'
+           "    }\n"
+           "  }\n"
            "}\n")
-    _write(root, "lib/screens/settings_screen.dart",
-           "import '../theme/app_theme.dart';\n"
+    # The routing table: every entry spells Controller@method, which is the
+    # shape audit_route_coverage measures against the controllers below, and
+    # routes/ beside app/ is what reads as `service` rather than `library`.
+    _write(root, "routes/api.php",
+           "<?php\n"
            "\n"
-           "class SettingsScreen {\n"
-           "  Widget build() => Column(children: [\n"
-           "        const Placeholder(),\n"
-           "        const _MetricTile(label: 'Storage used', value: '4.2 GB',\n"
-           "            icon: Icons.storage),\n"
-           "      ]);\n"
-           "}\n"
+           "$router->get('/orders', ['uses' => 'OrdersController@index']);\n"
+           "$router->get('/orders/{id}', ['uses' => 'OrdersController@show']);\n"
+           "$router->get('/home', ['uses' => 'HomeController@index']);\n")
+    _write(root, "app/Http/Controllers/HomeController.php",
+           "<?php\n"
            "\n"
-           "// THE SAME WIDGET, BUILT AGAIN UNDER A DIFFERENT NOUN. Identical\n"
-           "// constructor parameter set to _StatCell, different class name and a\n"
-           "// separately written body — which is what makes StatCell a real\n"
-           "// promotion candidate rather than one screen's private helper.\n"
-           "// audit_promotion_candidates.py matches on the parameter set, not on\n"
-           "// the name, so Step 0 has a true duplication to report; without this\n"
-           "// the command's own first step comes back empty and /promote-component\n"
-           "// StatCell argues from nothing.\n"
-           "class _MetricTile extends StatelessWidget {\n"
-           "  const _MetricTile({\n"
-           "    required this.label,\n"
-           "    required this.value,\n"
-           "    required this.icon,\n"
-           "    this.onTap,\n"
-           "  });\n"
+           "namespace App\\Http\\Controllers;\n"
            "\n"
-           "  final String label;\n"
-           "  final String value;\n"
-           "  final IconData icon;\n"
-           "  final VoidCallback? onTap;\n"
-           "\n"
-           "  @override\n"
-           "  Widget build(BuildContext context) => GestureDetector(\n"
-           "        onTap: onTap,\n"
-           "        child: Container(\n"
-           "          padding: AppTheme.spacing.md,\n"
-           "          child: Column(children: [\n"
-           "            Icon(icon),\n"
-           "            Text(value),\n"
-           "            Text(label),\n"
-           "          ]),\n"
-           "        ),\n"
-           "      );\n"
+           "class HomeController\n"
+           "{\n"
+           "    public function index()\n"
+           "    {\n"
+           "        return ['service' => 'example'];\n"
+           "    }\n"
            "}\n")
-    _write(root, "lib/screens/orders_screen.dart",
-           "import '../models/order.dart';\n"
-           "import '../services/pricing_rules.dart';\n"
-           "import '../theme/app_theme.dart';\n"
+    _write(root, "app/Http/Controllers/OrdersController.php",
+           "<?php\n"
            "\n"
-           "class OrdersScreen {\n"
-           "  Widget build() => Column(\n"
-           "        children: orders\n"
-           "            .map((o) => _OrderSummaryRow(order: o, onReorder: reorder))\n"
-           "            .toList(),\n"
-           "      );\n"
-           "}\n"
+           "namespace App\\Http\\Controllers;\n"
            "\n"
-           "// STAYS IN THE APP, and fails the command's Step 1 bar structurally\n"
-           "// rather than by its name. Its constructor takes a domain entity\n"
-           "// (`Order`) and its body applies product rules to that entity, so\n"
-           "// promoting it would drag Order, Money, OrderStatus and PricingRules\n"
-           "// into the design system with it. A widget merely CALLED\n"
-           "// OrderSummaryRow, taking two strings, would let the refusal case pass\n"
-           "// on the noun in the filename and measure nothing.\n"
-           "class _OrderSummaryRow extends StatelessWidget {\n"
-           "  const _OrderSummaryRow({\n"
-           "    required this.order,\n"
-           "    required this.onReorder,\n"
-           "  });\n"
+           "use App\\Domain\\Order;\n"
            "\n"
-           "  final Order order;\n"
-           "  final void Function(Order order) onReorder;\n"
+           "class OrdersController\n"
+           "{\n"
+           "    public function index()\n"
+           "    {\n"
+           "        return [];\n"
+           "    }\n"
            "\n"
-           "  @override\n"
-           "  Widget build(BuildContext context) => Padding(\n"
-           "        padding: AppTheme.spacing.md,\n"
-           "        child: Row(children: [\n"
-           "          Text('Order ${order.id}'),\n"
-           "          Text('${order.itemCount} items'),\n"
-           "          if (PricingRules.showsTaxBreakdown(order)) const Text('incl. tax'),\n"
-           "          Text(PricingRules.formatTotal(order)),\n"
-           "          if (PricingRules.isReorderable(order))\n"
-           "            TextButton(\n"
-           "              onPressed: () => onReorder(order),\n"
-           "              child: const Text('Reorder'),\n"
-           "            ),\n"
-           "        ]),\n"
-           "      );\n"
+           "    public function show()\n"
+           "    {\n"
+           "        return new Order('1');\n"
+           "    }\n"
            "}\n")
-    _write(root, "lib/theme/app_theme.dart",
-           "// A hardcoded colour, so a token audit pointed here has something to find.\n"
-           "const primary = Color(0xFF2266EE);\n")
-    _app_domain_sources(root)
-
-
-# --------------------------------------------------------------------------- #
-# The two widgets the `/promote-component` cases name, and the domain layer one
-# of them is coupled to.
-#
-# These exist because the four promote-component cases invoke
-# `/promote-component StatCell` and `/promote-component OrderSummaryRow`
-# against this fixture, and neither name appeared anywhere in it. Every one of
-# those cases was therefore pointed at a component that did not exist — the
-# command could only ever report "no such widget", and each case's negative
-# graders (`no-write`, `nothing-lands-in-design-system`) would have scored a
-# clean 1.0 off that refusal while measuring nothing about promotion judgement.
-#
-# They are shaped so the DISTINCTION the cases turn on is structural rather
-# than nominal: StatCell would survive being renamed to anything, and
-# OrderSummaryRow would not.
-# --------------------------------------------------------------------------- #
-
-def _app_domain_sources(root: Path) -> None:
-    """The product-layer types `OrderSummaryRow` is built on.
-
-    A widget is refusable because of what it is COUPLED to, not because of what
-    it is called. Naming a widget `OrderSummaryRow` and giving it two strings
-    would let the refusal case pass on the noun in the filename, which is a
-    fixture that makes a case pass by accident. So the entity is real, it
-    carries business state, and there is a rules module that decides things
-    about it.
-    """
-    _write(root, "lib/models/money.dart",
-           "/// A value object, not a primitive: the widget cannot render one\n"
-           "/// without knowing this project's currency conventions.\n"
-           "class Money {\n"
-           "  const Money(this.minorUnits, this.currency);\n"
-           "  final int minorUnits;\n"
-           "  final String currency;\n"
-           "}\n")
-    _write(root, "lib/models/order.dart",
-           "import 'money.dart';\n"
+    # The domain the controller reads: routes plus a request/response contract
+    # plus something they act on is what `service` means in roles.json ("a
+    # deployed data or API service — routes, request/response contracts").
+    # The `use App\Domain\Order` edge also gives composer.json's psr-4 mapping
+    # something real to describe.
+    _write(root, "app/Domain/Order.php",
+           "<?php\n"
            "\n"
-           "enum OrderStatus { pending, paid, shipped, delivered, cancelled, refunded }\n"
+           "namespace App\\Domain;\n"
            "\n"
-           "/// A domain entity. It has an identity, a lifecycle and money on it.\n"
-           "class Order {\n"
-           "  const Order({\n"
-           "    required this.id,\n"
-           "    required this.status,\n"
-           "    required this.itemCount,\n"
-           "    required this.subtotal,\n"
-           "    required this.tax,\n"
-           "    required this.total,\n"
-           "    required this.placedAt,\n"
-           "  });\n"
-           "  final String id;\n"
-           "  final OrderStatus status;\n"
-           "  final int itemCount;\n"
-           "  final Money subtotal;\n"
-           "  final Money tax;\n"
-           "  final Money total;\n"
-           "  final DateTime placedAt;\n"
-           "}\n")
-    _write(root, "lib/services/pricing_rules.dart",
-           "import '../models/order.dart';\n"
-           "\n"
-           "/// Product rules, not presentation. A design system that imported this\n"
-           "/// would be importing the business.\n"
-           "class PricingRules {\n"
-           "  static bool isReorderable(Order order) =>\n"
-           "      order.status == OrderStatus.delivered ||\n"
-           "      order.status == OrderStatus.cancelled;\n"
-           "\n"
-           "  static bool showsTaxBreakdown(Order order) => order.tax.minorUnits > 0;\n"
-           "\n"
-           "  static String formatTotal(Order order) =>\n"
-           "      '${order.total.currency} ${(order.total.minorUnits / 100).toStringAsFixed(2)}';\n"
+           "class Order\n"
+           "{\n"
+           "    public function __construct(public string $id)\n"
+           "    {\n"
+           "    }\n"
            "}\n")
 
 
 def _design_system_sources(root: Path) -> None:
-    # A package consumed by other repositories: components + tokens + theming,
-    # and pointedly NO screens or routes. An archetype detector that guesses
-    # `app` from the presence of source code alone should be wrong here.
+    # A package consumed by other repositories: a public parsing surface,
+    # pointedly NO routes and no controllers. An archetype detector that
+    # guesses `service` from the presence of source code alone should be wrong
+    # here.
     #
-    # DART, NOT TYPESCRIPT — and this is load-bearing rather than a preference.
-    # This fixture is the promotion TARGET for `_fixtures/app`, which is a
-    # Flutter app. Promoting a Dart widget into a TypeScript package is not a
-    # thing `/promote-component` could do correctly, so the pair has to share a
-    # language, and the graders settle which one: they assert
-    # `design-system/**/*stat_cell*` and `design-system/**/*stat_cell*test*` —
-    # snake_case, which is Dart's file convention and not TSX's. Making the app
-    # TypeScript instead would strand those two graders AND rewrite the fixture
-    # that eleven other cases depend on, including the planted-violation
-    # control that grades on `app_theme.dart` by name. Both `dart` and `tsx`
-    # adapters ship, so neither language is unsupported; this one is the one
-    # the assertions are written in.
+    # PHP, and the same language as `_app_sources`, because the two fixtures
+    # are siblings — a package and the API service beside it — which is the
+    # pair templates/docs/roles.json says its two archetypes were measured on:
+    # "a PHP parser package and its REST API sibling".
     _write(root, "README.md",
-           "# Example Design System\n\nA component and token package consumed by other "
-           "repositories. It has no screens, no routes and no users of its own.\n")
-    _write(root, "pubspec.yaml",
-           "name: example_design_system\n"
-           "description: Components, tokens and theming consumed by other repositories.\n"
-           "version: 0.4.0\n"
-           "environment:\n  sdk: '>=3.0.0 <4.0.0'\n"
-           "dependencies:\n  flutter:\n    sdk: flutter\n"
-           "dev_dependencies:\n  flutter_test:\n    sdk: flutter\n")
-    # The barrel. Step 4 of /promote-component exports the promoted component
-    # from here, so there has to be a here.
-    _write(root, "lib/example_design_system.dart",
-           "export 'src/components/ds_button.dart';\n"
-           "export 'src/components/ds_card.dart';\n"
-           "export 'src/tokens/tokens.dart';\n"
-           "export 'src/theme/ds_theme.dart';\n")
-    _write(root, "lib/src/components/ds_button.dart",
-           "import '../tokens/tokens.dart';\n"
-           "\n"
-           "class DsButton extends StatelessWidget {\n"
-           "  const DsButton({super.key, required this.label, this.onPressed});\n"
-           "  final String label;\n"
-           "  final VoidCallback? onPressed;\n"
-           "\n"
-           "  @override\n"
-           "  Widget build(BuildContext context) => TextButton(\n"
-           "        onPressed: onPressed,\n"
-           "        child: Padding(padding: DsTokens.space.md, child: Text(label)),\n"
-           "      );\n"
+           "# Example Query Support\n\nA query-parsing package consumed by other "
+           "repositories. It has no routes, no controllers and no users of its own.\n")
+    _write(root, DS_MANIFEST,
+           "{\n"
+           '  "name": "example/query-support",\n'
+           '  "description": "A query-parsing package consumed by other repositories.",\n'
+           '  "require": {\n'
+           '    "php": "^8.1"\n'
+           "  },\n"
+           '  "autoload": {\n'
+           '    "psr-4": {\n'
+           '      "Example\\\\QuerySupport\\\\": "src/"\n'
+           "    }\n"
+           "  }\n"
            "}\n")
-    _write(root, "lib/src/components/ds_card.dart",
-           "import '../tokens/tokens.dart';\n"
+    _write(root, "src/QueryParser.php",
+           "<?php\n"
            "\n"
-           "class DsCard extends StatelessWidget {\n"
-           "  const DsCard({super.key, required this.child});\n"
-           "  final Widget child;\n"
+           "namespace Example\\QuerySupport;\n"
            "\n"
-           "  @override\n"
-           "  Widget build(BuildContext context) => Container(\n"
-           "        padding: DsTokens.space.md,\n"
-           "        decoration: BoxDecoration(borderRadius: DsTokens.radius.md),\n"
-           "        child: child,\n"
-           "      );\n"
+           "class QueryParser\n"
+           "{\n"
+           "    public function parse(string $query): Segment\n"
+           "    {\n"
+           "        return new Segment($query);\n"
+           "    }\n"
            "}\n")
-    _write(root, "lib/src/tokens/tokens.dart",
-           "class DsTokens {\n"
-           "  static const space = (sm: 4.0, md: 8.0, lg: 16.0);\n"
-           "  static const radius = (sm: 2.0, md: 6.0);\n"
-           "}\n")
-    _write(root, "lib/src/theme/ds_theme.dart",
-           "import '../tokens/tokens.dart';\n"
+    _write(root, "src/Segment.php",
+           "<?php\n"
            "\n"
-           "class DsTheme {\n"
-           "  static const surface = DsTokens.space;\n"
-           "}\n")
-    # The three DS-side contribution gates /promote-component Step 3 names —
-    # unit test, gallery use case, docs entry — each shown ONCE, on an existing
-    # component. A command told "the DS repo requires a test, a gallery entry
-    # and a doc" can only comply if the repo it is handed shows where those go;
-    # `promote-component-proceeds-on-go-ahead` grades the test
-    # (`design-system/**/*stat_cell*test*`) on exactly that pattern.
-    _write(root, "test/components/ds_button_test.dart",
-           "import 'package:flutter_test/flutter_test.dart';\n"
-           "import 'package:example_design_system/example_design_system.dart';\n"
+           "namespace Example\\QuerySupport;\n"
            "\n"
-           "void main() {\n"
-           "  testWidgets('DsButton renders its label', (tester) async {\n"
-           "    await tester.pumpWidget(const DsButton(label: 'Save'));\n"
-           "    expect(find.text('Save'), findsOneWidget);\n"
-           "  });\n"
+           "class Segment\n"
+           "{\n"
+           "    public function __construct(public string $raw)\n"
+           "    {\n"
+           "    }\n"
            "}\n")
-    _write(root, "gallery/ds_button_gallery.dart",
-           "// One use case per component. Every component in lib/src/components/\n"
-           "// must appear here; this is the gallery gate Step 3 refers to.\n"
-           "import 'package:example_design_system/example_design_system.dart';\n"
+    _write(root, "tests/QueryParserTest.php",
+           "<?php\n"
            "\n"
-           "final dsButtonUseCases = [\n"
-           "  DsButton(label: 'Default', onPressed: () {}),\n"
-           "  const DsButton(label: 'Disabled'),\n"
-           "];\n")
-    # `doc/`, not `docs/`: Dart's own convention, and it keeps the component
-    # docs out of the directory the doc-role scaffolder writes into, so a
-    # bootstrap case run against this fixture is not reading these as project
-    # documents.
-    _write(root, "doc/components/ds_button.md",
-           "# DsButton\n\nOne entry per exported component: what it is for, its "
-           "parameters, and when to reach for something else.\n\n"
-           "| Parameter | Type | Notes |\n| --- | --- | --- |\n"
-           "| `label` | `String` | Required. |\n"
-           "| `onPressed` | `VoidCallback?` | Null disables the button. |\n")
+           "use Example\\QuerySupport\\QueryParser;\n"
+           "\n"
+           "class QueryParserTest\n"
+           "{\n"
+           "    public function testParsesToASegment()\n"
+           "    {\n"
+           "        $segment = (new QueryParser())->parse('a=b');\n"
+           "        assert($segment->raw === 'a=b');\n"
+           "    }\n"
+           "}\n")
 
 
-AUTHORED_DESIGN_DOC = """# API
+AUTHORED_DOC = """# API
 
 This document is deliberately *written*, not scaffolded — it carries no
 `status: stub` frontmatter, so it resolves with exit 0 and counts as real
@@ -482,8 +269,8 @@ stub and the decline that sit beside it in this same fixture.
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/widgets` | List widgets |
-| GET | `/api/widgets/{id}` | One widget |
+| GET | `/orders` | List orders |
+| GET | `/orders/{id}` | One order |
 
 ## Errors
 
@@ -567,7 +354,7 @@ def build_service(root: Path) -> None:
 
     # Authored: a real document, no stub frontmatter.
     manifest = json.loads((root / ".backend-suite/docs.manifest.json").read_text())
-    _write(root, manifest["roles"][AUTHORED_ROLE], AUTHORED_DESIGN_DOC)
+    _write(root, manifest["roles"][AUTHORED_ROLE], AUTHORED_DOC)
 
     # Stub: written by the real scaffolder, so the `status: stub` frontmatter is
     # whatever scaffold_doc.py actually emits today, not a copy of it.
@@ -626,13 +413,13 @@ def build_pre_ratified(root: Path) -> None:
             "state": "approved",
             "by": "a human who reviewed it",
             "on": "2026-01-01",
-            "value": "lib",
-            "evidence": "read the tree and confirmed every source file is under lib/",
+            "value": "app",
+            "evidence": "composer.json maps App\\ to app/ and the controllers live there",
             "verifiedAgainst": {"commit": "0" * 40},
         }
         # The ratified value must agree with the profile itself, or doctor would
         # report it contradicted and the fixture would be testing the wrong state.
-        profile["source"]["root"] = "lib"
+        profile["source"]["root"] = "app"
 
     _edit_json(root / ".backend-suite/profile.json", mutate)
 
