@@ -15,13 +15,16 @@ checks below were written to catch — some of those wrong guesses compile.
 
 Ported from the design system's `tooling/scripts/audit_api_consistency.py`,
 where all four checks are grounded in defects that package actually had. What
-changed in the port is stated under each check: two of the four are universal,
-one needed its remedy generalised, and one is only meaningful for a package that
-gets re-voiced and is therefore opt-in.
+each check means now is stated under it: load-bearing and hard-baked copy are
+universal and run off the language adapter's syntax; authored semantics keeps
+its UI provenance and is meant to be switched off with a why on a server-side
+tree; vocabulary's rules moved into project config, because Flutter literals in
+a PHP tree is exactly the "another language's patterns match nothing, and the
+run prints clean" failure this suite keeps closing.
 
 ## 1. Load-bearing copy — universal
 
-A user-facing string is *load-bearing* when the widget compares it to decide what
+A user-facing string is *load-bearing* when the code compares it to decide what
 something means. The origin case appended an "Unknown" segment and identified it
 with `option == 'Unknown'`, so the word printed on screen was simultaneously the
 label and the sentinel. A caller whose own options contained that word got it
@@ -29,13 +32,17 @@ rendered twice, and a genuine answer of "Unknown" came back as `null` —
 indistinguishable from never having answered.
 
 It compiles, it renders, and it is quietly wrong, which is the whole family of
-defect this tooling exists to catch.
+defect this tooling exists to catch. The backend reading is the same shape one
+layer down: a PHP response where `$payload['status'] === 'Unknown'` decides
+branching, so the envelope's own copy is also its control flow.
 
 ## 2. Hard-baked copy — OPT-IN, and this is the one that changed in the port
 
 Copy the caller cannot override at all. In a white-label *package* that is a
 defect: a client in another language, or simply with their own voice, has no way
-out short of forking.
+out short of forking. On a backend it is the same defect on the wire — a
+response literal a consumer must parse in your words rather than re-voice in
+theirs.
 
 In an application it is not a defect at all — the literals **are** the copy.
 Running this against a consuming app would report every string it ships, which is
@@ -47,7 +54,7 @@ distinguishable. This is a net, not a proof: it only matches literals someone
 thought to pattern-match. What actually proves the claim is a reference brand
 that renders every string in guillemets.
 
-## 3. Authored semantics — universal
+## 3. Authored semantics — UI provenance: off, with a why, on a server-side tree
 
 A component with a tap handler must author a `Semantics` node.
 
@@ -64,19 +71,38 @@ Announcing either as a button loses the only state that matters.
 Which wrappers count as authoring is per-project (`semanticsWrappers`), because
 `Semantics` is Flutter's and the wrapper beside it is the project's own.
 
-## 4. Vocabulary — universal
+The check compares the project's interaction surface (`tappable`) against those
+wrappers — and on a server-side tree the interaction surface belongs to the
+client app, not to this codebase. A PHP adapter spells `tappable` as route
+declarations, so leaving this check on would report every route as an unnamed
+tap: a finding nobody can act on here, which is how a real finding on the client
+side gets ignored too. The honest configuration is
+`checks.authoredSemantics: {"enabled": false, "why": "<where the surface
+lives>"}` — silence that costs a sentence, which the config contract enforces.
+What is not honest is leaving it on and learning to skip its line.
 
-Whether the same idea has the same name everywhere. Flutter's convention is the
-reference point because consumers arrive already knowing it:
+## 4. Vocabulary — the rules are the project's own
 
-  * `onPressed` on button-like types, `onTap` on tappable surfaces
-  * a nullable callback means *disabled*, so a component should not also carry an
-    `enabled` flag — then two things can disagree about whether a control works
+Whether the same idea has the same name everywhere. Each rule is a class-name
+condition plus the member conditions that contradict it, authored in
+`apiConsistency.vocabularyRules` — the same file as every other architecture
+fact this suite enforces (`[{message, classPattern?, classNotPattern?, has,
+hasNot?}]`; a class whose name matches, whose members all match `has`, and whose
+members match none of `hasNot`, is a finding).
 
-The `enabled` rule is about the *name*, not about having two states. A row that
-is dimmed-and-inert versus inert-at-full-contrast genuinely has two. What is
-wrong is a flag claiming to be the single authority on usability while sitting
-beside a callback that also decides it.
+The origin's rules were Flutter framework conventions, and they are recorded
+under each shape as the provenance of the mechanism:
+
+  * a class named `*Button`/`*Cta`/`*Fab` taking `onTap`, where Flutter's
+    buttons take `onPressed` — and the mirror case, `onPressed` on a class that
+    is not button-like
+  * a nullable `onTap`/`onPressed` callback beside an `enabled` flag — two
+    things that can disagree about whether a control works, where the nullable
+    callback alone is supposed to be the one answer
+
+`checks.vocabulary: true` with zero rules refuses rather than sweeping: a check
+with nothing to compare reports a confident clean, which is this suite's
+governing failure with a config file wrapped around it.
 """
 from __future__ import annotations
 
@@ -154,10 +180,43 @@ DEFAULTED = _SYNTAX.defaulted
 COMPARED = _SYNTAX.compared
 
 TAPPABLE = _SYNTAX.tappable
-BUTTONISH = re.compile(_RULES.get("buttonishPattern", r"(?:Button|Cta|Fab)\b"))
 
 _WRAPPERS = _RULES.get("semanticsWrappers") or ["Semantics"]
 AUTHORED = re.compile("|".join(rf"\b{re.escape(w)}\(" for w in _WRAPPERS))
+
+# The vocabulary rules are the project's own naming decisions, so they live in
+# arch-rules.json beside every other fact this suite enforces — the inline
+# Flutter literals this used to carry would have run over a PHP tree matching
+# nothing and reporting a confident clean. Every rule present in the config is
+# compiled HERE, at load, so a malformed rule is a startup refusal rather than a
+# silent skip at scan time: a rule that cannot run is a check that reports
+# nothing, and the two must not look alike. Zero rules is legal — the check can
+# be off — but not while it is on (see main()).
+VOCABULARY_RULES: list[dict] = []
+for _index, _rule in enumerate(_RULES.get("vocabularyRules") or []):
+    _where = f"apiConsistency.vocabularyRules[{_index}]"
+    _message = _rule.get("message")
+    _has = _rule.get("has")
+    if not isinstance(_message, str) or not _message.strip():
+        raise Refused(
+            f"{_where} has no non-empty `message`. A finding without a stated "
+            f"conflict is a count, not a finding.")
+    if not isinstance(_has, list) or not _has:
+        raise Refused(
+            f"{_where} has no `has` patterns — a rule with nothing to match on a "
+            f"class body can never fire, and a check that cannot fire reads as one "
+            f"that passed.")
+    try:
+        VOCABULARY_RULES.append({
+            "message": _message.strip(),
+            "class": re.compile(_rule["classPattern"]) if _rule.get("classPattern") else None,
+            "classNot": (re.compile(_rule["classNotPattern"])
+                         if _rule.get("classNotPattern") else None),
+            "has": [re.compile(p) for p in _has],
+            "hasNot": [re.compile(p) for p in _rule.get("hasNot") or []],
+        })
+    except re.error as exc:
+        raise Refused(f"{_where} carries an invalid regex: {exc}")
 
 
 def _exceptions() -> dict:
@@ -233,7 +292,8 @@ def scan(paths: list[Path], exempt: dict) -> dict:
         src = _ADAPTER.blank_comments(path.read_text())
 
         # Asserts exist to *reject* a colliding label; they name the string
-        # deliberately and are not the widget deciding meaning by it.
+        # deliberately — a test exercising the case, not production code
+        # deciding what something means by a word on screen.
         body = re.sub(r"assert\(.*?\n\s*\);", "", src, flags=re.S)
 
         for line_no, line in enumerate(body.splitlines(), 1):
@@ -250,29 +310,30 @@ def scan(paths: list[Path], exempt: dict) -> dict:
                 continue
             hardbaked.append(f"{rel}: '{literal}'")
 
-        # Vocabulary runs over plain classes too, not just widgets — the
-        # double-disabled defect lives on data classes as readily as on widgets.
+        # Every declared kind in scope, not one language's spelling of one:
+        # `class`/`final class`/`abstract class`, `interface`, `trait`, `enum`
+        # are all containers a naming rule can hold. The extraction is generic
+        # on purpose — it takes the body text and lets the project's own rules
+        # decide what matters, so nothing language-specific hides here. Bodies
+        # are matched multi-line (the convention in every language this suite
+        # has syntax for); a one-line body reads as part of whatever follows
+        # it, so plant fixtures with braces on their own lines.
         for cls, fields in re.findall(
-            r"^class (\w+)[^{]*\{(.*?)^\}", src, flags=re.S | re.M
+            r"^\s*[\w\s]*?\b(?:class|interface|trait|enum)\s+(\w+)"
+            r"[^{]*\{(.*?)^\}", src, flags=re.S | re.M
         ):
             if cls.startswith("_"):
                 continue
-            has_tap = re.search(r"\bfinal VoidCallback\??\s+onTap\b", fields)
-            has_press = re.search(r"\bfinal VoidCallback\??\s+onPressed\b", fields)
-            if has_tap and BUTTONISH.search(cls):
-                vocabulary.append(
-                    f"{rel}: {cls} is named a button but takes onTap; Flutter's "
-                    "buttons take onPressed")
-            if has_press and not BUTTONISH.search(cls):
-                vocabulary.append(
-                    f"{rel}: {cls} takes onPressed but is not button-like; "
-                    "Flutter uses onTap for surfaces")
-            nullable = re.search(r"\bfinal VoidCallback\?\s+on(Tap|Pressed)\b", fields)
-            enabled = re.search(r"\bfinal bool\s+enabled\b", fields)
-            if nullable and enabled:
-                vocabulary.append(
-                    f"{rel}: {cls} expresses disabled twice — a nullable callback "
-                    "AND an `enabled` flag, which can disagree")
+            for rule in VOCABULARY_RULES:
+                if rule["class"] and not rule["class"].search(cls):
+                    continue
+                if rule["classNot"] and rule["classNot"].search(cls):
+                    continue
+                if not all(p.search(fields) for p in rule["has"]):
+                    continue
+                if any(p.search(fields) for p in rule["hasNot"]):
+                    continue
+                vocabulary.append(f"{rel}: {cls} — {rule['message']}")
 
         if any(fnmatch.fnmatch(rel, p) or path.stem == p for p in semantics_exempt):
             continue
@@ -304,10 +365,12 @@ _REMEDY = {
         "labelled-tap-target guideline passes without this, because it only asks "
         "whether a name exists somewhere."),
     "vocabulary": (
-        "Match the name the rest of the codebase already uses. Flutter's convention "
-        "is the reference point because consumers arrive knowing it: onPressed on "
-        "buttons, onTap on surfaces, and a nullable callback as the one thing that "
-        "says disabled."),
+        "The rule that flagged this lives in apiConsistency.vocabularyRules "
+        "because it is a naming decision this project actually holds to — two "
+        "names for one idea are in play. Adopt the name the rest of the codebase "
+        "already uses on the other side; if the rule no longer describes a real "
+        "conflict, delete it with the care you would delete any check — a rule "
+        "nobody believes trains readers to ignore findings."),
 }
 _HEADLINE = {
     "compared": "load-bearing copy — a string literal decides what something means",
@@ -334,6 +397,14 @@ def main() -> int:
     paths = _files()
     exempt = _exceptions()
     enabled = {kind: _check_enabled(key) for kind, key in _CHECK_KEY.items()}
+    if enabled["vocabulary"] and not VOCABULARY_RULES:
+        raise Refused(
+            "apiConsistency.checks.vocabulary is on but "
+            "apiConsistency.vocabularyRules is empty. A vocabulary check with no "
+            "rules compares nothing and reports a confident clean — the exact "
+            "failure this audit's port exists to close. Author the naming rules "
+            "this project holds itself to, or switch the check off with a why.",
+            audit="audit_api_consistency")
     found = scan(paths, exempt)
     active = {k: v for k, v in found.items() if enabled[k]}
 

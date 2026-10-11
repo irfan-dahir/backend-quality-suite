@@ -67,15 +67,15 @@
   },
 
   "apiConsistency": {
-    "_comment": "Consumed by bin/audit_api_consistency.py. Which per-check rules are on, each with a human-readable 'why' shown when a check is off.",
-    "buttonishPattern": "(?:Button|Cta|Fab)\\b",
+    "_comment": "Consumed by bin/audit_api_consistency.py. checks: each of the four (loadBearingCopy, hardBakedCopy, authoredSemantics, vocabulary) is `true` or {\"enabled\": false, \"why\": \"...\"} — an unconfigured check refuses rather than passes. authoredSemantics is a UI-provenance check (a tap handler must author a named semantics node); on a server-side tree the interaction surface lives in the client app, so turn it off with a why rather than letting every route report as an unnamed tap. vocabularyRules: this project's own naming rules, [{message, classPattern?, classNotPattern?, has, hasNot?}] — a class whose name matches, whose members all match `has`, and whose members match none of `hasNot` is a finding; `vocabulary` on with zero rules refuses rather than sweeping clean.",
     "semanticsWrappers": ["Semantics"],
-    "scope": ["TODO: glob(s) this audit should scan, e.g. 'lib/**/*.dart'"],
+    "scope": ["TODO: glob(s) this audit should scan, e.g. 'routes/**/*.php'"],
     "checks": {
       "TODO_CHECK_NAME": {
         "enabled": true,
         "why": "TODO: why this check matters here, shown when disabled"
       }
-    }
+    },
+    "vocabularyRules": []
   }
 }

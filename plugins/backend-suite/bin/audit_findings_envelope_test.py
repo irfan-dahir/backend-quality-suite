@@ -384,84 +384,155 @@ class ProseFlags(unittest.TestCase):
 PROFILE = {
     "profileVersion": 1,
     "project": {"name": "Fixture"},
-    "adapters": {"lang": "dart"},
-    "source": {"root": "lib", "fileGlob": "**/*.dart"},
-    "tokens": {
-        "source": {"kind": "file", "path": "lib/theme/tokens.dart"},
-        "accessor": "AppTokens",
-        "roleSource": {"kind": "file", "path": "lib/theme/roles.dart"},
-        "roleAccessor": "DsColors",
-    },
+    "adapters": {"lang": "php"},
     "audits": {"exceptionsFile": ".backend-suite/exceptions.json",
                "archRulesFile": ".backend-suite/arch-rules.json"},
-    "docs": {"manifest": ".backend-suite/docs.manifest.json"},
 }
 
 ARCH_RULES = {
-    "unwiredRoles": {"requiredRoles": ["primary", "surface"]},
-    "unusedTokens": {"categories": {"spacing": "space", "radius": "radius"},
-                     "requiredTokens": None},
     "apiConsistency": {
-        "buttonishPattern": r"(?:Button|Cta|Fab)\b",
+        "scope": ["routes/**/*.php"],
         "semanticsWrappers": ["Semantics"],
-        "scope": ["lib/**/*.dart"],
-        "checks": {"loadBearingCopy": True, "hardBakedCopy": True,
-                   "authoredSemantics": True, "vocabulary": True},
+        "checks": {
+            "loadBearingCopy": True,
+            "hardBakedCopy": True,
+            # The check's surface is a client-side one; the fixture is a
+            # server tree, so it is off with a written reason — and the
+            # envelope has to carry that reason rather than vanish.
+            "authoredSemantics": {"enabled": False,
+                                  "why": "server-side tree; interaction "
+                                         "surfaces live in the client app"},
+            "vocabulary": True,
+        },
+        "vocabularyRules": [
+            {"message": "uses fetch, where the codebase names this find",
+             "classPattern": r"Repository",
+             "has": [r"function\s+fetch\s*\("]},
+        ],
     },
 }
 
-CLEAN_SOURCE = """class Foo {
-  double pad() => AppTokens.space16 + AppTokens.space8 + AppTokens.radius4;
-  void use(BuildContext context) {
-    final colors = DsColors.of(context);
-    colors.primary;
-    colors.surface;
-  }
+BAD_SOURCE = """<?php
+
+final class UserRepository
+{
+    public function fetch(int $id)
+    {
+        return $this->client->get('/users/' . $id);
+    }
+}
+
+if ($payload['status'] === 'Unknown') {
+    return response()->json(['message' => 'Not found'], 404);
 }
 """
 
-BAD_SOURCE = """class SaveButton extends StatelessWidget {
-  final VoidCallback? onTap;
-  final bool enabled;
-  Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Text('Tap here now'));
-  }
+CLEAN_SOURCE = """<?php
+
+final class HealthController
+{
+    public function status()
+    {
+        return ['status' => 'ok'];
+    }
 }
 """
 
 
-def dart_fixture(tmp: str) -> Path:
-    """A minimal Dart project the three project-shaped audits can all run against.
+def php_fixture(tmp: str, source: str) -> Path:
+    """A minimal PHP project the audit can run end to end.
 
-    Hand-built rather than borrowed from `evals/_fixtures/build_fixture.py`:
-    that builder shells out to the real toolchain to produce a project shaped
-    like a consumer's, which is far more than these three need and makes the
-    test depend on something installed.
+    Hand-built and tiny on purpose: this file tests the envelope, not the
+    adapter — the fixture only has to give each enabled check a real surface
+    to decide over, and the php adapter's syntax has its own probes.
+    Braces on their own lines because the audit's class extraction takes
+    multi-line bodies (the convention).
     """
     repo = Path(tmp)
     (repo / ".backend-suite").mkdir(parents=True)
-    (repo / "lib" / "theme").mkdir(parents=True)
+    (repo / "routes").mkdir(parents=True)
     (repo / ".backend-suite" / "profile.json").write_text(json.dumps(PROFILE))
     (repo / ".backend-suite" / "arch-rules.json").write_text(json.dumps(ARCH_RULES))
-    (repo / ".backend-suite" / "exceptions.json").write_text(json.dumps(
-        {"apiConsistency": {}, "unusedTokens": {"exempt": {}}, "unwiredRoles": {}}))
-    (repo / "lib" / "theme" / "tokens.dart").write_text(
-        "class AppTokens {\n"
-        "  static const space16 = 16.0;\n"
-        "  static const space8 = 8.0;\n"
-        "  static const radius4 = 4.0;\n"
-        "}\n")
-    (repo / "lib" / "theme" / "roles.dart").write_text(
-        "class DsColors {\n  final Color primary;\n  final Color surface;\n}\n")
-    (repo / "lib" / "clean.dart").write_text(CLEAN_SOURCE)
+    (repo / ".backend-suite" / "exceptions.json").write_text(
+        json.dumps({"apiConsistency": {}}))
+    (repo / "routes" / "api.php").write_text(source)
     return repo
 
 
 # UnusedTokens and UnwiredRoles classes removed with their scripts (audit_unused_tokens.py, audit_unwired_roles.py) when this repo re-domained; re-authored against backend audits if the envelope gain is re-measured.
 
-# ApiConsistency class removed with the dart fixtures when this repo re-domained;
-# it is re-authored against the php adapter's component-contract fixture in Phase D
-# (SWAP-PLAN.md) -- the audit itself (bin/audit_api_consistency.py) still ships.
+class ApiConsistency(unittest.TestCase):
+    """The project-shaped audit of the five: its findings ARE the check output.
+
+    The other four decide over docs, manifests and skill prose; this one's four
+    checks (load-bearing copy, hard-baked copy, authored semantics, vocabulary)
+    decide over a source tree through the php adapter's API_CONSISTENCY syntax,
+    and its config is the one place the audit makes a project say what it turned
+    off. So the envelope's `suppressed` block is under test here as much as its
+    findings are.
+    """
+
+    def test_planted_findings_reach_the_envelope_per_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = php_fixture(tmp, BAD_SOURCE)
+            result = run("audit_api_consistency", ["--findings"], repo=repo)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            data = envelope(repo, "api-consistency")
+            EnvelopeContract().assert_well_formed(data, "api-consistency")
+            self.assertEqual(categories(data),
+                             {"compared", "hardbaked", "vocabulary"})
+            compared = [f for f in data["findings"] if f["category"] == "compared"]
+            self.assertEqual(len(compared), 1)
+            self.assertIn("Unknown", compared[0]["summary"])
+            # Line-scoped checks carry a line number; vocabulary is
+            # class-scoped and reports the class, not a line.
+            self.assertIsInstance(compared[0]["line"], int)
+            vocabulary = [f for f in data["findings"]
+                          if f["category"] == "vocabulary"]
+            self.assertIn("UserRepository", vocabulary[0]["summary"])
+            # The check that is off is named WITH its reason — a disabled
+            # check must not read as one that found nothing.
+            self.assertIn("semantics", data["suppressed"])
+            self.assertIn("authoredSemantics",
+                          data["suppressed"]["semantics"])
+            self.assertIn("client app", data["suppressed"]["semantics"])
+            self.assertEqual(data["scanned"], 1)
+
+    def test_a_clean_sweep_is_empty_but_scanned(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = php_fixture(tmp, CLEAN_SOURCE)
+            result = run("audit_api_consistency", ["--findings"], repo=repo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = envelope(repo, "api-consistency")
+            EnvelopeContract().assert_well_formed(data, "api-consistency")
+            # The distinction the governing principle is about: clean over 1
+            # scanned file, not clean over a sweep that refused to run.
+            self.assertEqual(data["findings"], [])
+            self.assertEqual(data["scanned"], 1)
+
+    def test_control_output_is_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = php_fixture(tmp, BAD_SOURCE)
+            out = Path(tmp) / "env.json"
+            EnvelopeContract().assert_control_unchanged(
+                "audit_api_consistency", [], ["--findings", str(out)], repo=repo)
+
+    def test_vocabulary_on_with_no_rules_refuses_rather_than_sweeping(self):
+        """On with zero rules is the confident-zero failure in a config file.
+
+        The check must not be able to run and report nothing because nothing
+        was configured for it to compare.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = php_fixture(tmp, CLEAN_SOURCE)
+            rules_file = repo / ".backend-suite" / "arch-rules.json"
+            rules = json.loads(rules_file.read_text())
+            rules["apiConsistency"]["vocabularyRules"] = []
+            rules_file.write_text(json.dumps(rules))
+            result = run("audit_api_consistency", [], repo=repo)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("REFUSED", result.stderr)
+            self.assertIn("vocabularyRules", result.stderr)
 
 class EnvelopesAreReadableByTheRollUp(unittest.TestCase):
     """The point of all of the above: /quality-debt can now grade these.

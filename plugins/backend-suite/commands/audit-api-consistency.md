@@ -43,8 +43,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_api_consistency.py"
 |---|---|---|
 | `loadBearingCopy` | A user-facing string compared with `==` — the word on screen doubling as the sentinel. Translating it, or a client rebranding it, silently detaches the meaning from the thing being tapped | 🔴 Critical |
 | `hardBakedCopy` | Copy a caller cannot override. **Only meaningful for a package that gets re-voiced** — in an application the literals *are* the copy, which is why this is opt-in | 🟡 Should fix |
-| `authoredSemantics` | A tap handler with no authored `Semantics`. Flutter's own labelled-tap-target guideline passes on these, because it only asks whether a name exists somewhere — not whether the *role* is right | 🟡 Should fix |
-| `vocabulary` | The same idea spelled two ways: `onTap` on a button, `onPressed` on a surface, or an `enabled` flag beside a nullable callback so two things can disagree about whether a control works | 🟡 Should fix |
+| `authoredSemantics` | A tap handler with no authored `Semantics` node. This one has a UI provenance: on a server-side tree the interaction surface lives in the client app, so the honest configuration is off with a written `why` — and the audit names that reason in its summary rather than letting the check vanish | 🟡 Should fix |
+| `vocabulary` | The same idea spelled two ways. The rules are the project's own (`apiConsistency.vocabularyRules`: a class-name pattern plus the member patterns that contradict it — e.g. a `*Repository` taking `fetch` where the codebase names it `find`). Switched on with zero rules it **refuses** rather than sweeping a confident clean | 🟡 Should fix |
 
 The summary line names any check that is switched off, with its reason. **Read that line.** A disabled check is a decision someone made and should be re-examined when the thing it describes changes — a project that gets white-labelled needs `hardBakedCopy` turned back on.
 
