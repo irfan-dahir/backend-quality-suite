@@ -625,6 +625,7 @@ API_CONSISTENCY = ApiConsistencySyntax(
 # belongs here: the engine asks "does this project route?" and never learns
 # what the answer was made of.
 
+# Base routing signatures (Laravel/Lumen facades over the router)
 ROUTING_SIGNATURES = (
     # Laravel/Lumen facades over the router, in every real routes file.
     re.compile(
@@ -638,12 +639,136 @@ ROUTING_SIGNATURES = (
     re.compile(r"(?:@|#\[)(?:Route|Get|Post|Put|Patch|Delete|Head|Options|Fallback)\b"),
 )
 
+
+# Laravel-specific routing signatures (Laravel 8+ / Lumen 9+)
+# These extend the base patterns with Laravel-specific conventions.
+_LARAVEL_ROUTE_GROUP = r"(?:Route::(?:group|middleware|prefix|name|domain|namespace|controller|fallback|match)\s*\()"
+_LARAVEL_RESOURCE = r"(?:Route::(?:resource|apiResource|singleton)\s*\()"
+_LARAVEL_MODEL_BINDING = r"(?:Route::(?:bind|model|pattern)\s*\()"
+_LARAVEL_MIDDLEWARE = r"(?:Route::middleware\s*\()"
+_LARAVEL_NAME = r"(?:Route::name\s*\()"
+_LARAVEL_PREFIX = r"(?:Route::prefix\s*\()"
+_LARAVEL_DOMAIN = r"(?:Route::domain\s*\()"
+_LARAVEL_CONTROLLER = r"(?:Route::controller\s*\()"
+_LARAVEL_REDIRECT = r"(?:Route::redirect|Route::permanentRedirect|Route::view|Route::fallback)\s*\("
+_LARAVEL_FALLBACK = r"(?:Route::fallback\s*\()"
+
+# Laravel closure-based route definitions (web.php / api.php patterns)
+_LARAVEL_CLOSURE_ROUTE = r"\$router->(?:get|post|put|patch|delete|options|any|match|resource|apiResource|singleton)\s*\("
+
+# Laravel 11+ minimal routing (route files can be plain PHP arrays)
+_LARAVEL_ROUTE_ARRAY = r"return\s*\[\s*['\"].*['\"]\s*=>\s*['\"]"
+
+# Laravel-specific routing signatures (extends base Lumen patterns)
+LARAVEL_ROUTING_SIGNATURES = (
+    *ROUTING_SIGNATURES,  # includes base Lumen patterns
+    # Laravel resource / apiResource / singleton
+    re.compile(_LARAVEL_RESOURCE),
+    # Laravel route groups, middleware, prefixes, names, domains
+    re.compile(_LARAVEL_ROUTE_GROUP),
+    re.compile(_LARAVEL_MIDDLEWARE),
+    re.compile(_LARAVEL_NAME),
+    re.compile(_LARAVEL_PREFIX),
+    re.compile(_LARAVEL_DOMAIN),
+    # Route model binding
+    re.compile(_LARAVEL_MODEL_BINDING),
+    # Controller routing (Laravel 8+)
+    re.compile(_LARAVEL_CONTROLLER),
+    # Redirects, views, fallbacks
+    re.compile(_LARAVEL_REDIRECT),
+    re.compile(_LARAVEL_FALLBACK),
+    # Laravel closure-based routes (alternative to facades)
+    re.compile(_LARAVEL_CLOSURE_ROUTE),
+    # Laravel 11+ route array return
+    re.compile(_LARAVEL_ROUTE_ARRAY),
+)
+
+
+# Base capability signatures (original, for backward compatibility)
 CAPABILITY_SIGNATURES = {
     "routing": (
         ROUTING_SIGNATURES,
         "a PHP backend either declares its routes in a routes file (or an "
         "attributes-annotated controller) or has none; these are the "
         "constructions that mean the former",
+    ),
+}
+
+# Laravel-specific capability signatures (extends base capability)
+LARAVEL_CAPABILITY_SIGNATURES = {
+    "routing": CAPABILITY_SIGNATURES["routing"],  # base 'routing' capability
+    "laravel_routing": (
+        LARAVEL_ROUTING_SIGNATURES,
+        "a Laravel project declares routes via Route facade, route groups, "
+        "resource controllers, model binding, middleware, prefixes, domains, "
+        "and redirect/view/fallback routes. These patterns cover the full "
+        "Laravel routing surface.",
+    ),
+    "eloquent_models": (
+        (
+            # Eloquent model patterns
+            re.compile(r"\bclass\s+\w+\s+extends\s+Model\b"),
+            re.compile(r"use\s+Illuminate\\Database\\Eloquent\\Model\b"),
+            re.compile(r"use\s+HasFactory\b"),
+            # Casts, scopes, accessors, mutators
+            re.compile(r"\$casts\s*="),
+            re.compile(r"\$fillable\s*="),
+            re.compile(r"\$guarded\s*="),
+            re.compile(r"\$dates\s*="),
+            re.compile(r"\$appends\s*="),
+            re.compile(r"function\s+scope\w+\s*\("),
+            re.compile(r"function\s+get\w+Attribute\s*\("),
+            re.compile(r"function\s+set\w+Attribute\s*\("),
+            # Relationships
+            re.compile(r"\bhasOne\b"),
+            re.compile(r"\bhasMany\b"),
+            re.compile(r"\bbelongsTo\b"),
+            re.compile(r"\bbelongsToMany\b"),
+            re.compile(r"\bmorphOne\b"),
+            re.compile(r"\bmorphMany\b"),
+            re.compile(r"\bmorphTo\b"),
+        ),
+        "an Eloquent model declares its table, fillable, casts, scopes, "
+        "accessors, mutators, and relationships. These patterns cover the "
+        "full Eloquent model surface.",
+    ),
+    "form_requests": (
+        (
+            re.compile(r"\bclass\s+\w+\s+extends\s+FormRequest\b"),
+            re.compile(r"use\s+Illuminate\\Foundation\\Http\\FormRequest\b"),
+            re.compile(r"function\s+rules\s*\("),
+            re.compile(r"function\s+authorize\s*\("),
+            re.compile(r"function\s+messages\s*\("),
+            re.compile(r"function\s+attributes\s*\("),
+            re.compile(r"function\s+prepareForValidation\s*\("),
+            re.compile(r"function\s+passedValidation\s*\("),
+        ),
+        "a FormRequest declares validation rules, authorization, messages, "
+        "attributes, and preparation hooks. These patterns cover the full "
+        "FormRequest surface.",
+    ),
+    "api_resources": (
+        (
+            re.compile(r"\bclass\s+\w+\s+extends\s+JsonResource\b"),
+            re.compile(r"use\s+Illuminate\\Http\\Resources\\Json\\JsonResource\b"),
+            re.compile(r"use\s+Illuminate\\Http\\Resources\\Json\\ResourceCollection\b"),
+            re.compile(r"function\s+toArray\s*\("),
+            re.compile(r"function\s+toResponse\s*\("),
+            re.compile(r"function\s+with\s*\("),
+            re.compile(r"function\s+withResponse\s*\("),
+        ),
+        "an API Resource declares how a model is transformed for JSON output. "
+        "These patterns cover the resource and resource collection surface.",
+    ),
+    "policies": (
+        (
+            re.compile(r"\bclass\s+\w+\s+extends\s+Policy\b"),
+            re.compile(r"use\s+Illuminate\\Auth\\Access\\HandlesAuthorization\b"),
+            re.compile(r"function\s+\w+\s*\([^)]*User\s+\$user\b"),
+            re.compile(r"Gate::(?:define|allows|denies|check|any|none)\s*\("),
+        ),
+        "a Policy declares authorization logic for a model. Gates provide "
+        "closure-based authorization. These patterns cover both surfaces.",
     ),
 }
 
@@ -654,6 +779,39 @@ CAPABILITIES = (
         why="every route-aware check reads the file this field names. "
             "Undeclared, the check has nothing to read and reports clean — "
             "inert, not passing",
+    ),
+    Capability(
+        name="laravel_routing",
+        profile_field="source.routesFile",
+        why="Laravel-specific routing (resource controllers, model binding, "
+            "middleware groups, prefixes, domains, redirects). A project "
+            "using these patterns should declare this capability so audits "
+            "can leverage the richer signature set.",
+    ),
+    Capability(
+        name="eloquent_models",
+        profile_field="source.root",
+        why="Eloquent model detection for model-level audits (casts, scopes, "
+            "relationships, accessors/mutators). Requires source.root to find "
+            "model files.",
+    ),
+    Capability(
+        name="form_requests",
+        profile_field="source.root",
+        why="FormRequest validation audit support. Requires source.root to "
+            "find request classes.",
+    ),
+    Capability(
+        name="api_resources",
+        profile_field="source.root",
+        why="API Resource transformer audit support. Requires source.root to "
+            "find resource classes.",
+    ),
+    Capability(
+        name="policies",
+        profile_field="source.root",
+        why="Policy/Gate authorization audit support. Requires source.root to "
+            "find policy classes.",
     ),
 )
 
@@ -672,11 +830,11 @@ def detect_capability(ctx: AdapterContext, name: str) -> CapabilityEvidence:
     the adapter at a workspace stub and every capability reads as absent,
     which is a clean report about a tree nobody looked at.
     """
-    signatures = CAPABILITY_SIGNATURES.get(name)
+    signatures = LARAVEL_CAPABILITY_SIGNATURES.get(name)
     if signatures is None:
         raise CapabilityError(name, NAME,
                               f"no signature set for this capability; known: "
-                              f"{sorted(CAPABILITY_SIGNATURES)}")
+                              f"{sorted(LARAVEL_CAPABILITY_SIGNATURES)}")
     patterns, why = signatures
 
     repo = Path(str(ctx.repo))
