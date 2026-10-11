@@ -2,7 +2,7 @@
 
 Lives in the engine rather than in one audit because two tools consult the same
 file and disagreeing about what it means is worse than either reading it wrong:
-`audit_tokens.py` decides what to report, `repair_tokens.py` decides what to
+an audit decides what to report, and the repairer it points at decides what to
 rewrite. A literal the project exempted but the repairer rewrites anyway is the
 band-1 failure RFC-0003 §7 resolution 3 puts at a 0% ceiling.
 

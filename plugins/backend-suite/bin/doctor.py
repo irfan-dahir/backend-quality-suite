@@ -234,7 +234,7 @@ def _validate_node(node, schema: dict, root: dict, path: str, problems: list[str
     format/if-then-else — but those are not the shapes this schema uses, and this
     covers every keyword `profile.schema.json` actually contains. It exists because
     doctor previously checked only top-level keys: a wrong type, a missing nested
-    required field, or an unknown key three levels down (e.g. `tokens.source.kind`
+    required field, or an unknown key three levels down (e.g. `docs.externalRoles.<name>.repo`
     misspelled, or `adapters.langauge` instead of `adapters.lang`) passed silently
     and was the most common failure a new project hit, per issue #14.
     """
@@ -341,14 +341,14 @@ def check_against_schema(profile: dict, schema_path: Path) -> list[str]:
     Full JSON Schema needs a dependency these tools do not take, so this walks the
     schema recursively in stdlib and enforces the keywords `profile.schema.json`
     actually uses: type, required (at every level, not just the top), unknown keys
-    under `additionalProperties: false` (at every level), `$ref`/`$defs`, `oneOf`
-    (for `tokens.source`'s file-vs-package split), `const`, `pattern` (the
-    repo-relative-path check), and array `items`/`minItems`. This is what turns a
-    wrong type, a misspelled nested key, or a missing nested required field —
-    the most common failure a new project hits per issue #14 — into a reported
-    problem instead of a silently "healthy" profile. Still not full JSON Schema:
-    no `format` enforcement, no remote `$ref`, no `if`/`then`/`else`. None of those
-    are used here, so this says what it does rather than implying full coverage.
+    under `additionalProperties: false` (at every level), `$ref`/`$defs`, `oneOf`,
+    `const`, `pattern` (the repo-relative-path check), and array `items`/`minItems`.
+    This is what turns a wrong type, a misspelled nested key, or a missing nested
+    required field — the most common failure a new project hits per issue #14 — into
+    a reported problem instead of a silently "healthy" profile. Still not full JSON
+    Schema: no `format` enforcement, no remote `$ref`, no `if`/`then`/`else`. None
+    of those are used here, so this says what it does rather than implying full
+    coverage.
     """
     if not schema_path.is_file():
         # Returning [] silently was the same failure this function's own docstring
@@ -648,8 +648,7 @@ def _declared_output_globs(profile: dict) -> list[str]:
     holds hand-authored config alongside generated findings, so naming the whole
     directory would report files that belong in git.
     """
-    out = ((profile.get("audits") or {}).get("outputDir")
-           or (profile.get("tokens") or {}).get("outputDir"))
+    out = (profile.get("audits") or {}).get("outputDir")
     if not isinstance(out, str) or not out.strip() or out.startswith("TODO"):
         return []
     out = out.strip().strip("/")
@@ -935,27 +934,6 @@ def main() -> int:
     provenance_problems, untrusted = check_provenance(profile, repo, dead_paths)
     problems += provenance_problems
 
-    # Package-resolved token sources: check the package resolves and the file is
-    # there. An audit that cannot see the tokens must fail, not report zero.
-    src = profile.get("tokens", {}).get("source", {})
-    if src.get("kind") == "package":
-        resolver = repo / src.get("resolveVia", "")
-        if not resolver.is_file():
-            problems.append(
-                f"tokens.source: {src.get('resolveVia')} missing — run the package manager "
-                f"before trusting any token audit (they no-op silently without it)")
-        else:
-            entries = json.loads(resolver.read_text()).get("packages", [])
-            match = next((p for p in entries if p.get("name") == src["package"]), None)
-            if not match:
-                problems.append(f"tokens.source: package {src['package']!r} not resolved")
-            else:
-                root = match["rootUri"]
-                root = root[len("file://"):] if root.startswith("file://") else root
-                target = (resolver.parent / root).resolve() / src["pathInPackage"]
-                if not target.is_file():
-                    problems.append(f"tokens.source: {src['pathInPackage']} not in {src['package']}")
-
     # Doc roles.
     stubs: list[str] = []
     manifest_rel = profile.get("docs", {}).get("manifest")
@@ -1008,7 +986,7 @@ def main() -> int:
     # Script pointers inside every config the profile names, comments included.
     audits = profile.get("audits", {}) or {}
     config_files = [repo / args.profile]
-    for rel in (audits.get("configFile"), audits.get("exceptionsFile"),
+    for rel in (audits.get("exceptionsFile"),
                 audits.get("archRulesFile"), (profile.get("docs", {}) or {}).get("manifest")):
         if rel:
             config_files.append(repo / rel)

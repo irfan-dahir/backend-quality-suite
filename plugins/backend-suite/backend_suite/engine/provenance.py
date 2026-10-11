@@ -42,7 +42,7 @@ COMPUTED_STATES = ("contradicted",)
 ABSOLUTE = re.compile(r"^(/|~|[A-Za-z]:|\.\./)")
 # Keys whose values are paths. Globs are validated by shape, not existence.
 PATH_KEYS = {
-    "root", "path", "sharedComponentDir", "testRoot", "configFile",
+    "root", "path", "sharedComponentDir", "testRoot",
     "exceptionsFile", "archRulesFile", "baselineDir", "manifest", "resolveVia",
     "goldensDir",
 }

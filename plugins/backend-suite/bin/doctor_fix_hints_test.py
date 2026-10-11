@@ -44,8 +44,6 @@ BASE_PROFILE = {
     "project": {"name": "Fixture", "framework": "none"},
     "adapters": {"lang": "dart"},
     "source": {"root": "lib", "fileGlob": "**/*.dart"},
-    "tokens": {"source": {"kind": "file", "path": "lib/tokens.dart"},
-               "accessor": "AppTokens"},
     "docs": {"manifest": ".backend-suite/docs.manifest.json"},
 }
 
@@ -61,7 +59,7 @@ def fixture(tmp: Path, hooks_map: dict) -> Path:
     root = tmp / "project"
     (root / ".backend-suite").mkdir(parents=True)
     (root / "lib").mkdir()
-    (root / "lib" / "tokens.dart").touch()
+    (root / "lib" / "main.dart").touch()
     (root / ".backend-suite" / "docs.manifest.json").write_text(json.dumps({"roles": {}}))
     (root / ".backend-suite" / "profile.schema.json").write_text(SCHEMA.read_text())
     (root / ".backend-suite" / "profile.json").write_text(json.dumps(BASE_PROFILE, indent=2))

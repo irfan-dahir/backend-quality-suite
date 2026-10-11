@@ -41,7 +41,7 @@ def project(root: Path, files: dict, lang: str) -> Path:
     (root / ".backend-suite").mkdir(exist_ok=True)
     (root / ".backend-suite" / "profile.json").write_text(json.dumps(
         {"profileVersion": 1, "project": {"name": "fixture"}, "adapters": {"lang": lang},
-         "source": {"root": "src"}, "pipelines": {"tokens": ".backend-suite/out"}}))
+         "source": {"root": "src"}, "pipelines": {"mockApi": ".backend-suite/out"}}))
     return root
 
 

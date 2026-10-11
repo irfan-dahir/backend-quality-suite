@@ -101,8 +101,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as raw:
         fixture = Path(raw)
         (fixture / "service.stub").write_text(FIXTURE)
-        ctx = AdapterContext(repo=fixture, profile={}, exceptions={},
-                             token_accessor=None)
+        ctx = AdapterContext(repo=fixture, profile={}, exceptions={})
         findings = scan_tree(fixture, fixture, _stub_checks(ctx), globs=_STUB_GLOBS)
 
         if not any(f["kind"] == "plaintext-secret" and "hunter2" in f["snippet"]
@@ -151,8 +150,7 @@ def main() -> int:
             fixture = Path(raw)
             (fixture / "routes").mkdir()
             (fixture / "routes" / "api.php").write_text(PHP_FIXTURE)
-            ctx = AdapterContext(repo=fixture, profile={}, exceptions={},
-                                 token_accessor=None)
+            ctx = AdapterContext(repo=fixture, profile={}, exceptions={})
             php_findings = scan_tree(fixture, fixture, php.checks(ctx),
                                      globs=php.FILE_GLOBS)
 

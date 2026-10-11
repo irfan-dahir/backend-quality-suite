@@ -23,7 +23,7 @@
       "properties": {
         "invocation": {
           "type": "string",
-          "description": "The EXACT text that must appear for this entry to apply — a bare script basename ('repair_tokens.py'), a script plus a specific flag ('generate_openapi.py --check'), or a skill slash-form ('/establish-brand-voice'). Keyed on the invocation rather than only the script, because the same script can be safe under one flag and destructive under another (generate_openapi.py --check never writes; generate_openapi.py with no flag does) — allowlisting the bare name would launder the unsafe form in under the safe one's attestation. A bare-script entry covers every invocation of that script; a flagged entry covers only that exact flag combination and nothing else naming the same script."
+          "description": "The EXACT text that must appear for this entry to apply — a bare script basename ('generate_openapi.py'), a script plus a specific flag ('generate_openapi.py --check'), or a skill slash-form ('/establish-brand-voice'). Keyed on the invocation rather than only the script, because the same script can be safe under one flag and destructive under another (generate_openapi.py --check never writes; generate_openapi.py with no flag does) — allowlisting the bare name would launder the unsafe form in under the safe one's attestation. A bare-script entry covers every invocation of that script; a flagged entry covers only that exact flag combination and nothing else naming the same script."
         },
         "kind": {
           "type": "string",
@@ -42,7 +42,7 @@
         },
         "selftestCommand": {
           "type": "string",
-          "description": "Optional: the exact command audit_safe_repairers.py (or a human) can run to reproduce the R2 proof. Omitted only when no such command exists yet and r2 says why the mechanism (not a runnable command) is trusted instead — see the repair_tokens.py entry for a worked example of that gap being named rather than hidden."
+          "description": "Optional: the exact command audit_safe_repairers.py (or a human) can run to reproduce the R2 proof. Omitted only when no such command exists yet and r2 says why the mechanism (not a runnable command) is trusted instead — see the generate_openapi.py entry for a worked example of that gap being named rather than hidden."
         },
         "reason": {
           "type": "string",

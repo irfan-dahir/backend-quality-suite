@@ -55,7 +55,7 @@ hardcode a project path.**
 |---|---|---|
 | `sync-schema` | Copies the target version's `profile.schema.json` into `.backend-suite/` — that one file, nothing else | The target version ships no schema |
 | `scaffold-hooks-map` | Writes `hooks.map.json` from the template **only when the project has none** | Never overwrites an existing map — a project's own hook map is its own |
-| `declare-config-keys` | Names every newly-required top-level profile key the project does not declare | **Always refuses to fill them in.** A required key's value is a project fact — a source root, a token file, a framework — and inventing one produces a profile that validates and lies. `doctor.py` exists because of exactly that |
+| `declare-config-keys` | Names every newly-required top-level profile key the project does not declare | **Always refuses to fill them in.** A required key's value is a project fact — a source root, a docs manifest, a framework — and inventing one produces a profile that validates and lies. `doctor.py` exists because of exactly that |
 | `rebaseline` | Runs each ratchet audit's `--update-baseline` | Refuses, with exit 2, when new findings would be absorbed and nobody said to accept them |
 
 Select with `--only <action>` and `--skip <action>`, repeatable. An excluded

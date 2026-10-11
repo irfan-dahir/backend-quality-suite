@@ -84,19 +84,10 @@ def for_project(repo: Path):
         _refuse(f"{PROFILE} does not set adapters.lang — cannot pick a language adapter. "
                 f"INERT, not clean.")
     adapter = load(name)
-    audit_config = {}
-    config_rel = (profile.get("audits", {}) or {}).get("configFile")
-    if config_rel and (repo / config_rel).is_file():
-        try:
-            audit_config = json.loads((repo / config_rel).read_text())
-        except (OSError, ValueError):
-            audit_config = {}
     ctx = AdapterContext(
         repo=repo,
         profile=profile,
         exceptions=exceptions,
-        token_accessor=(profile.get("tokens", {}) or {}).get("accessor", ""),
-        audit_config=audit_config,
     )
     return adapter, ctx, adapter.checks(ctx)
 

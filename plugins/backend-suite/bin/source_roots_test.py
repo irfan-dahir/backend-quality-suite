@@ -90,36 +90,6 @@ def multi_root_fixture(tmp: Path) -> Path:
     return root
 
 
-def token_fixture(tmp: Path) -> Path:
-    """A design system's real shape: a token tree, a docs asset, and noise."""
-    root = tmp / "designsystem"
-    (root / "tokens" / "core").mkdir(parents=True)
-    (root / "tokens" / "brands" / "acme").mkdir(parents=True)
-    (root / "docs" / "stylesheets").mkdir(parents=True)
-    (root / "config").mkdir()
-    (root / "lib" / "theme").mkdir(parents=True)
-
-    # Style-Dictionary input shape, named after what it holds — the exact case
-    # the old name-gated detector could never open.
-    (root / "tokens" / "core" / "geometry.json").write_text(json.dumps({
-        "radius": {"small": {"value": 4, "type": "dimension"},
-                   "large": {"value": 16, "type": "dimension"}}}))
-    (root / "tokens" / "brands" / "acme" / "light.json").write_text(json.dumps({
-        "color": {"primary": {"value": "#123456"},
-                  "surface": {"value": "#ffffff"}}}))
-    # THE CONTROL that motivated this work: a docs stylesheet with the right name
-    # and no token contents. It may appear; it may not outrank the real files.
-    (root / "docs" / "stylesheets" / "tokens.css").write_text(":root{--x:1px}\n")
-    # THE OTHER CONTROL: ordinary config JSON. A single `value` key is a
-    # coincidence and must not make this a token candidate at all.
-    (root / "config" / "settings.json").write_text(json.dumps({
-        "server": {"value": "localhost"}, "retries": 3}))
-    # A compiled artefact: real token contents, but it is the output.
-    (root / "lib" / "theme" / "tokens.g.json").write_text(json.dumps({
-        "radius": {"small": {"value": 4}, "large": {"value": 16}}}))
-    return root
-
-
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
@@ -207,42 +177,13 @@ def main() -> int:
                and any("glob" in u["why"] for u in glob_report["couldNotDetermine"]),
                "a glob workspace member is reported, never expanded into frozen members")
 
-        print("\nsurvey: token detection by content, with its controls")
-        tokens = survey_of(token_fixture(tmpdir))["candidateTokenSources"]
-        by_path = {c["path"]: c for c in tokens if "path" in c}
-        expect("tokens/core/geometry.json" in by_path
-               and "tokens/brands/acme/light.json" in by_path,
-               "PLANTED: the Style-Dictionary-shaped sources are found by their contents")
-        expect(all(by_path[p]["format"] == "style-dictionary"
-                   for p in ("tokens/core/geometry.json", "tokens/brands/acme/light.json")),
-               "and are labelled with the format that identified them")
-        expect("config/settings.json" not in by_path,
-               "CONTROL: a random JSON with one `value` key is not a token candidate")
-        css = by_path.get("docs/stylesheets/tokens.css")
-        expect(css is not None and css["confidence"]
-               < by_path["tokens/core/geometry.json"]["confidence"],
-               "CONTROL: the docs CSS asset no longer outranks a real token file")
-        gen = by_path.get("lib/theme/tokens.g.json")
-        expect(gen is not None and gen.get("generated") is True
-               and gen["confidence"] < by_path["tokens/core/geometry.json"]["confidence"],
-               "CONTROL: a generated artefact is named as output, ranked below the source")
-        expect(max(c["confidence"] for c in tokens) < 1.0,
-               "HONESTY CONTROL: nothing is ever returned as a certainty")
-
-        report = survey_of(token_fixture(tmpdir / "again"))
-        ties = [u for u in report["couldNotDetermine"]
-                if u["field"] == "tokens.source" and "tie" in u["why"]]
-        expect(len(ties) == 1 and len(ties[0]["candidates"]) == 2,
-               "HONESTY CONTROL: two equally good sources are reported as a tie, not "
-               "silently ranked to make one look decisive")
-
     print()
     if FAILURES:
         print(f"{len(FAILURES)} failure(s):")
         for failure in FAILURES:
             print(f"  - {failure}")
         return 1
-    print("all source-root and token-detection cases hold.")
+    print("all source-root cases hold.")
     return 0
 
 

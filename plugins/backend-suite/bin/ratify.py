@@ -27,7 +27,7 @@ the record would be less true than it looks:
 Usage:
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" --list
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" source.root --by NAME
-    python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" tokens.accessor --declare --by NAME
+    python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" project.framework --declare --by NAME
                                       [--evidence "..."] [--on YYYY-MM-DD]
                                       [--profile PATH] [--dir .] [--force]
 

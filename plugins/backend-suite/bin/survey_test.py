@@ -212,7 +212,7 @@ def main() -> int:
         (schema_project / ".backend-suite").mkdir(parents=True)
         (schema_project / ".backend-suite" / "profile.json").write_text(json.dumps({
             "adapters": {"lang": "dart"},
-            "tokens": {"accessor": "X", "roleAccessor": "Y"},
+            "audits": {"exceptionsFile": "e.json", "bogusFile": "b.json"},
         }))
         (schema_project / ".backend-suite" / "profile.schema.json").write_text(json.dumps({
             "type": "object",
@@ -220,19 +220,19 @@ def main() -> int:
             "properties": {
                 "adapters": {"type": "object", "properties": {"lang": {"type": "string"}},
                              "additionalProperties": False},
-                "tokens": {"type": "object", "properties": {"accessor": {"type": "string"}}},
+                "audits": {"type": "object", "properties": {"exceptionsFile": {"type": "string"}}},
             },
         }))
         result = run("--check", "--project-root", str(schema_project), "--json")
         hits = [f for f in json.loads(result.stdout)["findings"]
                 if f["kind"] == "schema-accepts-undescribed-keys"]
-        expect(len(hits) == 1 and hits[0]["keys"] == ["roleAccessor"],
+        expect(len(hits) == 1 and hits[0]["keys"] == ["bogusFile"],
                "reports the one object whose document carries a key the schema neither "
                "describes nor forbids, and not every permissive object in the file")
 
         print("check: the same schema, nothing undescribed in the document")
         (schema_project / ".backend-suite" / "profile.json").write_text(json.dumps({
-            "adapters": {"lang": "dart"}, "tokens": {"accessor": "X"},
+            "adapters": {"lang": "dart"}, "audits": {"exceptionsFile": "e.json"},
         }))
         result = run("--check", "--project-root", str(schema_project), "--json")
         hits = [f for f in json.loads(result.stdout)["findings"]

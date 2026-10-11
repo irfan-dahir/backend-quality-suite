@@ -27,10 +27,9 @@ null `weekday` silently drops out of adherence scoring; an emptied `url`
 silently drops a download button. Both are real breakage hiding behind a
 script that printed nothing alarming.
 
-Do not "simplify" this back to an unconditional overwrite. See gh issue #116,
-and `backend_suite/engine/token_repair.py` / `bin/repair_tokens.py`, the
-precedent this contract is extracted from: emit, don't apply, and refuse
-rather than guess when the premise cannot be determined.
+Do not "simplify" this back to an unconditional overwrite. See gh issue #116:
+the contract this file follows is the one that issue measured — emit, don't
+apply, and refuse rather than guess when the premise cannot be determined.
 
 ## The contract (R1-R5)
 

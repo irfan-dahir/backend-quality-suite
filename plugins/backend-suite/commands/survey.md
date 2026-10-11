@@ -1,6 +1,6 @@
 ---
 name: survey
-description: "Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .backend-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .backend-suite/survey.json, creating that directory if it is absent."
+description: "Survey an unknown project — detected stack, candidate source roots, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .backend-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .backend-suite/survey.json, creating that directory if it is absent."
 invocation: auto
 maturity: unverified
 ---
@@ -44,8 +44,8 @@ absence of one.
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/survey.py" --check
 ```
 
-**The full survey on a project you are onboarding**, or when the stack, source
-roots or token source are what you need:
+**The full survey on a project you are onboarding**, or when the stack or
+source roots are what you need:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/survey.py"
@@ -91,14 +91,10 @@ reports it again and the run after that is ignored.
 
 ## Step 3 — Read the survey as candidates, never conclusions
 
-Three fields are deliberately hedged, and the hedging is measured, not modesty:
+Two of its fields are deliberately hedged, and the hedging is measured, not modesty:
 
 - **`stack.fileCensus` never votes.** A committed documentation build makes a
   census read a Dart repository as JavaScript. The manifest decides.
-- **`candidateTokenSources` is ranked and plural.** An earlier detector matched
-  the token audit's own output file, and on both real consumer projects the true
-  token source is not in the repository at all — it arrives as a package
-  dependency. `tokens.source` stays human-approved.
 - **`documents[].proposedRole` is `inferred` and confidence-scored per
   document.** Choosing between four plausible `design` documents is judgement,
   not a filename match, and it is not this script's job.

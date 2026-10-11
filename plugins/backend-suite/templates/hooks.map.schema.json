@@ -103,7 +103,7 @@
             },
             "bandsArg": {
               "type": "string",
-              "description": "Optional flag for a path the command writes {file, line, kind, band} records to (bin/repair_tokens.py's --bands-json). Without it the runner cannot attribute an offer to a specific finding and says so per finding rather than guessing."
+              "description": "Optional flag for a path the command writes {file, line, kind, band} records to (a findings-recording repairer's --bands-json flag). Without it the runner cannot attribute an offer to a specific finding and says so per finding rather than guessing."
             }
           },
           "additionalProperties": false

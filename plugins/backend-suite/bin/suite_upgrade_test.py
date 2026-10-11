@@ -77,7 +77,7 @@ def _make_consumer(root: Path, *, profile: dict | None = None,
     (dot / "profile.json").write_text(json.dumps(
         profile if profile is not None else {
             "profileVersion": 1, "project": {}, "adapters": {}, "source": {},
-            "tokens": {}, "docs": {},
+            "docs": {},
         }))
     if hooks_map:
         (dot / "hooks.map.json").write_text('{"hooks": []}')

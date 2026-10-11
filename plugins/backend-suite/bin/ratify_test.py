@@ -42,8 +42,6 @@ BASE = {
     "project": {"name": "Fixture", "framework": "none"},
     "adapters": {"lang": "dart"},
     "source": {"root": "lib", "fileGlob": "**/*.dart"},
-    "tokens": {"source": {"kind": "file", "path": "lib/tokens.dart"},
-               "accessor": "AppTokens"},
     "docs": {"manifest": ".backend-suite/docs.manifest.json"},
 }
 
@@ -53,7 +51,7 @@ def fixture(tmp: Path, provenance: dict | None = None) -> Path:
     root = tmp / "project"
     (root / ".backend-suite").mkdir(parents=True)
     (root / "lib").mkdir()
-    (root / "lib" / "tokens.dart").touch()
+    (root / "lib" / "main.dart").touch()
     (root / ".backend-suite" / "docs.manifest.json").write_text(json.dumps({"roles": {}}))
     (root / ".backend-suite" / "profile.schema.json").write_text(SCHEMA.read_text())
     profile = json.loads(json.dumps(BASE))
@@ -135,12 +133,12 @@ def case_approving_an_unproposed_field_is_refused() -> None:
     print("approving a field nothing proposed")
     with tempfile.TemporaryDirectory() as tmp:
         root = fixture(Path(tmp), INFERRED)
-        out = run(root, "tokens.accessor", "--by", "Ada")
+        out = run(root, "project.framework", "--by", "Ada")
         expect(out.returncode == 1, f"refused (got {out.returncode})")
         expect("--declare" in out.stderr, "points at the state that IS honest here")
-        declared = run(root, "tokens.accessor", "--declare", "--by", "Ada")
+        declared = run(root, "project.framework", "--declare", "--by", "Ada")
         expect(declared.returncode == 0, "and --declare is accepted for the same field")
-        expect(entry_of(root, "tokens.accessor").get("state") == "declared",
+        expect(entry_of(root, "project.framework").get("state") == "declared",
                "recorded as 'declared', not 'approved' — nobody reviewed a proposal")
 
 
@@ -176,13 +174,13 @@ def case_missing_path_is_refused() -> None:
     print("ratifying a path that is not there")
     with tempfile.TemporaryDirectory() as tmp:
         root = fixture(Path(tmp), {"fields": {
-            "tokens.source.path": {"state": "inferred", "evidence": "guessed"}}})
-        (root / "lib" / "tokens.dart").unlink()
-        out = run(root, "tokens.source.path", "--by", "Ada")
+            "docs.manifest": {"state": "inferred", "evidence": "guessed"}}})
+        (root / ".backend-suite" / "docs.manifest.json").unlink()
+        out = run(root, "docs.manifest", "--by", "Ada")
         expect(out.returncode == 1, f"refused (got {out.returncode})")
         expect("CONTRADICTED" in out.stderr,
                "because approving it writes a false human assertion doctor flags on sight")
-        expect(entry_of(root, "tokens.source.path").get("state") == "inferred",
+        expect(entry_of(root, "docs.manifest").get("state") == "inferred",
                "the entry is left as the guess it is")
 
 

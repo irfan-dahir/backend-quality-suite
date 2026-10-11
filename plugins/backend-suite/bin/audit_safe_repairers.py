@@ -247,7 +247,7 @@ def load_allowlist() -> dict[str, dict]:
 def _covered(script: str, args: str, allowlist: dict[str, dict]) -> bool:
     """Whether this exact invocation is vetted.
 
-    A bare-script entry ("repair_tokens.py") covers every invocation of that
+    A bare-script entry ("generate_openapi.py") covers every invocation of that
     script. A flagged entry ("generate_openapi.py --check") covers ONLY that
     exact flag — recommending the same script with no flag, or a different
     flag, is a different invocation and must have its own entry. This is the

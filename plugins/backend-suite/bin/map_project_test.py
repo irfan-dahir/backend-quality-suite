@@ -49,7 +49,6 @@ BASE = {
     "profileVersion": 1,
     "project": {"name": "Fixture", "framework": "none"},
     "source": {"root": "lib", "fileGlob": "**/*.dart"},
-    "tokens": {"source": {"kind": "file", "path": "lib/tokens.dart"}},
     "docs": {"manifest": ".backend-suite/docs.manifest.json"},
 }
 
@@ -58,7 +57,7 @@ def fixture(tmp: Path, provenance: dict | None = None) -> Path:
     root = tmp / "project"
     (root / ".backend-suite").mkdir(parents=True)
     (root / "lib").mkdir()
-    (root / "lib" / "tokens.dart").touch()
+    (root / "lib" / "main.dart").touch()
     profile = json.loads(json.dumps(BASE))
     if provenance is not None:
         profile["provenance"] = provenance

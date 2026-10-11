@@ -33,9 +33,8 @@ Two rules hold this together and neither is negotiable:
   * **A field the survey could not determine stays an explicit TODO.** No
     plausible default, ever. A visible gap gets filled; a confidently-wrong
     value gets trusted. That is the governing principle applied to scaffolding,
-    and it is why `tokens.source` — the worst-measured signal in the suite, and
-    on both real consumer projects not a file in the repository at all — is
-    deliberately absent from the seed table below.
+    and it is why intent-bearing fields — `project.audience` above all, which no
+    codebase states — are deliberately absent from the seed table below.
 
 Usage:
     python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" [--name "My Project"] [--dir .] [--force] [--only profile.json,exceptions.json]
@@ -184,11 +183,11 @@ def _seed_file_glob(report: dict) -> tuple[object, str] | None:
 
 
 # Dotted profile path → seeder. A field absent from this table is a field the
-# survey cannot settle, and its TODO survives untouched. `tokens.*` is the
-# deliberate headline absence (see the module docstring); so are
-# `project.audience` (intent, which no codebase states), `project.singleLocale`
-# (a decision, and its absence is meaningful), and every optional `source.*`
-# glob, which needs the judgement half — /map-project — not this script.
+# survey cannot settle, and its TODO survives untouched. `project.audience` is
+# the deliberate headline absence (see the module docstring); so are
+# `project.singleLocale` (a decision, and its absence is meaningful) and every
+# optional `source.*` glob, which needs the judgement half — /map-project — not
+# this script.
 SEEDERS = {
     "adapters.lang": _seed_adapter,
     "project.framework": _seed_framework,

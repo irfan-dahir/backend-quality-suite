@@ -9,7 +9,6 @@
     "project",
     "adapters",
     "source",
-    "tokens",
     "docs"
   ],
   "additionalProperties": false,
@@ -231,96 +230,9 @@
         }
       }
     },
-    "tokens": {
-      "type": "object",
-      "description": "Where the design tokens actually live. Deliberately not just a path: in this project the tokens were extracted into a package, so a file-only field would have no correct value. An audit that cannot find the tokens must fail loudly, never report zero violations.",
-      "required": [
-        "source",
-        "accessor"
-      ],
-      "properties": {
-        "_comment": {
-          "type": "string"
-        },
-        "source": {
-          "oneOf": [
-            {
-              "type": "object",
-              "required": [
-                "kind",
-                "path"
-              ],
-              "properties": {
-                "kind": {
-                  "const": "file"
-                },
-                "path": {
-                  "$ref": "#/$defs/relativePath"
-                }
-              }
-            },
-            {
-              "type": "object",
-              "required": [
-                "kind",
-                "package",
-                "pathInPackage"
-              ],
-              "properties": {
-                "kind": {
-                  "const": "package"
-                },
-                "package": {
-                  "type": "string"
-                },
-                "pathInPackage": {
-                  "type": "string"
-                },
-                "resolveVia": {
-                  "$ref": "#/$defs/relativePath",
-                  "description": "Resolve the package the way its own toolchain does. Guessing a path instead is what silently broke export_palette.py and both copies of audit_contrast.py."
-                }
-              }
-            }
-          ]
-        },
-        "accessor": {
-          "type": "string",
-          "description": "How code references a token, e.g. AppTokens."
-        },
-        "themeAccessor": {
-          "type": "string"
-        },
-        "generated": {
-          "type": "boolean",
-          "description": "True when tokens are generated output. Skills must then edit the source and regenerate, never the generated file."
-        },
-        "ownedBy": {
-          "type": "string",
-          "format": "uri",
-          "description": "Set when another repo owns the tokens, so no skill proposes editing them here."
-        },
-        "dtcg": {
-          "type": "object",
-          "description": "A W3C DTCG (Design Tokens Format Module 2025.10) file this project exchanges tokens with, e.g. a Figma variables or Tokens Studio export. Read by bin/import_tokens_dtcg.py as the default --file for drift; never written by any script.",
-          "properties": {
-            "path": {
-              "$ref": "#/$defs/relativePath"
-            },
-            "_comment": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
-      }
-    },
     "audits": {
       "type": "object",
       "properties": {
-        "configFile": {
-          "$ref": "#/$defs/relativePath"
-        },
         "exceptionsFile": {
           "$ref": "#/$defs/relativePath"
         },
@@ -573,7 +485,7 @@
         },
         "fields": {
           "type": "object",
-          "description": "Dotted profile field path (e.g. 'source.root', 'tokens.source.path') → how that field got its value. Paths name leaves of this profile; an entry for a path the profile no longer contains is reported, since a ratification of a field nobody has is a ratification of nothing.",
+          "description": "Dotted profile field path (e.g. 'source.root', 'docs.manifest') → how that field got its value. Paths name leaves of this profile; an entry for a path the profile no longer contains is reported, since a ratification of a field nobody has is a ratification of nothing.",
           "additionalProperties": {
             "$ref": "#/$defs/provenanceEntry"
           }

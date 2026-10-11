@@ -44,7 +44,7 @@ These **24** are marked `invocation: auto`: Claude may run them from plain langu
 | `/draft-pr-description` | Draft a PR title and description from the actual diff and commit history, following the project's own PR template. | auto | ✅ proven | `house-style` |
 | `/repo-health` | Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read. | auto | ⚠️ use with review | `backend-suite` |
 | `/review-docs` | Audit the project's documents against each other and against the codebase, reporting what is stale, out of sync, or missing. | auto | ⚠️ use with review | `backend-suite` |
-| `/survey` | Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of… | auto | ⚠️ use with review | `backend-suite` |
+| `/survey` | Survey an unknown project — detected stack, candidate source roots, a document inventory with proposed roles, and an explicit list of what could not be determined. | auto | ⚠️ use with review | `backend-suite` |
 | `/upgrade-measure` | Use before upgrading the suite in a project, or on a suite PR before merging. | auto | ⚠️ use with review | `backend-suite` |
 
 ## Commands that wait for you to ask

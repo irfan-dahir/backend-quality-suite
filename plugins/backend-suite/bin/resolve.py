@@ -63,7 +63,7 @@ def main() -> int:
     ap.add_argument("--dirs", action="store_true", help="print directory roles")
     ap.add_argument("--dir", metavar="NAME", help="print one directory role's path")
     ap.add_argument("--profile", metavar="KEY",
-                    help="print a dotted key from profile.json, e.g. audits.configFile")
+                    help="print a dotted key from profile.json, e.g. audits.exceptionsFile")
     ap.add_argument("--reverse", metavar="PATH", help="print the role for a path")
     ap.add_argument("--source-roots", action="store_true",
                     help="print every declared source root, one per line, or refuse")

@@ -102,9 +102,8 @@ SURVEY_VERSION = 1
 # Never walked, never surveyed, never reported as undeclared. Two different
 # reasons live in this one set and both matter: VCS/tooling noise, and — more
 # importantly — the suite's own output. `.backend-suite/` holds findings the
-# audits wrote; surveying it is how token detection previously matched
-# `.backend-suite/findings/tokens.json` and proposed the audit's own output as the
-# project's token source.
+# audits wrote; walking it would let a detector propose the suite's own output
+# as project content — a measured failure, not a hypothetical one.
 ALWAYS_SKIP = {
     ".git", ".hg", ".svn", MARKER, "node_modules", "build", "dist", "out",
     ".dart_tool", ".gradle", ".idea", ".vscode", "__pycache__", ".venv", "venv",
@@ -201,7 +200,7 @@ PATHISH = re.compile(r"^[A-Za-z0-9._\-/*{}\[\]]+$")
 # no consumer directory name appears here, and none may.
 PATH_VALUED_KEYS = {
     "root", "path", "dir", "testRoot", "sharedComponentDir", "baselineDir",
-    "goldensDir", "manifest", "configFile", "exceptionsFile", "archRulesFile",
+    "goldensDir", "manifest", "exceptionsFile", "archRulesFile",
     "resolveVia", "pathInPackage",
 }
 
@@ -1027,211 +1026,6 @@ def _yaml_list(text: str, key: str) -> list[str]:
     return out
 
 
-def detect_token_sources(root: Path, files: list[str], unknown: list[dict]) -> list[dict]:
-    """Ranked token-source CANDIDATES with reasons. Never a single conclusion.
-
-    Measured failure modes this is shaped around (RFC-0002 §3e):
-      * the previous detector matched `.backend-suite/findings/tokens.json` — the
-        token audit's own output — on both real consumers. `.backend-suite/` is in
-        ALWAYS_SKIP and build output is excluded here too;
-      * on both real consumers the true source is not in the repository at all:
-        it arrives as `package:ds_flutter`. So dependency names that look like a
-        token package are emitted as candidates in their own right, and the
-        caller is told in `couldNotDetermine` that the winner may be none of the
-        files listed;
-      * **the name gate was the bug.** Only a file *called* `tokens.json` or
-        `*.tokens.json` was ever opened, so a design system whose sources are a
-        directory of W3C-shaped files named after what they hold — geometry,
-        motion, typography, one per brand — scored zero real candidates and the
-        list was topped by a docs stylesheet that merely had the right filename.
-        Content is now what earns the high scores and a filename only ever earns
-        a low one, which is the correct way round: a name is a hint about a file
-        and its contents are the file.
-
-    Two shapes are recognised by content, because two are in wide use — the W3C
-    Design Tokens format (`$value`/`$type`) and the older Style-Dictionary input
-    shape (nested groups whose leaves are `{"value": …}`). Neither is scored above
-    0.9: even a perfectly-shaped file may be one of several, or may be an example
-    in somebody's documentation.
-    """
-    candidates: list[dict] = []
-    excluded = ("dist/", "build/", "out/", f"{MARKER}/", "coverage/")
-
-    for rel in files:
-        if rel.startswith(excluded) or f"/{MARKER}/" in rel:
-            continue
-        name = Path(rel).name.lower()
-        shape = _token_file_shape(root / rel) if name.endswith(".json") else None
-        if shape:
-            kind, score, why = shape
-            candidate = {"path": rel, "confidence": score, "why": why, "format": kind}
-            if _looks_generated(rel):
-                # A compiled artefact is a token SINK, not a source. Editing it is
-                # how a design system's real source and its build output diverge,
-                # so it is reported (it is genuinely evidence tokens exist here)
-                # and deliberately ranked below anything hand-authored.
-                candidate["confidence"] = 0.2
-                candidate["generated"] = True
-                candidate["why"] = (f"{why} — but this path is marked generated, so it is "
-                                    f"the compiled OUTPUT of a token source, not the source")
-            candidates.append(candidate)
-        elif name.endswith(".tokens.json") or name == "tokens.json":
-            # Right name, unrecognised contents. Still worth surfacing, at the
-            # confidence a filename alone deserves.
-            candidates.append({"path": rel, "confidence": 0.5,
-                               "why": "filename suggests design tokens, but the contents "
-                                      "match no token format this detector recognises"})
-        elif re.fullmatch(r"(design[-_.])?tokens?\.(dart|ts|js|json|scss|css|yaml)", name):
-            candidates.append({"path": rel, "confidence": 0.5,
-                               "why": "filename matches a conventional token module"})
-        elif name in {"tailwind.config.js", "tailwind.config.ts", "tailwind.config.mjs"}:
-            candidates.append({"path": rel, "confidence": 0.6,
-                               "why": "Tailwind config carries the theme scale for this stack"})
-        elif name in {"theme.dart", "theme.ts", "theme.js"}:
-            candidates.append({"path": rel, "confidence": 0.3,
-                               "why": "a theme module often re-exports tokens rather than defining them"})
-
-    for dep, where in _dependency_names(root):
-        if re.search(r"(token|theme|design[-_]?system|\bds[-_])", dep, re.I):
-            candidates.append({
-                "dependency": dep,
-                "confidence": 0.6,
-                "why": f"declared in {where}; on both real consumer projects the true token "
-                       f"source is a package dependency and no file in the repository",
-            })
-
-    unknown.append({
-        "field": "tokens.source",
-        "why": "token-source detection is the worst-measured signal in the suite",
-        "note": "The list above is CANDIDATES with reasons. `tokens.source` stays "
-                "human-approved; the true source may be none of these, and on both real "
-                "consumer projects it is a package dependency resolved through the "
-                "package manager's own map.",
-    })
-
-    ranked = sorted(candidates,
-                    key=lambda c: (-c["confidence"], c.get("path") or c.get("dependency")))
-    # Several equally good answers is an ANSWER, and suppressing it to look
-    # decisive is the specific dishonesty RFC-0002 §3e forbids. A design system
-    # legitimately splits its tokens across core/semantic/per-brand files; sorting
-    # picks one of them for the top of the list and that ordering means nothing.
-    top = [c for c in ranked if c["confidence"] == ranked[0]["confidence"]] if ranked else []
-    if len(top) > 1:
-        unknown.append({
-            "field": "tokens.source",
-            "why": f"{len(top)} candidates tie at the highest confidence "
-                   f"({ranked[0]['confidence']}) — nothing here separates them",
-            "note": "The order of the list is alphabetical within a confidence band and "
-                    "carries NO ranking. A token set split across several files (core, "
-                    "semantic, per-brand) is normal; `tokens.source` may need to name a "
-                    "directory, several files, or something outside the repository.",
-            "candidates": [c.get("path") or c.get("dependency") for c in top],
-        })
-    return ranked
-
-
-# A path the project's own build wrote. Two general conventions, no project
-# literals: a `.g.`/`.generated.` infix (Dart, TS codegen, protobuf) and a
-# `generated/` path segment.
-_GENERATED = re.compile(r"(^|/)generated/|\.(g|generated|freezed|pb)\.[A-Za-z0-9]+$")
-
-
-def _looks_generated(rel: str) -> bool:
-    return bool(_GENERATED.search(rel.lower()))
-
-
-# Beyond this a JSON file is data, not a token definition, and parsing every one
-# of them turns a survey into a build step. A cap that is hit is not silently
-# dropped — the file simply never becomes a candidate, and the filename rules
-# below still see it.
-_MAX_TOKEN_JSON_BYTES = 1_048_576
-
-
-def _token_file_shape(path: Path):
-    """`(format, confidence, why)` when this JSON file IS a token definition, else None.
-
-    None is the common case and must stay cheap: the overwhelming majority of JSON
-    in a repository is package metadata, fixtures, lockfiles and editor config,
-    and none of it may become a token candidate. So both tests below require a
-    *structural signature*, not the mere presence of a key.
-    """
-    try:
-        if path.stat().st_size > _MAX_TOKEN_JSON_BYTES:
-            return None
-        data = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
-    except (ValueError, OSError):
-        return None
-    if not isinstance(data, dict):
-        return None
-
-    if _has_w3c_shape(data):
-        return ("w3c-design-tokens", 0.9,
-                "W3C Design Tokens format — `$value`/`$type` present in the file's own "
-                "contents. The format reached its first stable version in Oct 2025; this "
-                "is the strongest signal available, and it is a content signal, not a name")
-
-    # Style Dictionary's input shape: nested groups whose leaves are objects with
-    # a `value`. Two leaves are required rather than one because a single
-    # `{"value": …}` anywhere is a coincidence — config files, fixtures and API
-    # samples are full of them — while a tree of them is a token file.
-    leaves = _style_dictionary_leaves(data)
-    if leaves >= 2:
-        return ("style-dictionary", 0.8,
-                f"Style-Dictionary input shape — {leaves} nested group leaves of the form "
-                f"`{{\"value\": …}}`. A content signal; scored below the W3C format because "
-                f"the shape is less distinctive and a non-token file can imitate it")
-    return None
-
-
-def _has_w3c_shape(node, depth: int = 0) -> bool:
-    if depth > 6 or not isinstance(node, dict):
-        return False
-    if "$value" in node or "$type" in node:
-        return True
-    return any(_has_w3c_shape(v, depth + 1) for v in node.values())
-
-
-# What Style Dictionary allows beside `value` on a leaf. A leaf carrying anything
-# else is some other kind of object that happens to have a `value` key, and is not
-# counted — that narrowness is what keeps ordinary config out of the candidate list.
-_SD_LEAF_KEYS = {"value", "type", "comment", "attributes", "name", "description",
-                 "themeable", "filePath", "isSource", "original", "deprecated"}
-
-
-def _style_dictionary_leaves(node, depth: int = 0) -> int:
-    if depth > 8 or not isinstance(node, dict):
-        return 0
-    if "value" in node and set(node) <= _SD_LEAF_KEYS:
-        return 1
-    return sum(_style_dictionary_leaves(v, depth + 1) for v in node.values())
-
-
-def _dependency_names(root: Path):
-    pkg = root / "package.json"
-    if pkg.is_file():
-        try:
-            data = json.loads(pkg.read_text(encoding="utf-8", errors="ignore"))
-            for group in ("dependencies", "devDependencies"):
-                for dep in (data.get(group) or {}):
-                    yield dep, f"package.json {group}"
-        except ValueError:
-            pass
-    pubspec = root / "pubspec.yaml"
-    if pubspec.is_file():
-        text = pubspec.read_text(encoding="utf-8", errors="ignore")
-        in_deps = False
-        for line in text.splitlines():
-            if re.match(r"^(dev_)?dependencies:", line):
-                in_deps = True
-                continue
-            if line and not line[0].isspace():
-                in_deps = False
-            if in_deps:
-                match = re.match(r"^  ([A-Za-z0-9_]+):", line)
-                if match:
-                    yield match.group(1), "pubspec.yaml dependencies"
-
-
 def document_inventory(root: Path, files: list[str], unknown: list[dict]) -> dict:
     """Markdown documents, with a proposed role and a confidence per proposal.
 
@@ -1307,7 +1101,6 @@ def survey(root: Path) -> dict:
         "stack": stack,
         "sourceRoots": detect_source_roots(root, files, unknown),
         "uiRoots": ui,
-        "candidateTokenSources": detect_token_sources(root, files, unknown),
         "documents": document_inventory(root, files, unknown),
         "filesSeen": len(files),
         "couldNotDetermine": unknown,
@@ -1660,7 +1453,6 @@ def main() -> int:
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(f"survey: wrote {SURVEY_REL} — {report['filesSeen']} file(s) seen, "
           f"stack={report['stack']['stack']!r}, "
-          f"{len(report['candidateTokenSources'])} token candidate(s), "
           f"{len(report['couldNotDetermine'])} thing(s) it could NOT determine.")
     for item in report["couldNotDetermine"]:
         print(f"  ? {item['field']}: {item['why']}")

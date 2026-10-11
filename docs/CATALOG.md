@@ -50,7 +50,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/survey` | auto | ⚪ unverified | Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .backend-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .backend-suite/survey.json, creating that directory if it is absent. |
+| `/survey` | auto | ⚪ unverified | Survey an unknown project — detected stack, candidate source roots, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .backend-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .backend-suite/survey.json, creating that directory if it is absent. |
 | `/map-project` | explicit | ⚪ unverified | Propose the mappings a survey cannot: which document is really the API doc, which project kind this is (service or library), which candidate document source is the true one — each with the reasoning it was argued from. Every value it proposes is written with provenance `inferred` and nothing else, so no downstream check trusts it until a human ratifies. Proposes and argues; never decides. |
 
 ### Building — a mutation on the project's own contract

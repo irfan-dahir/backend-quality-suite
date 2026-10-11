@@ -30,7 +30,7 @@ def expect(condition: bool, what: str) -> None:
 
 
 def plant(root: Path) -> None:
-    """A project whose stack the survey CAN read and whose tokens it cannot."""
+    """A project whose stack the survey CAN read and whose intent it cannot."""
     (root / "lib" / "features").mkdir(parents=True)
     (root / "pubspec.yaml").write_text("name: fixture\ndependencies:\n  flutter:\n    sdk: flutter\n")
     (root / "lib" / "main.dart").write_text("void main() {}\n")
@@ -67,14 +67,12 @@ def main() -> int:
         expect(leaf(profile, "source.root") == "lib" and "source.root" in entries,
                "a field the survey determined is seeded and carries its provenance")
 
-        # The control. tokens.source.path is the field survey.py refuses to
-        # settle on principle, so its TODO must survive untouched.
-        expect(str(leaf(profile, "tokens.source.path")).startswith("TODO"),
-               "CONTROL: a field the survey could not determine is still a TODO")
-        expect("tokens.source.path" not in entries,
-               "CONTROL: and carries no provenance entry claiming otherwise")
+        # The control. project.audience is a field no codebase states, so its
+        # TODO must survive untouched.
         expect(str(leaf(profile, "project.audience")).startswith("TODO"),
-               "CONTROL: intent (audience) is never inferred from a codebase")
+               "CONTROL: a field the survey could not determine is still a TODO")
+        expect("project.audience" not in entries,
+               "CONTROL: and carries no provenance entry claiming otherwise")
 
         # The chain's next step consumes this profile: map_project.py refuses to
         # write any inferred entry carrying a human's keys, and init.py once

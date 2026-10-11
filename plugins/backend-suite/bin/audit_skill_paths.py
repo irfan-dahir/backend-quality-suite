@@ -591,7 +591,7 @@ def project_identifiers(text: str, basename: str) -> list[tuple[str, str]]:
                         "component namespace. Name the role or the capability, "
                         "not the class"),
         (EXPORT_PACKAGE, "is one project's package name. Read it from the "
-                         "profile (tokens.source.package)"),
+                         "project's own config"),
     ):
         for m in pattern.finditer(text):
             hit = m.group(1)
@@ -624,7 +624,7 @@ def identifiers_in_code(text: str, basename: str) -> list[tuple[str, str]]:
                         "component namespace. Read the prefix from the project's "
                         "config (reinventedComponents.exportPrefix)"),
         (EXPORT_PACKAGE, "is one project's package name. Read it from the "
-                         "profile (tokens.source.package) or from the audit's "
+                         "project's own config or from the audit's "
                          "own rules section"),
     ):
         for m in pattern.finditer(text):

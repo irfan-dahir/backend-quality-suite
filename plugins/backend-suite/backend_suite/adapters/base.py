@@ -131,52 +131,6 @@ class AdapterContext:
     repo: "object"                      # pathlib.Path to the repo root
     profile: dict                       # .backend-suite/profile.json
     exceptions: dict                    # .backend-suite/exceptions.json
-    token_accessor: str = ""            # e.g. "AppTokens" — how code names a token
-    audit_config: dict = field(default_factory=dict)  # the design-audit rules file
-
-    def minimums(self) -> dict:
-        """Accessibility thresholds from the audit config.
-
-        These live in config for a reason worth stating: the accessibility
-        scanner used to hardcode `< 14` and `< 48` while the config *also*
-        declared min_text_sp 14 and min_touch_target_dp 48. They agreed, but
-        nothing made them agree — a project raising its minimum in config would
-        have got a scanner that silently kept enforcing the old one.
-        """
-        raw = dict(self.audit_config.get("accessibility_minimums", {}) or {})
-        # Templates scaffolded before the rename wrote camelCase keys that
-        # nothing read — a configured minimum silently became "not set". Accept
-        # them, loudly, so those projects keep working until they migrate.
-        for old, new in DEPRECATED_MINIMUM_KEYS.items():
-            if old in raw:
-                import sys
-                print(f"warning: accessibility_minimums.{old} is deprecated — rename it "
-                      f"to {new} in the audit config", file=sys.stderr)
-                if new not in raw:
-                    raw[new] = raw[old]
-                del raw[old]
-        return raw
-
-
-DEPRECATED_MINIMUM_KEYS = {
-    "minTextSizeSp": "min_text_sp",
-    "minTouchTargetDp": "min_touch_target_dp",
-}
-
-
-def numeric_minimum(minimums: dict, key: str) -> tuple[Optional[float], Optional[str]]:
-    """(value, None), (None, None) when unset, or (None, reason) when unusable.
-
-    An unedited scaffold leaves "TODO or delete, e.g. 14" here. That must be a
-    named refusal, never a float() crash and never a guessed number.
-    """
-    value = minimums.get(key)
-    if value is None:
-        return None, None
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None, (f"accessibility_minimums.{key} is {value!r}, not a number — "
-                      "replace the scaffold placeholder with a number, or delete the key")
-    return float(value), None
 
 
 @dataclass

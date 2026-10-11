@@ -80,15 +80,11 @@ the first one.
 
 ## Step 1 — Read the survey as a brief, not as answers
 
-Three of its fields are deliberately hedged, and you inherit the hedge:
+Two of its fields are deliberately hedged, and you inherit the hedge:
 
 - **`stack.fileCensus` never votes.** A committed documentation build makes a
   census read a Dart repository as JavaScript. If the manifests did not decide
   the stack, the census does not get to.
-- **`candidateTokenSources` is ranked and plural** — and on both real consumer
-  projects measured for RFC-0002 the true token source **is not in the repository
-  at all**; it arrives as a package dependency. "Not present on disk" is a live
-  possibility here, not an edge case.
 - **`documents[].proposedRole` is already `inferred` and confidence-scored.** A
   filename match is a prior, not a conclusion. Your job is to confirm, overturn,
   or refuse it — with a reason either way, including when you agree.
@@ -184,7 +180,7 @@ be written without writing it, `--list` shows what has already been proposed,
 `--candidate` names a contender on the single-field form, and `--dir` /
 `--profile` point at a project or a profile other than the detected ones.
 
-The field is a **dotted path** (`source.root`, `tokens.source.path`,
+The field is a **dotted path** (`source.root`, `docs.manifest`,
 `project.projectKind`, `docs.roles.design`) — the same paths `doctor.py`
 enumerates as profile leaves. The script writes the value at that leaf and one
 entry under `provenance.fields` keyed by the same path:
@@ -234,7 +230,7 @@ Refuse — do not propose — when:
 - the role's true owner looks like another repository (that is a `docs.manifest.json`
   `external` entry and exit 3, not a path here);
 - the survey put the field in `couldNotDetermine` and you found nothing it did not;
-- the true value appears not to be in this repository at all (the token-source case);
+- the true value appears not to be in this repository at all (an externally-owned value);
 - no role in the vocabulary fits, and the honest answer is that the vocabulary is short one.
 
 Collect every refusal in one list in your report, each with **what evidence would
@@ -326,8 +322,8 @@ profile is still full of TODOs; then map. It holds the same two rules
 - **Every seeded field is written `inferred`** — never `declared`, never
   `approved`. A survey found it; no human decided it.
 - **A field the survey could not determine stays an explicit TODO.** No
-  plausible default. (`tokens.source` is deliberately outside the seed table for
-  that reason — it is the worst-measured signal in the suite.)
+  plausible default. (Intent-bearing fields like `project.audience` stay
+  outside the seed table for that reason — no codebase states them.)
 
 The `inferred`-only rule is the same on both sides of that boundary. What does
 **not** change hands:

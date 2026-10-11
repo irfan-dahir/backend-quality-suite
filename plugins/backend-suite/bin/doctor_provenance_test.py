@@ -36,8 +36,6 @@ BASE = {
     "project": {"name": "Fixture", "framework": "none"},
     "adapters": {"lang": "dart"},
     "source": {"root": "lib", "fileGlob": "**/*.dart"},
-    "tokens": {"source": {"kind": "file", "path": "lib/tokens.dart"},
-               "accessor": "AppTokens"},
     "docs": {"manifest": ".backend-suite/docs.manifest.json"},
 }
 
@@ -47,7 +45,7 @@ def fixture(tmp: Path, provenance: dict | None) -> Path:
     root = tmp / "project"
     (root / ".backend-suite").mkdir(parents=True)
     (root / "lib").mkdir()
-    (root / "lib" / "tokens.dart").touch()
+    (root / "lib" / "main.dart").touch()
     (root / ".backend-suite" / "docs.manifest.json").write_text(json.dumps({"roles": {}}))
     (root / ".backend-suite" / "profile.schema.json").write_text(SCHEMA.read_text())
     # A configured hooks map, because doctor now reports an absent/inert/scaffold
@@ -135,7 +133,7 @@ def main() -> int:
     expect("CONTRADICTED" not in result.stdout, "reports no contradiction when there is none")
 
     result, _ = case("the same profile with the ratified path deleted", prov,
-                     mutate=lambda r: (r / "lib" / "tokens.dart").unlink()
+                     mutate=lambda r: (r / "lib" / "main.dart").unlink()
                      or (r / "lib").rmdir())
     expect(result.returncode == 1, "exits 1 once the ratified path is gone")
     expect("CONTRADICTED" in result.stdout,

@@ -63,7 +63,7 @@ was.
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" source.root --by NAME \
         --evidence "what was actually checked"
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" tokens.accessor --declare --by NAME
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/ratify.py" project.framework --declare --by NAME
 ```
 
 Other flags: `--on YYYY-MM-DD` for the decision's date, `--profile` and `--dir`

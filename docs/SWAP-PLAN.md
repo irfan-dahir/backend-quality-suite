@@ -109,26 +109,30 @@ archetype rows + test swapped to `library`/`service`; eval fixtures renamed
 
 ### Deferred to Phase D (one coherent unit — the tokens/config swap)
 
-- [ ] `profile.schema.json`: `tokens` is still a REQUIRED section and an
-  `additionalProperties: false` top level means removing it invalidates every
-  fixture that still carries it. Remove as ONE unit: schema `tokens` property
-  + required entry; `profile.json.template` tokens block (and its
-  design-flavored TODO examples); `survey.py` `detect_token_sources()` +
-  token-candidate plumbing; `doctor.py` tokens.source package-resolution check
-  (~line 940), `tokens.outputDir` fallback (~line 652), and the fix-hint table's
-  `repair_tokens.py` entry (script deleted in A2 — the hint is dangling);
-  `backend_suite/adapters/__init__.py` + `engine/capabilities.py`
-  `token_accessor` threading; `engine/pipelines.py` `DEFAULTS` entries
-  `tokens`/`copy`/`assets` (their pipeline dirs were deleted in A1; `mockApi`
-  stays); and the `"tokens"` blocks in ~7 test fixtures (doctor_fix_hints_test,
-  doctor_hooks_map_test, map_project_test, audit_findings_envelope_test,
-  ratify_test, doctor_provenance_test).
+- [x] (D4a, this commit) `profile.schema.json` `tokens` property + required entry,
+  `profile.json.template` tokens block + design-flavoured TODO examples,
+  `survey.py` `detect_token_sources()` + token-candidate plumbing (the
+  `candidateTokenSources` report key and summary count with it), `doctor.py`
+  tokens.source package-resolution check + `tokens.outputDir` fallback,
+  `adapters/__init__.py`/`engine/capabilities.py` `token_accessor` threading
+  (the field itself too — no check ever read it), `engine/pipelines.py`
+  `DEFAULTS` entries `tokens`/`copy`/`assets` (`mockApi` stays), and the
+  `"tokens"` blocks in the test fixtures (doctor_fix_hints_test,
+  doctor_hooks_map_test, map_project_test, ratify_test, doctor_provenance_test;
+  audit_findings_envelope_test was already clean from D3a). The dangling
+  `repair_tokens.py` fix-hint references (schema examples, docstrings) were
+  purged in the same commit; ratify_test's tokens.* cases re-authored onto
+  project.framework / docs.manifest, init_from_survey_test's control onto
+  project.audience, source_roots_test's token-detection section removed with
+  the function it tested.
 - [ ] `bin/propose_config.py` — design-audit-config + flutter/tsx sections:
   full re-author (its test was already deleted in A2; the script still names
   the deleted config file).
-- [ ] `configFile` remnants: schema `audits.configFile` property, survey
-  `PROPOSED_PROFILE_KEYS` entry, `provenance.py` ratifiable list entry —
-  harmless while absent from every profile; purge with the tokens swap.
+- [x] (D4a, this commit) `configFile` remnants: schema `audits.configFile`
+  property, survey key entry (`PATH_VALUED_KEYS` — `PROPOSED_PROFILE_KEYS` no
+  longer existed), `provenance.py` PATH_KEYS entry, plus the one real consumer:
+  the `audit_config` loader in `adapters/__init__.py` and its only reader
+  (`AdapterContext.minimums()`, accessibility machinery with no callers).
 - [ ] Eval fixture CONTENT: `_app_sources` / `_design_system_sources` still
   build a Flutter-shaped tree (widgets, pubspec) under the renamed
   service/library fixtures; the bootstrap/map-project eval cases' prose and

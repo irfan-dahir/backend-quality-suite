@@ -87,8 +87,7 @@ def cross_check(repo: Path, profile: dict) -> list[dict]:
                    f"than left as an empty result.",
         }]
 
-    ctx = AdapterContext(repo=repo, profile=profile, exceptions={},
-                         token_accessor=(profile.get("tokens", {}) or {}).get("accessor", ""))
+    ctx = AdapterContext(repo=repo, profile=profile, exceptions={})
     findings: list[dict] = []
     for cap in declared_caps(ctx):
         try:

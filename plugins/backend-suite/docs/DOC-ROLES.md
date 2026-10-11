@@ -48,7 +48,7 @@ Reads `.backend-suite/docs.manifest.json` from the project root, which
 | `resolve.py --dirs` | Every directory role |
 | `resolve.py --dir <name>` | One directory role's path |
 | `resolve.py --reverse <path>` | Which role a path plays |
-| `resolve.py --profile <key>` | A dotted key from `profile.json`, e.g. `audits.configFile` |
+| `resolve.py --profile <key>` | A dotted key from `profile.json`, e.g. `audits.exceptionsFile` |
 | `resolve.py --project-kind` | This project's declared archetype, or exit 2 |
 | `resolve.py --roles-for-kind <kind>` | Roles that apply to an archetype, with `expected`/`optional` |
 | `resolve.py --check` | Also fail if the mapped file doesn't exist |
@@ -232,7 +232,7 @@ rather than counting registrations as coverage.
 | `rfc` | The proposal format for a change, argued before a decision is made — distinct from `decisions`, which records the outcome |
 | `postmortem` | Structured record of a regression, including agent-caused ones — dispatch provenance, claimed-vs-shipped, verification tier at merge |
 | `components` | The component reference — what exists, its API, its variants. **Usually external:** in an app consuming a shared design system, this document belongs to the design system, not the app |
-| `tokens` | What the design tokens mean and how they are organised — the prose counterpart to the profile's `tokens.source` file pointer. **Usually external**, for the same reason as `components` |
+| `tokens` | What the design tokens mean and how they are organised — the prose counterpart to any token files this project keeps. **Usually external**, for the same reason as `components` |
 
 Directory roles (via `--dir`): `specs`, `workingContext`, `plans`, `derived`,
 `walkthroughs`, `tasks`.

@@ -1,6 +1,6 @@
 {
   "$schema": "../plugins/backend-suite/templates/profile.schema.json",
-  "_readme": "The only place project-specific facts live. Every field here is explained in profile.schema.json (canonical) — read that file alongside this one. Fill in every TODO, delete sections you genuinely do not have (only 'project', 'adapters', 'source', 'tokens' and 'docs' are required), then run `python3 \"${CLAUDE_PLUGIN_ROOT}/bin/doctor.py\"` before trusting anything else. Never put an absolute path, a client name, or a hostname in this file.",
+  "_readme": "The only place project-specific facts live. Every field here is explained in profile.schema.json (canonical) — read that file alongside this one. Fill in every TODO, delete sections you genuinely do not have (only 'project', 'adapters', 'source' and 'docs' are required), then run `python3 \"${CLAUDE_PLUGIN_ROOT}/bin/doctor.py\"` before trusting anything else. Never put an absolute path, a client name, or a hostname in this file.",
   "profileVersion": 1,
   "project": {
     "name": "TODO_PROJECT_NAME",
@@ -9,27 +9,16 @@
     "singleLocale": "TODO or delete: set only if this project is deliberately single-locale, e.g. 'en-US'. Prevents a skill from proposing i18n scaffolding."
   },
   "adapters": {
-    "lang": "TODO: which language adapter audits this project's source, once one ships for this stack (see docs/ROADMAP.md). Leave unset — and rely on the documentation skills only — until an adapter for this project's language exists; an adapter name nothing resolves is worse than none."
+    "lang": "TODO: which language adapter audits this project's source — 'php' ships with the suite, and docs/CATALOG.md lists what resolves. Leave unset — and rely on the documentation skills only — until an adapter for this project's language exists; an adapter name nothing resolves is worse than none."
   },
   "source": {
-    "root": "TODO: repo-relative source root, e.g. 'lib' or 'src'",
-    "fileGlob": "TODO: glob for source files under root, e.g. '**/*.dart' or '**/*.tsx'",
-    "screensGlob": "TODO or delete: glob that matches screen/page files specifically",
-    "featureWidgetsGlob": "TODO or delete: glob for feature-level (non-shared) components",
-    "sharedComponentDir": "TODO or delete: repo-relative dir holding shared/reusable components",
+    "root": "TODO: repo-relative source root, e.g. 'src' or 'app'",
+    "fileGlob": "TODO: glob for source files under root, e.g. '**/*.php' or '**/*.ts'",
+    "screensGlob": "TODO or delete: glob that matches the request-facing layer (controllers/pages) specifically",
+    "featureWidgetsGlob": "TODO or delete: glob for feature-level (non-shared) modules",
+    "sharedComponentDir": "TODO or delete: repo-relative dir holding shared/reusable modules",
     "otherSharedDirs": [],
     "testRoot": "TODO or delete: repo-relative root of the test suite"
-  },
-  "tokens": {
-    "_comment": "Deliberately not just a path — some projects extract tokens into a separate package. Use the 'file' shape below when tokens live in this repo, or the 'package' shape when another package owns them.",
-    "source": {
-      "kind": "file",
-      "path": "TODO: repo-relative path to the token source, e.g. 'lib/theme/app_theme.dart'"
-    },
-    "accessor": "TODO: how code references a token, e.g. 'AppTokens'",
-    "themeAccessor": "TODO or delete: how code references the active theme, if distinct from tokens",
-    "generated": false,
-    "ownedBy": "TODO or delete: set to a URL only when another repo owns these tokens, so no skill proposes editing them here"
   },
   "audits": {
     "exceptionsFile": ".backend-suite/exceptions.json",
@@ -42,7 +31,7 @@
   "provenance": {
     "_readme": "How each field above got its value: 'inferred' (a survey or a skill proposed it — authoritative for nothing), 'declared' (a human wrote it), 'approved' (a human reviewed an inferred value and ratified it). Optional, and starting empty is honest: doctor.py reports every field with no entry here as UNTRUSTED and prints the ratified-of-total count on every run, so an empty block reads as '0 of N ratified' rather than as approval. There is no 'contradicted' state to write — doctor computes it when an approved or declared field stops matching the tree. Add `verifiedAgainst.commit` (a git SHA) when you ratify a field: staleness is measured in diffs, not days, and there is deliberately no expiry date.",
     "fields": {
-      "_example": "Delete this key and add real entries as you ratify fields, e.g. \"source.root\": { \"state\": \"approved\", \"by\": \"TODO\", \"on\": \"TODO-YYYY-MM-DD\", \"value\": \"lib\", \"evidence\": \"TODO: why this is right\", \"verifiedAgainst\": { \"commit\": \"TODO-git-sha\" } }"
+      "_example": "Delete this key and add real entries as you ratify fields, e.g. \"source.root\": { \"state\": \"approved\", \"by\": \"TODO\", \"on\": \"TODO-YYYY-MM-DD\", \"value\": \"src\", \"evidence\": \"TODO: why this is right\", \"verifiedAgainst\": { \"commit\": \"TODO-git-sha\" } }"
     }
   }
 }
