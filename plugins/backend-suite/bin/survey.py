@@ -851,9 +851,31 @@ def survey(root: Path) -> dict:
 # The completeness diff: disk → declared
 # --------------------------------------------------------------------------- #
 
+def _is_derived(path: Path) -> bool:
+    """Whether a .backend-suite/*.json is a DERIVED collateral, not authored config.
+
+    The survey writes its own output to .backend-suite/survey.json carrying a
+    `sourceStamp` (the same marker that stops it being mistaken for hand-written
+    work). Reading that output back as a *declaration* is circular — and it was
+    worse than circular: survey.json's `projectRoot` is absolute, and
+    `check()`'s sibling walk resolved it as a sibling's parent and crashed with
+    `~/.Trash is not in the subpath of the project` on the first real --check.
+    A file that parses to an object with a top-level `sourceStamp` is derived,
+    not config; a file that cannot be parsed is left for declared_paths to
+    report as unreadable."
+    """
+    try:
+        with path.open(encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (ValueError, OSError):
+        return False
+    return isinstance(data, dict) and "sourceStamp" in data
+
+
 def config_files(root: Path) -> list[Path]:
     return sorted(p for p in (root / MARKER).glob("*.json")
-                  if p.is_file() and not p.name.endswith(".schema.json"))
+                  if p.is_file() and not p.name.endswith(".schema.json")
+                  and not _is_derived(p))
 
 
 def declared_paths(configs: list[Path],
@@ -1044,6 +1066,14 @@ def check(root: Path) -> tuple[list[dict], list[str]]:
             parents.add(prefix.rsplit("/", 1)[0])
     for parent in sorted(parents):
         if not (root / parent).is_dir():
+            continue
+        # A declaration that resolves OUTSIDE the project root — an absolute
+        # value (forbidden by profile.schema.json but a profile can drift) or a
+        # `../` prefix — must never turn this walk into an iteration of another
+        # tree. Measured crash: survey.json's absolute projectRoot made this
+        # iterate the home directory and die on ~/.Trash. Rule 2 has nothing to
+        # say about siblings of a directory this repo does not contain.
+        if not (root / parent).resolve().is_relative_to(root.resolve()):
             continue
         for entry in sorted((root / parent).iterdir()):
             if not entry.is_dir() or entry.name in ALWAYS_SKIP:
