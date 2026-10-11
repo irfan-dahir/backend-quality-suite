@@ -39,8 +39,14 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   over a php fixture (vendor/ beside composer.json, authored `src/build/`
   kept, SKIPPED counted, scanSkipDirs include/add overrides); the tsx
   span-cache half died with the tsx adapter and is not replaced.
-- [ ] `bin/survey_ui_roots_test.py` — the init-from-survey e2e (`audit_tokens`
-  runs with no edits) → backend equivalent: init → a live php-backed audit runs.
+- [x] (D5c, this commit) `bin/survey_source_roots_test.py` — re-authored from
+  the purged `survey_ui_roots_test.py` (renamed: the UI ranking it pinned is
+  gone). Pins the sourceRoots ranking (conventional root 0.8 / empty 0.2 /
+  workspace member 0.7, seed bar 0.8), the e2e (init --from-survey seeds
+  lang/root/glob/framework as inferred; a live php audit then refuses at its
+  rules-section TODO, proving the seeded fields loaded), and two controls
+  (unshipped adapter ⇒ lang stays TODO; no conventional root ⇒ empty list +
+  couldNotDetermine).
 - [x] (D4b, this commit) `bin/propose_config_test.py` — proposes flutter
   layers/adapter-seam/animated-widget sections → backend sections (routes
   file, cache TTLs). 8 cases over a php fixture: the three proposals with
@@ -48,9 +54,14 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   never overwritten, exit 2 when nothing is measurable, unreadable
   composer.json refusal, `--apply` unknown section, and the never-proposed
   listing.
-- [ ] `bin/audit_report_paths_test.py` — report-path mechanics
-  (`--out` wins, defaults inside `.backend-suite/`, scaffolded .gitignore
-  covers them) against adapter-backed audits.
+- [x] (D5c, this commit) `bin/audit_report_paths_test.py` — report-path
+  mechanics against the audits that survived the re-domain: 5 cases over a
+  php fixture for `audit_layer_boundaries.py` (default lands inside
+  `.backend-suite/`, `--out` wins, planted violation present, no `scripts/`
+  dir created, no envelope-dir collision, scaffolded gitignore covers the
+  report). The mock-api leg was already pinned in `mock_api_drift_test.py`;
+  the textual `scripts/` sweep was deliberately not ported (measured-history
+  mentions stay as history; the behavioral assertion is stronger).
 - [x] (D5b-2, this commit) `bin/audit_contract_headers_test.py` — mockapi
   seed tests built on `adapters.dart` → php fixtures: 53 cases over a
   Lumen-shaped fixture (screens = controllers with a CONTRACT header over
@@ -80,10 +91,20 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   routes/api.php fixture through the adapter's own checks and globs, and the
   seam gate is green in the current 14/16. The entry described pre-repoint
   state.
-- [ ] `bin/survey.py` — the UI-decision path (`ui_adapter`, `UI_DIR_NAMES`,
-  `ADAPTER_REFINEMENTS`) decides which language a *design* suite audits when
-  server and UI stacks disagree. Backend suite: decide drop vs invert (route
-  root, not UI root, decides).
+- [x] (D5c, this commit) `bin/survey.py` — the UI-decision path
+  (`ui_adapter`, `UI_DIR_NAMES`, the `uiRoots` ranking, and init.py's
+  UI-first seeding of `source.root` / `source.roots` / `adapters.lang`)
+  decided: **dropped**, not inverted. Nothing in the backend suite reads
+  `uiRoots` (every audit reads server code), and the UI-first preference was
+  load-bearing in the wrong direction — a php repo carrying a `resources/js`
+  frontend would have been seeded to audit the frontend and refined php→web.
+  `detect_source_roots` now answers alone; the held-out measurement stays as
+  a history note in survey.py. Also fixed in init.py: `FILE_GLOB_BY_STACK`
+  had no `php` entry, so a composer.json project kept `source.fileGlob` as a
+  TODO and no audit could run on a seeded profile (php/ruby/java/swift added;
+  mixed-extension stacks deliberately left out). `verify.py`'s prose
+  examples re-pointed from `audit-tokens`/`design-critic` to real components
+  (`audit-error-handling`, `review-docs`, `log-decision`→`audit_proposal_status.py`).
 - [x] (D4b, this commit) `bin/propose_config.py` — proposal sections themselves
   (config template keys) are design-domain. Full re-author: the three design
   proposers (adapter seam, animated widgets, colour names) are gone;

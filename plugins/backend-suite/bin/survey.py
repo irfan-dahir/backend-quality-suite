@@ -504,8 +504,7 @@ def _gradle_compose_evidence(root: Path) -> list[str]:
     return hits
 
 
-def detect_stack(root: Path, files: list[str], unknown: list[dict],
-                 ui: dict | None = None) -> dict:
+def detect_stack(root: Path, files: list[str], unknown: list[dict]) -> dict:
     """Stack and candidate adapter, decided by root manifests.
 
     The census is computed and reported because "how many files of each kind" is
@@ -538,34 +537,6 @@ def detect_stack(root: Path, files: list[str], unknown: list[dict],
     }
 
     stacks = {stack for _n, stack, _a, _r, _w in found}
-    # The UI decides, when the UI can be found. A design suite audits the code
-    # that renders; on a Rails + React or Django + Vue repository the root
-    # manifest that names the SERVER language is the wrong vote. Only applied
-    # when the root manifests cannot answer on their own (none, several that
-    # disagree, or one whose stack has no adapter) — a single-stack repository
-    # the manifests already settle is left exactly as it was.
-    from_ui = ui_adapter(ui or {}, files, available)
-    single_adapter = (len(stacks) == 1
-                      and next((a for _n, _s, a, _r, _w in found if a), None))
-    if from_ui and not single_adapter and not (
-            len(stacks) == 1 and next(iter(stacks)) == GRADLE_STACK
-            and _gradle_compose_evidence(root)):
-        adapter, ui_stack, because = from_ui
-        result["stack"] = ui_stack
-        if len(stacks) > 1:
-            result["candidateStacks"] = sorted(stacks)
-        result["candidateAdapter"] = adapter
-        result["uiStackDecision"] = {
-            "provenance": "inferred",
-            "manifestStacks": sorted(stacks),
-            "chosenRoots": ui["chosen"],
-            "because": because,
-            "why": ("the root manifest(s) name a server or packaging stack; the UI the "
-                    "suite audits lives under the chosen UI root(s), whose files need "
-                    f"the {adapter!r} adapter"),
-        }
-        return result
-
     if not found:
         result["stack"] = None
         result["candidateAdapter"] = None
@@ -745,261 +716,30 @@ def detect_source_roots(root: Path, files: list[str], unknown: list[dict]) -> li
 
 
 # --------------------------------------------------------------------------- #
-# UI roots: where the DESIGN surface lives, ranked by evidence
+# (removed) UI roots: where the DESIGN surface lived, ranked by evidence
 # --------------------------------------------------------------------------- #
 #
-# The root manifest answers "how is this repository packaged", which is the
-# wrong question for a design suite on any polyglot repository. A held-out run
-# (docs/MEASUREMENT-2026-10-08-web-adapter-held-out.md §2) put six public
-# projects through survey → init --from-survey → audit_tokens and got ZERO
-# findings on all six: a Gemfile made a React+SCSS app read as Ruby, a
-# workspace's backend package outranked its frontend, and five of six roots
-# were left as TODO. Every run refused honestly — but a suite that can never
-# get past onboarding audits nothing.
+# This section ranked directories by UI evidence (component files,
+# stylesheets, UI-framework dependencies) and proposed them as `uiRoots`, and
+# init.py seeded source.root / source.roots / adapters.lang from that ranking.
+# It was measured into existence for the design suite (a held-out run put six
+# public projects through survey -> init --from-survey -> audit_tokens and got
+# zero findings on all six; docs/MEASUREMENT-2026-10-08-web-adapter-held-out.md
+# §2 is the history). The re-domain removed it, for two reasons:
 #
-# So this ranks candidate directories by UI evidence instead: component files
-# (JSX/TSX/SFC/Flutter widgets), stylesheets, and UI-framework dependencies in
-# the manifest that owns the candidate. It PROPOSES — every candidate carries
-# its evidence and the choice carries a confidence and the runners-up. Nothing
-# here is a declaration; init.py writes whatever it seeds from this as
-# `inferred`, and a low-confidence ranking picks nothing at all.
-
-COMPONENT_SUFFIXES = (".tsx", ".jsx", ".vue", ".svelte", ".astro")
-STYLE_SUFFIXES = (".css", ".scss", ".sass", ".less", ".styl", ".pcss")
-CODE_SUFFIXES = (".ts", ".js", ".mjs", ".cjs", ".py", ".rb", ".go", ".rs", ".php",
-                 ".java", ".kt", ".swift", ".cs", ".dart", ".ex", ".erb")
-
-# Dependencies that mean "this package renders UI".
-UI_DEPS = {
-    "react", "react-dom", "vue", "svelte", "@angular/core", "solid-js", "preact",
-    "lit", "react-native", "@mui/material", "@chakra-ui/react", "tailwindcss",
-    "styled-components", "@emotion/react", "flutter",
-}
-# Dependencies that mean "this package is a runnable UI application" rather than
-# a library — an app is what a design audit is usually pointed at.
-APP_DEPS = {
-    "next", "nuxt", "vite", "@sveltejs/kit", "react-scripts", "@angular/cli",
-    "expo", "astro", "gatsby", "webpack", "@vitejs/plugin-react",
-    "@vitejs/plugin-vue", "@rails/webpacker", "shakapacker", "esbuild",
-}
-# Dependencies that mean "this package is a server". Only counted against a
-# candidate that has no UI dependency of its own.
-SERVER_DEPS = {
-    "express", "fastify", "koa", "@nestjs/core", "hapi", "@hapi/hapi", "typeorm",
-    "mikro-orm", "@mikro-orm/core", "sequelize", "ioredis", "bull", "bullmq",
-}
-# Path segments that name something other than the product UI. A penalty, not a
-# filter: a project whose only UI lives under `docs/` should still be found.
-NON_UI_SEGMENTS = {
-    "backend", "server", "api", "worker", "workers", "cli", "test", "tests",
-    "e2e", "__tests__", "fixtures", "examples", "example", "scripts", "tools",
-    "migrations", "db", "spec", "playground", "benchmarks", "docs",
-}
-# Directory names conventionally holding a web front end inside a server repo
-# (Rails `app/javascript`, Django/Phoenix `assets` or `frontend`, …).
-UI_DIR_NAMES = {"javascript", "frontend", "client", "web", "webapp", "ui", "www", "assets"}
-NESTED_MANIFESTS = ("package.json", "pubspec.yaml")
-UI_SEED_CONFIDENCE = 0.6
-MIN_UI_FILES = 5
-
-
-def _manifest_deps(path: Path) -> set[str]:
-    """Dependency names declared by one package.json or pubspec.yaml."""
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return set()
-    if path.name == "package.json":
-        try:
-            data = json.loads(text)
-        except ValueError:
-            return set()
-        deps: set[str] = set()
-        for group in ("dependencies", "devDependencies", "peerDependencies"):
-            if isinstance(data.get(group), dict):
-                deps |= set(data[group])
-        return deps
-    return {m.group(1) for m in re.finditer(r"^  ([A-Za-z0-9_]+):", text, re.M)}
-
-
-def _ui_candidate_dirs(root: Path, files: list[str]) -> dict[str, str]:
-    """Candidate directory → the manifest (repo-relative) that owns it."""
-    packages = sorted({str(Path(rel).parent.as_posix()) for rel in files
-                       if Path(rel).name in NESTED_MANIFESTS and rel.count("/") <= 4})
-    packages = ["." if p == "" else p for p in packages]
-
-    def owner(rel_dir: str) -> str | None:
-        best = None
-        for pkg in packages:
-            if pkg == "." or rel_dir == pkg or rel_dir.startswith(pkg + "/"):
-                if best is None or len(pkg) > len(best):
-                    best = pkg
-        return best
-
-    out: dict[str, str] = {}
-    for pkg in packages:
-        base = "" if pkg == "." else pkg + "/"
-        # `src/` only: a package's `lib/` or `app/` is as often a slice of it
-        # (Next's `app/` router, a `lib/` of helpers) as its whole source.
-        inner = [sub for sub in ("src",) if (root / base / sub).is_dir()]
-        out[f"{base}{inner[0]}" if inner else (pkg)] = pkg
-        if pkg == ".":
-            # The root package's own conventional roots, each its own candidate:
-            # a Node server + client repo keeps its UI in `app/` beside `server/`.
-            for sub in ("src", "app", "lib", "client"):
-                if (root / sub).is_dir():
-                    out.setdefault(sub, ".")
-    dirs = {"/".join(rel.split("/")[:i]) for rel in files
-            for i in range(1, min(rel.count("/"), 3) + 1)}
-    for rel_dir in sorted(dirs):
-        parts = rel_dir.split("/")
-        if (parts[-1] in UI_DIR_NAMES and rel_dir not in out
-                and rel_dir not in packages):
-            own = owner(rel_dir)
-            out[rel_dir] = own if own is not None else ""
-    return out
-
-
-def detect_ui_roots(root: Path, files: list[str], unknown: list[dict]) -> dict:
-    """Rank directories by how much of the UI they hold. Proposes; never decides."""
-    candidates = []
-    for rel_dir, pkg in _ui_candidate_dirs(root, files).items():
-        prefix = "" if rel_dir in (".", "") else rel_dir + "/"
-        under = [f for f in files if f.startswith(prefix)]
-        comp = [f for f in under if f.endswith(COMPONENT_SUFFIXES)]
-        style = [f for f in under if f.endswith(STYLE_SUFFIXES)]
-        code = [f for f in under if f.endswith(COMPONENT_SUFFIXES + STYLE_SUFFIXES + CODE_SUFFIXES)]
-        manifest = None
-        if pkg:
-            for name in NESTED_MANIFESTS:
-                p = root / ("" if pkg == "." else pkg) / name
-                if p.is_file():
-                    manifest = p
-                    break
-        deps = _manifest_deps(manifest) if manifest else set()
-        dart = [f for f in under if f.endswith(".dart")]
-        if "flutter" in deps:
-            comp = comp + dart
-        ui_files = len(comp) + len(style)
-        if ui_files == 0:
-            continue
-        ui_deps = sorted(deps & UI_DEPS)
-        app_deps = sorted(deps & APP_DEPS)
-        server_deps = sorted(deps & SERVER_DEPS)
-        segments = set(rel_dir.lower().split("/"))
-        bad_segments = sorted(segments & NON_UI_SEGMENTS)
-        ratio = ui_files / max(len(code), 1)
-        # Size dominates, density modulates: a 9-file helper directory that is
-        # all components must not outrank a 500-file application.
-        score = math.log2(1 + ui_files) * (0.75 + 0.5 * ratio)
-        evidence = [f"{len(comp)} component file(s), {len(style)} stylesheet(s) "
-                    f"of {len(code)} source file(s)"]
-        if ui_deps:
-            score += 3
-            evidence.append(f"UI dependencies in {manifest.relative_to(root).as_posix()}: "
-                            f"{', '.join(ui_deps[:5])}")
-        if app_deps:
-            score += 2
-            evidence.append(f"application tooling: {', '.join(app_deps[:4])}")
-        if "apps" in segments:
-            score += 1
-            evidence.append("lives under apps/")
-        if server_deps and not ui_deps:
-            score -= 3
-            evidence.append(f"server dependencies and no UI dependency: {', '.join(server_deps[:4])}")
-        if bad_segments:
-            score -= 2
-            evidence.append(f"path names a non-UI concern: {', '.join(bad_segments)}")
-        candidates.append({
-            "path": "." if rel_dir in ("", ".") else rel_dir,
-            "score": round(score, 2),
-            "componentFiles": len(comp),
-            "styleFiles": len(style),
-            "isApp": bool(app_deps) or "apps" in segments,
-            # Whether this candidate IS a package (its root or its src/), rather
-            # than a directory inside one. Only packages count as sibling apps.
-            "ownPackage": pkg not in ("", ".") and rel_dir in (pkg, f"{pkg}/src"),
-            "suffixes": sorted({Path(f).suffix for f in comp + style}),
-            "evidence": evidence,
-        })
-
-    # A directory nested inside a better-or-equal candidate of the same package is
-    # noise in the ranking, not a runner-up — but a nested directory that BEATS its
-    # parent (Rails `app/javascript` inside `app`) is the answer.
-    # The repository root is a candidate only when nothing narrower is: in a
-    # workspace it is the sum of every package, and it always "wins" by size.
-    if any(c["path"] != "." for c in candidates):
-        candidates = [c for c in candidates if c["path"] != "."]
-    candidates.sort(key=lambda c: (-c["score"], -c["path"].count("/"), c["path"]))
-    result: dict = {"candidates": candidates[:8], "chosen": [], "confidence": 0.0,
-                    "provenance": "inferred",
-                    "_note": ("A ranking by UI evidence, not a declaration. init.py seeds "
-                              "only a choice at or above "
-                              f"{UI_SEED_CONFIDENCE} confidence, and always as `inferred`.")}
-    strong = [c for c in candidates
-              if c["score"] > 0 and c["componentFiles"] + c["styleFiles"] >= MIN_UI_FILES]
-    if not strong:
-        unknown.append({
-            "field": "uiRoots",
-            "why": "no directory holds enough component or style files to call it the UI",
-            "note": f"looked for {', '.join(COMPONENT_SUFFIXES + STYLE_SUFFIXES)} and UI "
-                    "framework dependencies. Nothing proposed — declare source.root.",
-        })
-        return result
-
-    best = strong[0]
-    rivals = [c for c in strong[1:] if not c["path"].startswith(best["path"] + "/")
-              and not best["path"].startswith(c["path"] + "/")]
-    second = rivals[0]["score"] if rivals else 0.0
-    margin = (best["score"] - second) / best["score"] if best["score"] > 0 else 0.0
-    confidence = round(min(0.9, 0.45 + 0.45 * margin + (0.1 if best["isApp"] else 0)), 2)
-
-    # Several sibling applications, each about as strong as the best: a monorepo
-    # with more than one UI, which `source.roots` exists to describe.
-    apps = [c for c in [best, *rivals]
-            if c["isApp"] and c["ownPackage"] and c["score"] >= 0.75 * best["score"]]
-    if best["isApp"] and best["ownPackage"] and len(apps) >= 2:
-        result["chosen"] = [c["path"] for c in apps]
-        confidence = round(min(0.85, 0.5 + 0.1 * len(apps)), 2)
-        result["why"] = (f"{len(apps)} sibling UI applications score within 25% of each "
-                         "other; proposing all of them as source.roots")
-    else:
-        result["chosen"] = [best["path"]]
-        result["why"] = (f"{best['path']} scores {best['score']}"
-                         + (f"; runner-up {rivals[0]['path']} scores {rivals[0]['score']}"
-                            if rivals else "; no rival candidate"))
-    result["confidence"] = confidence
-    result["runnersUp"] = [c["path"] for c in rivals if c["path"] not in result["chosen"]][:3]
-    if confidence < UI_SEED_CONFIDENCE:
-        unknown.append({
-            "field": "uiRoots",
-            "why": f"the UI-root ranking is not decisive (confidence {confidence}): "
-                   f"{result['why']}",
-            "note": "Candidates are listed under uiRoots with their evidence; none is "
-                    "seeded. Pick one and declare source.root.",
-        })
-    return result
-
-
-def ui_adapter(ui: dict, files: list[str], available: list[str]) -> tuple[str, str, list[str]] | None:
-    """The adapter the CHOSEN UI roots need, from the files under them."""
-    chosen = ui.get("chosen") or []
-    if not chosen or ui.get("confidence", 0) < UI_SEED_CONFIDENCE:
-        return None
-    suffixes = set()
-    for path in chosen:
-        prefix = "" if path == "." else path + "/"
-        suffixes |= {Path(f).suffix for f in files if f.startswith(prefix)}
-    web_suffixes = set(ADAPTER_REFINEMENTS["tsx"][1])
-    if suffixes & web_suffixes and "web" in available:
-        return "web", "javascript/typescript", sorted(suffixes & web_suffixes)
-    if suffixes & {".tsx", ".jsx", ".ts", ".js"} and "tsx" in available:
-        return "tsx", "javascript/typescript", sorted(suffixes & {".tsx", ".jsx"})
-    if ".dart" in suffixes and "dart" in available:
-        return "dart", "dart/flutter", [".dart"]
-    return None
-
-
+#   * nothing in the backend suite reads `uiRoots` — every audit here reads
+#     server code, and a ranking of frontend directories answers a question
+#     no consumer asks;
+#   * worse than dead, the seeding preference was load-bearing in the wrong
+#     direction: on a php repository that also carries a `resources/js`
+#     frontend, the UI ranking could seed `source.root` to the frontend and
+#     refine the adapter php -> web, pointing backend audits at frontend
+#     files. The design suite needed the UI-first preference; the backend
+#     suite's audits read the server, so the same logic inverts.
+#
+# What decides source.root now: `detect_source_roots` only — manifest
+# conventional roots and declared workspace members, each with a confidence,
+# and init.py seeds only a single candidate at or above its bar.
 def _yaml_list(text: str, key: str) -> list[str]:
     """The `- item` entries directly under a top-level `key:` in a YAML document.
 
@@ -1093,14 +833,11 @@ def survey(root: Path) -> dict:
             "note": "Nothing to compare against, so `survey.py --check` has no declared side.",
         })
 
-    ui = detect_ui_roots(root, files, unknown)
-    stack = detect_stack(root, files, unknown, ui)
     return {
         "surveyVersion": SURVEY_VERSION,
         "sourceStamp": source_stamp(root),
-        "stack": stack,
+        "stack": detect_stack(root, files, unknown),
         "sourceRoots": detect_source_roots(root, files, unknown),
-        "uiRoots": ui,
         "documents": document_inventory(root, files, unknown),
         "filesSeen": len(files),
         "couldNotDetermine": unknown,

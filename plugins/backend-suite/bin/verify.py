@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run a component's MECHANICAL part against a project, and record what happened.
 
-    python3 plugins/backend-suite/bin/verify.py audit-tokens
-    python3 plugins/backend-suite/bin/verify.py audit-tokens --project-root ../some-project
+    python3 plugins/backend-suite/bin/verify.py audit-error-handling
+    python3 plugins/backend-suite/bin/verify.py audit-error-handling --project-root ../some-project
     python3 plugins/backend-suite/bin/verify.py --all
 
 Roadmap Workstream A1 — the keystone item. This suite currently has components
@@ -26,8 +26,8 @@ from candidacy — running `resolve.py` proves nothing about the specific claim
 a component makes, and counting it would fabricate a pass by coincidence.
 
   - **Zero** `.py` references found: the component is prose for an LLM to
-    follow (`design-critic`, most of `review-docs`'s judgement checks) — there
-    is no deterministic execution trace to run. **Refused.**
+    follow (`review-docs`, most of its checks are judgement with no
+    deterministic trace) — there is no execution trace to run. **Refused.**
   - **Exactly one** distinct `.py` reference: that is the mechanical part.
     Run it against the target project and record what happened.
   - **More than one** distinct reference: which one (if any) is "the"
@@ -57,9 +57,9 @@ always one of three outcomes, never a boolean:
 Written to `<project-root>/.backend-suite/evidence/<component-name>.json`:
 
     {
-      "component": "audit-tokens",
+      "component": "audit-error-handling",
       "plugin": "backend-suite",
-      "backing_script": "plugins/backend-suite/bin/audit_tokens.py"  | null,
+      "backing_script": "plugins/backend-suite/bin/audit_error_handling.py"  | null,
       "verified_against": {"project": "<profile project.name or null>",
                             "path": "<absolute project root>",
                             "commit": "<HEAD sha>" | null,
@@ -212,12 +212,13 @@ def eponymous_owner(script: Path) -> str | None:
     """The name of the component this script is `script.stem == name` for, if any.
 
     A component's prose routinely points at a script it doesn't own — a
-    "gather evidence" step in a prose-authoring skill running `audit_tokens.py`
-    to see what it finds, the way `establish-interaction-spec` does, is not
-    that skill's own mechanical part; it's borrowing `audit-tokens`'s. Without
-    this check, verify.py silently attributed audit-tokens's own result to a
-    completely different component — found by running against real, prose-
-    heavy docs, not the clean fixture this script was first tested against.
+    "gather evidence" step in a decision-logging skill running
+    `audit_proposal_status.py` to see what the proposal pipeline found, the way
+    `log-decision` does, is not that skill's own mechanical part; it's borrowing
+    `audit-proposal-status`'s. Without this check, verify.py silently
+    attributed audit-proposal-status's own result to a completely different
+    component — found by running against real, prose-heavy docs, not the clean
+    fixture this script was first tested against.
     """
     for c in all_components():
         if script.stem == c["name"].replace("-", "_"):
@@ -474,7 +475,8 @@ def verify_one(name: str, target: Path) -> int:
         # — check it isn't secretly someone else's. A private implementation
         # script nobody else claims (pipeline.py, extract_copy.py) is fine to
         # run; a script that IS another component's own eponymous mechanical
-        # part (audit_tokens.py belongs to audit-tokens) is borrowed, not owned
+        # part (audit_proposal_status.py belongs to audit-proposal-status) is
+        # borrowed, not owned
         # — running it here would attribute a different component's result to
         # this one.
         owner = eponymous_owner(chosen)
@@ -500,7 +502,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("component", nargs="?",
-                     help="skill or agent name, e.g. audit-tokens")
+                     help="skill or agent name, e.g. audit-error-handling")
     ap.add_argument("--all", action="store_true",
                      help="verify every catalogued component, refusing what can't be mechanised")
     ap.add_argument("--project-root", help="project to verify against "

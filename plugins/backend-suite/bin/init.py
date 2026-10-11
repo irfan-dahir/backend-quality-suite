@@ -101,6 +101,14 @@ FILE_GLOB_BY_STACK = {
     "python": "**/*.py",
     "go": "**/*.go",
     "rust": "**/*.rs",
+    "ruby": "**/*.rb",
+    "php": "**/*.php",
+    "java": "**/*.java",
+    "swift": "**/*.swift",
+    # Stacks with no single source extension (javascript/typescript,
+    # java/kotlin) are deliberately absent: seeding `**/*.js` on a TypeScript
+    # project would sweep the wrong half of the tree, and a wrong glob is
+    # worse than a visible TODO.
 }
 
 # A source root is seeded only from a candidate this confident. survey.py scores
@@ -110,36 +118,10 @@ FILE_GLOB_BY_STACK = {
 SOURCE_ROOT_CONFIDENCE = 0.8
 
 
-# The UI-root ranking (survey.py `uiRoots`) is seeded only at or above this
-# confidence — survey.py's own UI_SEED_CONFIDENCE, restated because init reads a
-# survey.json, which may come from another run, not survey.py's module state.
-UI_ROOT_CONFIDENCE = 0.6
-
-
-def _ui_choice(report: dict) -> dict | None:
-    ui = report.get("uiRoots") or {}
-    if ui.get("chosen") and ui.get("confidence", 0) >= UI_ROOT_CONFIDENCE:
-        return ui
-    return None
-
-
-def _ui_evidence(ui: dict, path: str) -> str:
-    cand = next((c for c in ui.get("candidates", []) if c["path"] == path), {})
-    runners = ", ".join(ui.get("runnersUp") or []) or "none"
-    return (f"ranked first of {len(ui.get('candidates', []))} UI-root candidate(s) by UI "
-            f"evidence at confidence {ui['confidence']} ({'; '.join(cand.get('evidence', []))}); "
-            f"runners-up: {runners}")
-
-
 def _seed_adapter(report: dict) -> tuple[object, str] | None:
     adapter = (report.get("stack") or {}).get("candidateAdapter")
     if not adapter:
         return None
-    decision = (report.get("stack") or {}).get("uiStackDecision")
-    if decision:
-        return adapter, (f"the root manifest(s) name {decision['manifestStacks'] or 'no stack'}, "
-                         f"but the UI root(s) {decision['chosenRoots']} hold "
-                         f"{', '.join(decision['because'])} files, which this adapter reads")
     manifests = ", ".join(m["file"] for m in (report.get("stack") or {}).get("manifestsFound", []))
     return adapter, f"survey.py read a root manifest ({manifests}) and this plugin ships that adapter"
 
@@ -159,12 +141,9 @@ def _seed_framework(report: dict) -> tuple[object, str] | None:
 
 
 def _seed_source_root(report: dict) -> tuple[object, str] | None:
-    # A design suite audits the UI, so the UI ranking answers first. Its first
-    # choice is also `root` when several roots are seeded: scripts that read
-    # only `source.root` then audit the strongest UI instead of nothing.
-    ui = _ui_choice(report)
-    if ui:
-        return ui["chosen"][0], _ui_evidence(ui, ui["chosen"][0])
+    # The UI-root ranking that used to answer first is gone (survey.py removes
+    # it): on a backend repository the strongest *source* root is the only
+    # honest answer, and a frontend directory must never become source.root.
     strong = [c for c in report.get("sourceRoots") or []
               if c.get("confidence", 0) >= SOURCE_ROOT_CONFIDENCE]
     if len(strong) != 1:
@@ -278,15 +257,6 @@ def seed_profile(profile: dict, report: dict) -> tuple[list[dict], list[str]]:
         _set(profile, dotted, value)
         record(dotted, value, evidence)
 
-    # Several sibling UI applications: `source.roots` is the only key that can say
-    # so (RFC-0002 §3g #3). The template does not carry it, so it is added here,
-    # and only from a UI ranking that cleared the bar.
-    ui = _ui_choice(report)
-    source = profile.get("source")
-    if ui and len(ui["chosen"]) > 1 and isinstance(source, dict):
-        source["roots"] = list(ui["chosen"])
-        record("source.roots", list(ui["chosen"]),
-               f"{ui.get('why', '')}; confidence {ui['confidence']}")
     return seeded, todo
 
 
