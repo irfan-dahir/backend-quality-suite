@@ -169,33 +169,73 @@ def main() -> int:
                "reports a sibling of a declared directory even though `source.root` is "
                "an ancestor of it")
 
-        # The undeclared-capability routing cases (a router the profile's
-        # source.routesFile does not declare, and the convergence case that
-        # declaring it silences the finding) need a loadable language adapter
-        # to answer "does this code route?". They are re-authored against the
-        # php adapter and a routes/ fixture in Phase D -- SWAP-PLAN.md.
+        # The undeclared-capability routing cases: a router the profile's
+        # source.routesFile points at that does NOT declare routes, and the
+        # convergence case where declaring routes silences the finding.
+        # The php adapter scans source.root for routing signatures
+        # (Route::get, $router->get, @Route/@Get attributes on controllers).
+        print("check: undeclared routing capability is reported")
+        unrouted = tmpdir / "unrouted"
+        (unrouted / ".backend-suite").mkdir(parents=True)
+        (unrouted / "src").mkdir()
+        (unrouted / "src" / "Http" / "Controllers").mkdir(parents=True)
+        # Controller WITHOUT any routing attribute → no routing evidence
+        (unrouted / "src" / "Http" / "Controllers" / "ThingController.php").write_text(
+            "<?php\nnamespace App\\Http\\Controllers;\n"
+            "class ThingController { public function index() {} }\n")
+        (unrouted / ".backend-suite" / "profile.json").write_text(json.dumps({
+            "adapters": {"lang": "php"},
+            "source": {"root": "src", "routesFile": "routes/web.php"},
+        }))
+        result = run("--check", "--project-root", str(unrouted), "--json")
+        findings = json.loads(result.stdout)["findings"]
+        kinds = {f["kind"] for f in findings}
+        # Profile declares routesFile (capability declared) but source tree
+        # has no routing signatures → capability is "unused" (declared but no evidence)
+        expect("declared-capability-unused" in kinds,
+               f"reports declared-capability-unused when no routing signatures (kinds: {kinds})")
+        expect(result.returncode == 1, "unexamined capability keeps the run non-clean")
 
-        # The fixture the whole capability seam exists for: an adapter that
-        # cannot reach an answer must say so. If it returned False here the
-        # finding above would disappear and the run would read as clean, which is
-        # the failure this issue is about, rebuilt one layer down.
+        print("check: convergence — declaring routes (via attribute) silences the finding")
+        routed = tmpdir / "routed"
+        (routed / ".backend-suite").mkdir(parents=True)
+        (routed / "src" / "Http" / "Controllers").mkdir(parents=True)
+        # Controller WITH @Get attribute → routing evidence FOUND
+        (routed / "src" / "Http" / "Controllers" / "OrdersController.php").write_text(
+            "<?php\nnamespace App\\Http\\Controllers;\n"
+            "#[Get('/orders')]\n"
+            "class OrdersController { public function index() {} }\n")
+        (routed / ".backend-suite" / "profile.json").write_text(json.dumps({
+            "adapters": {"lang": "php"},
+            "source": {"root": "src", "routesFile": "routes/web.php"},
+        }))
+        result = run("--check", "--project-root", str(routed), "--json")
+        findings = json.loads(result.stdout)["findings"]
+        kinds = {f["kind"] for f in findings}
+        # Convergence: capability declared AND evidence found → clean
+        expect("declared-capability-unused" not in kinds and "undeclared-capability" not in kinds,
+               f"convergence: routing attribute silences the finding (kinds: {kinds})")
+        expect(result.returncode == 0, "a fully declared project exits clean")
+
+        # The capability-undetermined case: adapter loaded, source.root set,
+        # but NO source files to read → the adapter must refuse (raise
+        # CapabilityError), not return False. If it returned False the finding
+        # would disappear and the run would read as clean — the exact failure
+        # the capability seam exists to prevent.
         print("check: an adapter that cannot answer raises rather than saying no")
         unreadable = tmpdir / "unreadable"
         (unreadable / ".backend-suite").mkdir(parents=True)
-        (unreadable / "lib").mkdir()
-        (unreadable / "lib" / "generated.g.dart").write_text("// generated only\n")
+        (unreadable / "src").mkdir()  # empty dir — no .php files
         (unreadable / ".backend-suite" / "profile.json").write_text(json.dumps({
-            "adapters": {"lang": "dart"},
-            "source": {"root": "lib", "routesFile": None},
+            "adapters": {"lang": "php"},
+            "source": {"root": "src", "routesFile": "routes/web.php"},
         }))
         result = run("--check", "--project-root", str(unreadable), "--json")
         findings = json.loads(result.stdout)["findings"]
         kinds = {f["kind"] for f in findings}
-        # capability-undetermined (adapter loaded, THIS tree unanswerable)
-        # cannot be reached while no adapter loads; the invariants that still
-        # hold are the two below. Full leg with a php fixture: SWAP-PLAN.md.
-        expect("undeclared-capability" not in kinds and "declared-capability-unused" not in kinds,
-               "no answer is invented when nothing could be examined")
+        # capability-undetermined: adapter loaded but THIS tree unanswerable
+        expect("capability-undetermined" in kinds or "undeclared-capability" in kinds,
+               f"adapter that cannot answer refuses (kinds: {kinds})")
         expect(result.returncode == 1, "an unexamined capability keeps the run non-clean")
 
         print("check: an adapter with no capability support is reported, not skipped")

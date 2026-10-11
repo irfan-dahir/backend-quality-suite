@@ -634,7 +634,8 @@ ROUTING_SIGNATURES = (
     re.compile(
         r"\$router->(?:get|post|put|patch|delete|options|any|route|group)\s*\("),
     # PHP 8 attributes (Symfony 6+, and route attributes generally).
-    re.compile(r"@(?:Route|Get|Post|Put|Patch|Delete|Head|Options|Fallback)\b"),
+    # Native attribute syntax: #[Route], #[Get], etc. Doctrine annotations use @.
+    re.compile(r"(?:@|#\[)(?:Route|Get|Post|Put|Patch|Delete|Head|Options|Fallback)\b"),
 )
 
 CAPABILITY_SIGNATURES = {

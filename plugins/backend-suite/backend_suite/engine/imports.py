@@ -37,8 +37,7 @@ def require_path_imports(adapter, audit: str) -> None:
             f"the {getattr(adapter, 'NAME', '?')!r} adapter's imports name modules or "
             f"packages, not file paths, so a directory-rooted layer rule cannot be "
             f"matched against them — refusing rather than reporting every import as "
-            f"external and the tree as clean. Use audit_adapter_pattern (a regex over "
-            f"import targets) to ban a layer's package or module instead.", audit)
+            f"external and the tree as clean.", audit)
 
 
 def import_targets(rx, text: str) -> list[tuple[int, str]]:

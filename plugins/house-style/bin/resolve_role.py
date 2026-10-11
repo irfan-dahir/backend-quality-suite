@@ -53,6 +53,7 @@ than grow this file.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -146,7 +147,24 @@ def is_stub(path: Path) -> bool:
     return False
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--dir", metavar="name", default=None,
+        help="resolve a DIRECTORY role from the manifest's `directories` map "
+             "instead of a document role")
+    parser.add_argument(
+        "role", nargs="?", default=None,
+        help="document role to resolve, e.g. 'pr' or 'api'")
+    args = parser.parse_args(argv)
+
+    if args.dir and args.role:
+        parser.error("give a role OR --dir <name>, not both")
+    if args.dir is None and args.role is None:
+        parser.error("give a role, or --dir <name>")
+
     repo = project_root()
     path = repo / MANIFEST
     if not path.is_file():
@@ -154,24 +172,17 @@ def main(argv: list[str]) -> int:
         return 2
     manifest = json.loads(path.read_text())
 
-    if argv[:1] == ["--dir"]:
-        if len(argv) < 2:
-            print("--dir needs a name", file=sys.stderr)
-            return 2
+    if args.dir is not None:
         dirs = manifest.get("directories", {})
-        if argv[1] not in dirs:
-            print(f"unknown directory role {argv[1]!r}. Known:", file=sys.stderr)
+        if args.dir not in dirs:
+            print(f"unknown directory role {args.dir!r}. Known:", file=sys.stderr)
             for known in sorted(dirs):
                 print(f"  {known}", file=sys.stderr)
             return 2
-        print(dirs[argv[1]])
+        print(dirs[args.dir])
         return 0
 
-    if not argv or argv[0].startswith("-"):
-        print(f"usage: {Path(__file__).name} <role> | --dir <name>", file=sys.stderr)
-        return 2
-
-    role = argv[0]
+    role = args.role
     roles: dict[str, str] = manifest.get("roles", {})
     external = {k: v for k, v in manifest.get("externalRoles", {}).items()
                 if not k.startswith("_")}

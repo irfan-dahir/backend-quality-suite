@@ -35,8 +35,11 @@ Reference: `<pipelines.mockApi>/contracts.json`, `${CLAUDE_PLUGIN_ROOT}/backend_
 
 ## Source-of-truth chain
 
-1. **The Dart model's `fromJson`** — defines field **shape** (names). This is
-   what a designer or dev changes when a feature's data actually changes.
+1. **The model's declared wire shape** — field **shape** (names). On a PHP
+   model that is its public instance properties — what `json_encode` emits —
+   read by the `schema_provider` `<pipelines.mockApi>/config.json` names
+   (`php_model_fields` for PHP models; `dart_fromjson` for Dart ones). This
+   is what a dev changes when a feature's data actually changes.
 2. **The fixture** (`test/fixtures/<name>.json`) — the **one file a human
    hand-edits** for example **values**. Shape must match the model; values
    are a judgment call (realistic sample data, edge cases) this skill never
@@ -59,7 +62,7 @@ Check `<pipelines.mockApi>/contracts.json` for the endpoint. If it's not there y
 "caregivers_list": {
   // Paths in this example are illustrative — they come from the project, not
   // from this skill. A different stack has different shapes here.
-  "model_file": "<source.root>/features/<feature>/data/models/<name>_model.dart",
+  "model_file": "<source.root>/<feature>/Models/<name>.php",
   "fixture": "<source.testRoot>/fixtures/<name>_example.json",
   "fixture_list_key": "caregivers",
   "api_doc_anchor": "#### `GET /caregivers`",

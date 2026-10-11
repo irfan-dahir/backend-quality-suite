@@ -521,11 +521,13 @@ EXEMPT: list[tuple[str, str, str]] = [
     ("audit_reinvented_components.py", "lib/src/components",
      "Same dependency-package path as audit_promotion_candidates.py, for the "
      "same reason and with the same expiry."),
-    ("design-auditor.md", "lib/app/theme/app_theme",
+    ("review-docs.md", "lib/app/theme/app_theme",
      "The sentence exists to say the path is GONE — \"…and a components.dart "
      "barrel, neither of which still exists\". Replacing it with a profile "
      "placeholder would make the warning unreadable: the reader needs the old "
-     "name to recognise the stale instruction being retracted."),
+     "name to recognise the stale instruction being retracted. (This exemption "
+     "was added when the skill was named design-auditor; renamed to review-docs "
+     "in Phase D.)"),
 ]
 # The four KNOWN BROKEN entries that sat here — house-style's two skills unable to
 # reach backend-suite's resolver — are gone because the cause is gone, not because

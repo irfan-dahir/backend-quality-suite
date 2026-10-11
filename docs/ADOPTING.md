@@ -6,9 +6,9 @@ For putting this on a project it has never seen. Assumes you've read
 
 **The honest summary:** documentation tooling and doc-role resolution are stack-
 agnostic today and work anywhere. Source scanning depends on a language adapter,
-and none ships yet — a `php` adapter is the first workstream (see
-[ROADMAP.md](./ROADMAP.md)). Every stack gets the documentation half today and
-the scanning half when its adapter lands.
+and the `php` adapter ships (the first workstream — see [ROADMAP.md](./ROADMAP.md)).
+The documentation half works on every stack today; the scanning half works on
+projects the php adapter reads.
 
 ---
 
