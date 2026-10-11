@@ -297,6 +297,84 @@ one. The first backend validation runs — jikan-rest and jikan — are next.
 
 ---
 
+## Laravel Adapter Quick Reference
+
+The `php` adapter is the first shipped language adapter. It targets PHP 8.0+
+backends in the Laravel/Lumen mould (routes files, service classes, middleware)
+and plain PHP libraries (src/ + tests/).
+
+### Capabilities
+
+| Capability | Profile field | What it detects |
+|---|---|---|
+| `routing` | `source.routesFile` | `Route::`, `$router->`, `#[Route/@Get]` — base PHP routing |
+| `laravel_routing` | `source.routesFile` | `Route::resource`, `Route::bind`, `#[Get]`, middleware, prefixes, domains, model binding, controller routing, redirects, fallback, closure routes, route arrays |
+| `eloquent_models` | `source.root` | `extends Model`, `HasFactory`, casts, fillable, scopes, accessors, mutators, relationships |
+| `form_requests` | `source.root` | `FormRequest`, `rules()`, `authorize()`, `messages()`, `attributes()`, `prepareForValidation`, `passedValidation` |
+| `api_resources` | `source.root` | `JsonResource`, `ResourceCollection`, `toArray()`, `toResponse`, `with()` |
+| `policies` | `source.root` | `Policy`, `HandlesAuthorization`, `Gate::define/allows/denies/check` |
+
+### Routing Signatures
+
+The adapter pre-compiles all routing regexes at module load:
+
+- **Base**: `Route::get/post/...`, `$router->get/post/...`, `#[Route/@Get/...]`
+- **Laravel-specific**: `Route::resource/apiResource/singleton`, `Route::group/middleware/prefix/name/domain`, `Route::model/bind`, `Route::controller`, `Route::redirect/view/fallback`, `$router->resource/apiResource/singleton`, route arrays (`return [...]`)
+
+### Capability Detection
+
+Each capability has compiled regex patterns and a human-readable "why" string.
+
+- **routing**: scans `source.routesFile` for `Route::`, `$router->`, `#[Route/@Get]`
+- **eloquent_models**: scans `source.root` for `extends Model`, `HasFactory`, casts, relationships
+- **form_requests**: scans `source.root` for `extends FormRequest`, `rules()`, `authorize()`
+
+### Audit Config Examples
+
+**errorHandling** vocabulary:
+```json
+"exception_type": "AppException",
+"guard_call": "guarded",
+"client_call_pattern": "Http::(?:get|post|put|patch|delete)",
+"error_state_widget": "ErrorResponse",
+"error_message_field": "errorMessage",
+"state_class_pattern": "^class (\\w+Failed)\\b",
+"state_file_suffix": "_Failure.php",
+"pages_marker": "/Http/"
+```
+
+**contractHeaders** for controllers:
+```json
+"headerMarker": "// CONTRACT:",
+"receiverPattern": "private\\s+(\\w+)\\s+\\$contract\\s*;",
+"receiverName": "contract",
+"screenClassPattern": "class\\s+(\\w+Controller)\\b",
+"scope": "app/Http/Controllers/*.php",
+"adapterGlob": "app/Services/*.php"
+```
+
+**layerBoundaries** with namespace roots:
+```json
+"rules": [
+  {"label": "HTTP layer must not import Service layer",
+   "fromGlob": "app/Http/**", "mustNotImport": ["app/Services/**", "App\\Services\\"]},
+  {"label": "Service layer must not import HTTP layer",
+   "fromGlob": "app/Services/**", "mustNotImport": ["app/Http/**", "App\\Http\\"]}
+]
+```
+
+**apiConsistency** with Laravel vocabulary:
+```json
+"vocabularyRules": [
+  {"message": "uses fetch, where the codebase names this find",
+   "classPattern": "Repository", "has": ["function fetch\\("]},
+  {"message": "uses find, where the codebase names this fetch",
+   "classPattern": "Repository", "has": ["function find\\("]}
+]
+```
+
+---
+
 ## The oracle
 
 **Recorded audit baselines that let you prove a refactor changed nothing.**

@@ -67,6 +67,110 @@ half.
 
 ---
 
+## Migrating from Lumen to Laravel
+
+If you are moving a project from Lumen to Laravel (or adding Laravel to an
+existing Lumen codebase), the `php` adapter is available and unlocks the full
+audit suite. Here is what changes:
+
+### What changes when you add the `php` adapter
+
+| Before (no adapter) | After (`adapters.lang: "php"`) |
+|---|---|
+| Code-shape audits refuse (exit 2) | Audits run and report findings |
+| `audit-error-handling` refuses | Checks for unguarded `Http::get()`, exception mangling, dead failure states |
+| `audit-api-consistency` refuses | Checks vocabulary drift, hard-coded copy, route tapability |
+| `audit-contract-headers` refuses | Validates CONTRACT headers on controllers vs services |
+| `audit-layer-boundaries` refuses | Enforces HTTP layer not reaching Service layer |
+
+### Minimal config for Laravel/Lumen
+
+```json
+{
+  "adapters": { "lang": "php" },
+  "source": {
+    "root": "app",
+    "fileGlob": "**/*.php",
+    "screensGlob": "app/Http/Controllers/*.php",
+    "routesFile": "routes/web.php"
+  },
+  "audits": {
+    "archRulesFile": ".backend-suite/arch-rules.json"
+  }
+}
+```
+
+### Recommended `arch-rules.json` for Laravel
+
+Use the Laravel-ready template:
+
+```bash
+cp "${CLAUDE_PLUGIN_ROOT}/templates/dot-backend-suite/arch-rules-laravel.json.template" \
+   .backend-suite/arch-rules.json
+```
+
+Then edit `.backend-suite/arch-rules.json` and fill in:
+
+1. **`errorHandling` vocabulary** — your project's names for:
+   - `exception_type` (e.g., `AppException`)
+   - `guard_call` (e.g., `guarded`)
+   - `client_call_pattern` (e.g., `Http::(?:get|post|put|patch|delete)`)
+   - `error_state_widget` (e.g., `ErrorResponse`)
+   - `error_message_field` (e.g., `errorMessage`)
+   - `state_class_pattern` (e.g., `^class (\\w+Failed)\\b`)
+   - `state_file_suffix` (e.g., `_Failure.php`)
+   - `pages_marker` (e.g., `/Http/`)
+
+2. **`contractHeaders`** — if your controllers use a shared service contract:
+   ```json
+   "headerMarker": "// CONTRACT:",
+   "receiverPattern": "private\\s+(\\w+)\\s+\\$contract\\s*;",
+   "receiverName": "contract",
+   "screenClassPattern": "class\\s+(\\w+Controller)\\b",
+   "scope": "app/Http/Controllers/*.php",
+   "adapterGlob": "app/Services/*.php"
+   ```
+
+3. **`layerBoundaries`** — protect layer separation:
+   ```json
+   "rules": [
+     {"label": "HTTP layer must not import Service layer",
+      "fromGlob": "app/Http/**", "mustNotImport": ["app/Services/**", "App\\Services\\"]},
+     {"label": "Service layer must not import HTTP layer",
+      "fromGlob": "app/Services/**", "mustNotImport": ["app/Http/**", "App\\Http\\"]}
+   ]
+   ```
+
+### New audits available for Laravel
+
+| Audit | What it catches |
+|-------|----------------|
+| `audit_route_model_binding` | Missing/incorrect route model bindings, controller signature mismatches |
+| `audit_form_request_validation` | Missing `rules()`/`authorize()`, duplicate/empty rules |
+| `audit_layer_boundaries` | HTTP→Service layer violations via namespace roots |
+| `audit_api_consistency` | Vocabulary drift (fetch vs find), hard-coded copy |
+| `audit_contract_headers` | CONTRACT header mismatches on controllers |
+| `audit_route_coverage` | Every route has a controller method, every method is routed |
+| `audit_cache_ttl_coverage` | Every route has a TTL in config |
+
+### Running the Laravel audits
+
+```bash
+# Run all Laravel-specific audits
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_route_model_binding.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_form_request_validation.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_layer_boundaries.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_api_consistency.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_contract_headers.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_route_coverage.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_cache_ttl_coverage.py" --findings
+
+# Or run everything
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/repo_health.py"
+```
+
+---
+
 ## Step 1 — Leave the adapter unset (for now)
 
 `adapters.lang` in `.backend-suite/profile.json` stays a TODO until an adapter

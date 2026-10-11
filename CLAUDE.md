@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # Claude Instructions — Backend Quality Suite
 
 This repo's documentation is already the instruction layer. This file exists only

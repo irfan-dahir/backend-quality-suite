@@ -234,6 +234,63 @@ need to look at, never as a pass.
 
 ---
 
+## Quick start: Laravel / Lumen projects
+
+If you are running this on a Laravel or Lumen project, the `php` adapter is
+available and unlocks the full audit suite. Here is the shortest honest path:
+
+```bash
+# 1. Install the suite
+claude plugin marketplace add irfan-dahir/backend-quality-suite
+claude plugin install backend-suite@backend-quality-suite
+
+# 2. Scaffold the config (creates .backend-suite/ with all templates)
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Laravel Project"
+
+# 3. Fill in the three required fields in .backend-suite/profile.json:
+#    - adapters.lang = "php"
+#    - source.root = "app" (or "src" if your code lives there)
+#    - source.fileGlob = "**/*.php"
+
+# 4. (Optional but recommended) Copy the Laravel-ready arch-rules template:
+cp "${CLAUDE_PLUGIN_ROOT}/templates/dot-backend-suite/arch-rules-laravel.json.template" \
+   .backend-suite/arch-rules.json
+
+# 5. Run the survey to auto-detect your docs and routes:
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/survey.py"
+
+# 6. Seed the profile from the survey (fills in adapters.lang, source.root, etc.):
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --from-survey
+
+# 6. Run the Laravel-specific audits:
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_route_model_binding.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_form_request_validation.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_layer_boundaries.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_api_consistency.py" --findings
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_contract_headers.py" --findings
+
+# 7. (Optional) Wire the pre-commit hook for fast audits:
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/install_precommit_hook.py"
+```
+
+**What the template gives you:**
+
+| Audit | What it checks |
+|-------|----------------|
+| `audit_route_model_binding` | Implicit/explicit route model bindings, controller signatures |
+| `audit_form_request_validation` | Missing `rules()`/`authorize()`, duplicate/empty rules |
+| `audit_layer_boundaries` | HTTP layer reaching into Service layer, namespace roots |
+| `audit_api_consistency` | Vocabulary drift (fetch vs find), hard-coded copy, semantics |
+| `audit_contract_headers` | CONTRACT headers on controllers matching service interfaces |
+
+**Minimal manual edits after `--from-survey`:**
+
+1. Open `.backend-suite/arch-rules.json` and fill in the `errorHandling` vocabulary (your `exception_type`, `guard_call`, etc.)
+2. If you don't use FormRequests, set `formRequestValidation.requireRules = false`
+3. Adjust `layerBoundaries.rules` to match your actual directory structure
+
+---
+
 ## Where reports go
 
 Audits save their raw reports inside `.backend-suite/`, for example:
