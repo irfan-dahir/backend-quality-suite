@@ -415,6 +415,64 @@ def main() -> int:
         expect(after - before == {"survey.json"},
                "survey.json is the only file written — never profile.json or a manifest")
 
+        print("check: a derived survey.json is not read back as config")
+        # Regression: survey.py --check crashed on the first real consumer
+        # (jikan). survey.json is the survey's own derived output and carries an
+        # ABSOLUTE projectRoot; config_files used to read it as an authored
+        # declaration, and check()'s sibling walk then resolved that absolute
+        # path as a sibling's parent and iterated the HOME directory, dying on
+        # ~/.Trash with "not in the subpath of".
+        derived = tmpdir / "derived"
+        (derived / ".backend-suite").mkdir(parents=True)
+        (derived / "src").mkdir()
+        (derived / "src" / "a.php").write_text("<?php\n")
+        (derived / ".backend-suite" / "survey.json").write_text(json.dumps({
+            "surveyVersion": 1,
+            "sourceStamp": {
+                "generatedBy": "bin/survey.py v1",
+                "projectRoot": str(derived.resolve()),
+                "commit": "abcd",
+            },
+            "stack": {"stack": "php", "candidateAdapter": "php"},
+            "sourceRoots": [{"path": "src", "files": 1, "why": "fixture", "confidence": 0.8}],
+            "documents": {"documents": []},
+            "filesSeen": 1,
+            "couldNotDetermine": [],
+        }))
+        (derived / ".backend-suite" / "profile.json").write_text(json.dumps({
+            "adapters": {"lang": "php"},
+            "source": {"root": "src"},
+        }))
+        result = run("--check", "--project-root", str(derived), "--json")
+        expect(result.returncode in (0, 1) and "Traceback" not in result.stderr
+               and "not in the subpath of" not in result.stderr,
+               f"--check runs to a verdict with a survey.json present "
+               f"(got {result.returncode}: {result.stderr.strip()[:200]})")
+        expect(json.loads(result.stdout).get("projectRoot"),
+               "--json identifies the project it checked")
+
+        print("check: an absolute declaration cannot escape the sibling walk")
+        # Defence-in-depth: an authored profile with an absolute path value
+        # (forbidden by profile.schema.json, but a profile can drift) must be
+        # skipped by rule 2, never iterated as a parent outside the project.
+        absroot = tmpdir / "absroot"
+        (absroot / ".backend-suite").mkdir(parents=True)
+        (absroot / "src").mkdir()
+        (absroot / "src" / "a.php").write_text("<?php\n")
+        escape = tmpdir / "escape-parent"
+        (escape / "stray").mkdir(parents=True)
+        (escape / "stray" / "f.txt").touch()
+        (absroot / ".backend-suite" / "profile.json").write_text(json.dumps({
+            "adapters": {"lang": "php"},
+            "source": {"root": "src"},
+            "pipelines": {"absScan": str(escape.resolve())},
+        }))
+        result = run("--check", "--project-root", str(absroot), "--json")
+        expect(result.returncode in (0, 1) and "Traceback" not in result.stderr
+               and "not in the subpath of" not in result.stderr,
+               f"an absolute declared path never makes the sibling walk leave the "
+               f"project (got {result.returncode}: {result.stderr.strip()[:200]})")
+
     print()
     if FAILURES:
         print(f"{len(FAILURES)} failure(s).")
