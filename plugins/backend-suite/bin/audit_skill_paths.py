@@ -488,6 +488,14 @@ EXEMPT: list[tuple[str, str, str]] = [
      "Provenance: ported from the design-system repo, where that path is real."),
     ("audit_error_handling.py", "scripts/audit_error_handling.py",
      "Provenance: ported from the mobile app's own scripts/, pre-extraction."),
+    ("audit_report_paths_test.py", "scripts/audit_error_handling.py",
+     "Provenance, in a docstring the gate itself exempts by construction "
+     "(docstrings never reach the AST; this is the LEGACY text sweep that also "
+     "sees them). audit_report_paths_test.py explains that the re-domained "
+     "audits keep measured-history notes naming the OLD location — the literal "
+     "is the record, quoted as history, and the behavioral assertion in the "
+     "same file (no scripts/ directory is created on a real run) is the actual "
+     "guard. Identical shape to audit_error_handling.py's own exemption."),
     ("mock_api_reminders.py", "mock_api/scripts/",
      "Provenance: the comment explains the bug where this hook pointed at the "
      "project's pre-port script location. Quoting the wrong path is the record."),

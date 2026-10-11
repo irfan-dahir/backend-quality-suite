@@ -29,11 +29,12 @@ import re
 import sys
 from pathlib import Path
 
+from _bootstrap import PLUGIN_ROOT  # noqa: F401  (puts backend_suite on sys.path)
 from backend_suite.project import profile, project_root  # noqa: E402
 from backend_suite.adapters import load as load_adapter  # noqa: E402
 from backend_suite.engine import findings as F  # noqa: E402
 from backend_suite.engine import arch  # noqa: E402
-from backend_suite.adapters.base import CapabilityError  # noqa: E402
+from backend_suite.adapters.base import AdapterContext, CapabilityError  # noqa: E402
 
 MARKER = "form_request_validation"
 
@@ -237,8 +238,11 @@ def main() -> int:
         print(f"{MARKER}: {exc}", file=sys.stderr)
         return 2
 
-    # Check capability
-    caps = adapter.capabilities(None)
+    # Check capability with the project context (not a bare None): the php
+    # adapter offers form_requests only to projects that read as Laravel, so a
+    # library like jikan honestly REFUSES here rather than crashing.
+    caps = adapter.capabilities(AdapterContext(repo=repo, profile=profile_data,
+                                               exceptions={}))
     if not any(c.name == "form_requests" for c in caps):
         print(f"{MARKER}: php adapter does not expose form_requests capability", file=sys.stderr)
         return 2
