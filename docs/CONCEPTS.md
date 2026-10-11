@@ -38,11 +38,11 @@ concept below follows from taking that seriously.
 **The canonical, human-approved set of project documents. The one thing in the
 system that is written by people and answers to nothing else.**
 
-A design brief, a screen inventory, a flows document, a decisions log, a brand
-voice guide. Not generated. Not derived. Not linted into shape.
+An API doc, an RFC, a decisions log, a changelog, a deployment runbook. Not
+generated. Not derived. Not linted into shape.
 
-Everything else the suite produces is downstream of it. When Claude audits a
-screen, the question it asks is *does this match the context layer* — not *does
+Everything else the suite produces is downstream of it. When Claude audits an
+endpoint, the question it asks is *does this match the context layer* — not *does
 this match some rule the tool has an opinion about*. The tool has no opinions
 about your product. It only knows how to check the codebase against what you
 already decided.
@@ -65,9 +65,9 @@ An agent implementing a feature reads the code around it and infers the pattern
 it should follow. Where the real pattern was written down, it follows it. Where
 it was not, the agent infers a plausible one — and a second pattern now exists
 where one was intended. This happens at machine speed, on every feature, in
-every repository. **Design drift is no longer mostly a human failure of
-discipline; it is a mechanical consequence of writing code faster than anyone
-writes down why.**
+every repository. **Drift is no longer mostly a human failure of discipline;
+it is a mechanical consequence of writing code faster than anyone writes down
+why.**
 
 Two things follow, and both sharpen rules this document already had.
 
@@ -184,31 +184,31 @@ regenerate it, gate it in CI, never hand-edit it.
 
 **A role is what a document *is for*, independent of where it lives.**
 
-`design`, `flows`, `decisions`, `brand-voice`, `motion`, `pr`, `brief` — 20
-roles in all on the reference project.
+`api`, `api-standard`, `decisions`, `backlog`, `changelog`, `deprecations`,
+`rfc`, `pr` — 18 roles in all.
 
 Skills refer to documents by role, in double-brace notation:
 
 ```
-Read {{doc:design}} and check the screen inventory against the codebase.
+Read {{doc:api}} and check the endpoint list against the codebase.
 ```
 
 Each project maps roles to its own paths in `.backend-suite/docs.manifest.json`.
-One project calls it `docs/DESIGN.md`; another calls it
-`design/design-system.md`; a third splits it in two. The skill does not know or
+One project calls it `docs/API.md`; another calls it
+`docs/openapi/README.md`; a third splits it in two. The skill does not know or
 care. `bin/resolve.py` turns a role into a path at run time:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api
 ```
 
 This is the mechanism that took 252 hardcoded paths to **0**. It is also the
-reason a skill written for a Flutter app runs unchanged on a Next.js one — the
+reason a skill written for a Lumen service runs unchanged on a Rails one — the
 skill never named a file.
 
 **A role with no mapping is a loud failure, not a silent skip.** `resolve.py`
 exits non-zero and says which role is unmapped. This has already caught a real
-mistake: during the portability validation it rejected an invented token-source
+mistake: during the portability validation it rejected an invented document
 path on a codebase nobody here had seen before, which is exactly the job.
 
 ---
@@ -217,8 +217,8 @@ path on a codebase nobody here had seen before, which is exactly the job.
 
 **`.backend-suite/profile.json` — every project-specific fact, in one file.**
 
-Where the source lives. Which adapter to use. Where design tokens are defined.
-Which paths are exempt from which audit, and why. The architecture rules this
+Where the source lives. Which adapter to use (unset until one ships). Which
+paths are exempt from which audit, and why. The architecture rules this
 project holds itself to.
 
 The rule is: **if a tool needs to know something about your project, it reads it
@@ -245,31 +245,32 @@ confidently. That happened here — see **INERT**, below.
 live. An adapter is an implementation of one.**
 
 The engine (`backend_suite/engine/`) knows how to *audit*. It does not know how to
-read your language. When it needs to find every colour literal, it asks the
-adapter.
+read your language. When it needs to parse your source, it asks the adapter.
 
 Three seams are defined:
 
 | Seam | What it abstracts | Status |
 |---|---|---|
-| **Language** | Parsing source for tokens, copy, a11y attributes | `dart.py` ✅, `tsx.py` ✅, `web.py`, `swift.py`, `kotlin.py` (unverified) |
-| **Asset** | How bundled imagery is registered with the build | `flutter_pubspec.py` ✅, `bundler.py` ✅ |
-| **Scaffold** | Generating new screens in the project's idiom | `flutter.py` ✅ |
+| **Language** | Parsing source — endpoints, error shapes, layer imports | No adapter ships yet; `php` is next (see [ROADMAP.md](./ROADMAP.md)) |
+| **Asset** | How a project's static files are registered with its build | Deferred with the backend config-schema swap |
+| **Scaffold** | Generating new code in the project's idiom | Deferred with the backend config-schema swap |
 
-All three are implemented. The contracts still live in
-`backend_suite/adapters/base.py`, because a written contract is what an
-implementation gets checked against.
+The contracts live in `backend_suite/adapters/base.py`, because a written
+contract is what an implementation gets checked against. No implementation
+ships right now — the UI adapters left with the design domain — so the
+contract's behaviour is proven a different way: `verify_seam.py` (below).
 
-`bundler.py` is worth singling out: it is an adapter whose job is to **refuse
-correctly**. Bundler-driven stacks have no asset registry — a file is included
-because something imports it — so "is this asset registered?" has no answer, and
-it raises rather than inventing a boolean. Returning False would be a permanent
-false finding on every asset; returning True would hide every real one.
+An adapter's job includes **refusing correctly**. Where a stack has no answer
+to a capability's question, the adapter raises rather than inventing a
+boolean: returning False would be a permanent false finding on everything the
+question covers; returning True would hide every real one.
 
 `backend_suite/adapters/verify_seam.py` runs in CI and proves the engine still
-works through a non-Dart adapter with no engine changes. Without it, the seam
-would rot back into Dart-shaped assumptions within a few commits and nobody
-would notice until the next project tried to adopt it.
+works through an adapter nobody's project uses — a synthetic language driven by
+an in-process stub, positive and negative controls included. Without it, the
+seam would rot back into one-language assumptions within a few commits and
+nobody would notice until the next project tried to adopt it. When the `php`
+adapter lands it becomes a second leg of the same proof.
 
 ---
 
@@ -277,19 +278,22 @@ would notice until the next project tried to adopt it.
 
 **An adapter that cannot do something refuses loudly. It never returns empty.**
 
-`tsx.py` implements token scanning. It does not implement accessibility scanning
-or copy extraction. Ask it for those and it fails with a clear message naming
-the missing capability.
+An adapter implements some capabilities and not others. Ask it for one it
+does not implement and it fails with a clear message naming the missing
+capability — the seam's `CapabilityError`. Today, with no language adapter
+shipped, every code-shape audit fails this way on every stack, by design.
 
 The alternative — returning zero findings — is the failure mode this rule
 exists to prevent, because **zero findings and cannot-look are indistinguishable
 to the person reading the report**, and one of them means "you're fine" while
 the other means "you have no idea."
 
-This was validated against a codebase the suite had never seen: on
-[`calcom/cal.com`](https://github.com/calcom/cal.com), `audit_tokens.py`
-returned 20 genuine findings across 7 files, while `audit_accessibility.py` and
-`extract_copy.py` correctly refused. Both outcomes were the designed one.
+This shape was validated read-only against a real public codebase during the
+suite's design-era portability work (recorded in
+[ADOPTING.md](./ADOPTING.md#validation-history-and-what-validates-next)'s
+validation-history note): the audits that could see returned genuine findings,
+and the ones that could not refused by name. Both outcomes were the designed
+one. The first backend validation runs — jikan-rest and jikan — are next.
 
 ---
 
@@ -298,9 +302,10 @@ returned 20 genuine findings across 7 files, while `audit_accessibility.py` and
 **Recorded audit baselines that let you prove a refactor changed nothing.**
 
 Before the suite was pulled apart, every audit was run against the original
-project and its exact output recorded to `.backend-suite/baselines/` — 8 audits,
-one baseline each. The token audit's baseline is 145 findings across 40 files, and
-running it from the plugin against that project still reproduces exactly that.
+project and its exact output recorded to `.backend-suite/baselines/` — one
+baseline per audit. The largest baseline recorded that way was 145 findings
+across 40 files, and running the same audit from the plugin against that
+project still reproduces exactly that.
 
 Then, after each stage of the extraction, the same audits were re-run **from the
 new location, against the same project.** Byte-identical output means the
@@ -315,7 +320,7 @@ aggressive without being reckless.
 **The oracle was not sufficient on its own, twice**, which is worth knowing
 before trusting one:
 
-- The accessibility audit has a **0-finding baseline**. 0-before and 0-after
+- An audit can carry a **0-finding baseline**. 0-before and 0-after
   proves nothing at all. A deliberately-broken probe file had to be planted to
   give the audit something to find — and it caught a real regression the oracle
   had reported as clean.
@@ -354,13 +359,13 @@ a finding or produces an error. Never a shrug.
   Allowed only when the skill is read-only, or confirms before it writes. Asking
   "is anything out of sync?" should just run the documentation audit. You should
   not have to know it is called `/review-docs`.
-- **`explicit`** — waits for a real decision from you. Brand voice, project-wide
+- **`explicit`** — waits for a real decision from you. Project-wide
   conventions, generated content someone has to sign off on.
 
 The split is a judgement about **blast radius, not about difficulty.** An audit
-that reads 500 files is `auto`. A skill that writes three sentences of brand
-voice is `explicit`, because those three sentences become the thing every future
-copy decision is measured against.
+that reads 500 files is `auto`. A skill that drafts a document someone has to
+sign off on is `explicit`, because that draft becomes the thing every future
+decision is measured against.
 
 Both fields are declared in each component's frontmatter, and
 [CATALOG.md](./CATALOG.md) is generated from them, so the documented tier and
@@ -401,9 +406,9 @@ These are different axes and get confused, so:
 
 | Scope | Example |
 |---|---|
-| Universal | Token auditing. True for any design system anywhere |
+| Universal | Doc-role resolution and the documentation audits. True for any project anywhere |
 | Org | Org letterhead, our PR process, client-readiness reporting |
-| Project | This app's screens, tokens, exemptions |
+| Project | This service's source globs, doc mappings, exemptions |
 
 **Plugins** — how scopes ship. Two, not three:
 
@@ -426,12 +431,13 @@ Each layer knows strictly less about specifics than the one below it names.
 
 The stack holds **structurally**, not by discipline: the engine does not import
 any adapter. Checks are handed *to* it as a parameter, so there is no code path
-by which `engine/` could reach `dart.py` — verified: zero references to
-`adapters` anywhere under `engine/`. `verify_seam.py` then proves the same thing
-behaviourally in CI by running the engine through a non-Dart adapter.
+by which `engine/` could reach any adapter module — verified: zero references
+to `adapters` anywhere under `engine/`. `verify_seam.py` then proves the same
+thing behaviourally in CI by running the engine through a synthetic, non-native
+adapter.
 
 Worth being precise about the honest limit here: **nothing greps for a forbidden
-import.** If someone added `from ..adapters.dart import …` to the engine
+import.** If someone added `from ..adapters.php import …` to the engine
 tomorrow, `compileall` would pass and `verify_seam.py` would very likely still
 pass. The guard is real but it is a behavioural one, not an import gate. (The
 separate `bin/audit_layer_boundaries.py` polices the *consuming project's*

@@ -59,7 +59,7 @@ def patched_plugin_server(dest: Path) -> Path:
 class Server:
     def __init__(self, root: Path, server: Path | None = None):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(root))
-        env.pop("DESIGN_SUITE_NO_ONBOARDING", None)
+        env.pop("BACKEND_SUITE_NO_ONBOARDING", None)
         self.p = subprocess.Popen([sys.executable, str(server or SERVER)], cwd=root, env=env,
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
         self.n = 0

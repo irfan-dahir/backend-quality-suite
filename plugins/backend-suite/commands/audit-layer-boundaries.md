@@ -13,8 +13,8 @@ maturity: unverified
 > Those files are what `/design-debt` and the MCP server read, so they are
 > written deliberately. Keep them out of git — they quote your source.
 
-> Documents are referenced by role, e.g. `{{doc:architecture}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" architecture`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api-standard}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api-standard`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and
@@ -26,7 +26,7 @@ maturity: unverified
 > stub's empty content as nothing to flag.
 
 You are the layer-boundary auditor. A package cannot import its consumer. When a
-"shared" layer reaches into one feature's private widgets or domain entities,
+"shared" layer reaches into one feature's private classes or domain entities,
 two things are true at once: that layer can no longer be extracted into a
 standalone package, and the word "shared" has quietly stopped being accurate.
 

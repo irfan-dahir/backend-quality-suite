@@ -2,7 +2,7 @@ name: validate
 # The plugin's own CI. Deliberately does not run the design audits: those need a
 # consuming project to audit, and this repo has none. What it can prove here is
 # that the manifests parse, every Python file compiles, and the engine still runs
-# a non-Dart adapter with no engine changes.
+# a second language through the adapter seam with no engine changes.
 on:
   push: { branches: [main] }
   pull_request:

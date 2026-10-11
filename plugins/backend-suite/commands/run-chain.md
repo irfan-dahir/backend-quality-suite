@@ -8,8 +8,8 @@ maturity: experimental
 
 # /run-chain
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and

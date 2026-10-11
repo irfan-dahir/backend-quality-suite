@@ -1,14 +1,14 @@
 ---
 name: map-project
-description: "Propose the mappings a survey cannot: which document is really the design doc, which project kind this is, which candidate token source is the true one — each with the reasoning it was argued from. Every value it proposes is written with provenance `inferred` and nothing else, so no downstream check trusts it until a human ratifies. Proposes and argues; never decides."
+description: "Propose the mappings a survey cannot: which document is really the API doc, which project kind this is (service or library), which candidate document source is the true one — each with the reasoning it was argued from. Every value it proposes is written with provenance `inferred` and nothing else, so no downstream check trusts it until a human ratifies. Proposes and argues; never decides."
 invocation: explicit
 maturity: unverified
 ---
 
 # /map-project
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and
@@ -22,7 +22,7 @@ maturity: unverified
 The judgement half of discovery (RFC-0002 §3b-ii). `bin/survey.py` is the
 mechanical half: it reads the disk and states facts. This skill reads the survey
 *and the candidate documents themselves* and **argues** for a mapping — "four
-files could be `{{doc:design}}`; this one, because it carries the screen
+files could be `{{doc:api}}`; this one, because it carries the endpoint
 inventory the other three reference."
 
 A regex over filenames scored 4 confident of 20 on a real zero-state repository.

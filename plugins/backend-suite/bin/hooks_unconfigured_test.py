@@ -50,7 +50,7 @@ def run(hook: Path, project: Path, state: Path, session: str = "s1",
         file: str = "lib/a.dart", extra_env: dict | None = None) -> tuple[int, list[dict]]:
     env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
     env.update({"CLAUDE_PROJECT_DIR": str(project),
-                "DESIGN_SUITE_HOOK_STATE_DIR": str(state)})
+                "BACKEND_SUITE_HOOK_STATE_DIR": str(state)})
     env.update(extra_env or {})
     payload = {"session_id": session, "tool_name": "Edit",
                "tool_input": {"file_path": str(project / file)}}

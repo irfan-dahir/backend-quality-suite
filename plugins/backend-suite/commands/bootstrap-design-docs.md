@@ -7,8 +7,8 @@ maturity: unverified
 
 # /bootstrap-design-docs
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and
@@ -21,10 +21,8 @@ maturity: unverified
 
 You stand up the documentation layer of a project that has none, by
 reverse-engineering what is already built and then **proposing one document at a
-time** — each one accepted or declined by the human before you move on. It
-generalizes `/establish-brand-voice`'s reverse-engineer-then-confirm pattern from
-copy to the rest of the doc suite, and it is the entry point for RFC-0002
-§3d-ii's propose-and-ratify flow.
+time** — each one accepted or declined by the human before you move on. It is the
+entry point for RFC-0002 §3d-ii's propose-and-ratify flow.
 
 **⚠️ Not verified end-to-end.** This skill needs a project with NO documentation
 layer to prove itself against, and both consumers it has been installed on
@@ -56,9 +54,9 @@ Concretely, in this skill:
   asks for that, say no and explain why: the stubs would report as coverage
   nobody wrote.
 - Stopping part-way through the applicable roles is a **normal, good outcome**,
-  not an unfinished job. A project with three written documents and seventeen
-  roles nobody has looked at is in an honest state; the same project with twenty
-  stubs is lying.
+  not an unfinished job. A project with three written documents and fifteen
+  roles nobody has looked at is in an honest state; the same project with
+  eighteen stubs is lying.
 - The roles you have not proposed stay **absent** from the manifest. Absent means
   "nobody has looked yet", which is a real gap the suite is supposed to keep
   reporting — do not pre-register them to tidy the list.
@@ -96,14 +94,14 @@ print(archetypes.kind_of(p)); print(archetypes.roles_for(archetypes.kind_of(p), 
 
 - If it prints a kind and its expected roles, that list is the **universe you may
   propose from**. A role that is `na` for this kind is not proposable at all —
-  proposing `flows` to a component library manufactures a document about screens
-  it does not have.
+  proposing `deployment` to a `library` manufactures a deployment runbook for a
+  thing that is never deployed.
 - If it raises **`ArchetypeNotDeclared`**, the project has not said what it is.
-  **Say that you do not know, and stop to ask.** Do not assume `app` — guessing
-  `app` for a package is exactly the assumption `archetypes.py` refuses to make
-  on your behalf, and it would put screen-shaped documents into a repository with
-  no screens. Offer the kinds (`app`, `design-system`, `docs-site`), let the human
-  declare one in the profile, and resume. You may proceed without a declared kind
+  **Say that you do not know, and stop to ask.** Do not assume `service` —
+  guessing `service` for a parser library is exactly the assumption
+  `archetypes.py` refuses to make on your behalf, and it would put deployment
+  runbooks into a repository that is never deployed. Offer the kinds
+  (`service`, `library`), let the human declare one in the profile, and resume. You may proceed without a declared kind
   only if the human explicitly names the single role they want, and then you
   propose only that one.
 - If it raises **`UnknownArchetype`**, the declared kind is outside the
@@ -121,17 +119,13 @@ in something real. What to read depends on the archetype:
 **Any archetype** — the entry-point file, the README, the directory layout, and
 whatever config already declares conventions.
 
-**`app`** — the theme/token definitions (a `theme.*`, a CSS custom-properties
-file, a Tailwind config — read the location from `.backend-suite/profile.json`,
-never hardcode one), the screen files and the router/navigation config they are
-reachable from, and the shared-component directory.
+**`service`** — the route declarations and the handler entry points, the
+error-handling machinery (the shared exception type every failure funnels
+through), the config that declares conventions (auth, caching, rate limits),
+and the migrations that shape the data.
 
-**`design-system`** — the exported component surface and its public entry point,
-the token source and how themes are declared over it, and whatever variant/state
-conventions the components already share.
-
-**`docs-site`** — the site config, the content tree, and the navigation
-definition.
+**`library`** — the public entry points (the facade or top-level API), what the
+package exports, and any existing release notes or CHANGELOG.
 
 This step produces **notes, not files**. Nothing is written to disk here.
 
@@ -140,14 +134,14 @@ This step produces **notes, not files**. Nothing is written to disk here.
 Pick the **single** role with the strongest evidence behind it — the one you can
 say the most true, specific things about. Then make one proposal, and stop:
 
-> *(Illustration from a `design-system` project — `tokens` is `na` for an
-> `app`, and `scaffold_doc.py` refuses it there.)*
+> *(Illustration from a `service` project — `deployment` is `na` for a
+> `library`, and `scaffold_doc.py` refuses it there.)*
 >
-> I propose `{{doc:tokens}}` for this project.
-> Evidence: 41 colour constants and 6 spacing constants defined in `<file>`, read
-> by 23 files.
-> Accepting scaffolds `docs/TOKENS.md` as a **stub** — registered, `status: stub`,
-> resolving with exit 5 and counting as design debt until someone writes it.
+> I propose `{{doc:api}}` for this project.
+> Evidence: 42 route declarations in `<the route file>`, all serving JSON
+> through shared resources, referenced by 3 doc files.
+> Accepting scaffolds `docs/API.md` as a **stub** — registered, `status: stub`,
+> resolving with exit 5 and counting as debt until someone writes it.
 > Declining records that decision with your reason.
 > Accept, decline, or skip for now?
 
@@ -174,11 +168,10 @@ in: the document **exists and is empty**, `resolve.py` exits 5 for that role, an
 whoever authors it.
 
 If you already have enough reverse-engineered material to fill sections of it,
-offer that content **section by section for confirmation**, exactly as
-`/establish-brand-voice` does — and only delete the stub frontmatter once the
-human has confirmed the document is genuinely written. A reverse-engineered
-document describes what the code does today, which may not be design intent; say
-so explicitly rather than presenting it as ratified.
+offer that content **section by section for confirmation** — and only delete the
+stub frontmatter once the human has confirmed the document is genuinely written.
+A reverse-engineered document describes what the code does today, which may not
+be the intent; say so explicitly rather than presenting it as ratified.
 
 The script refuses (exit 1) on an unknown role, a role with no template, a
 destination that already exists, and a role already declined. Each refusal is a
@@ -188,15 +181,15 @@ real answer — relay it and stop, never work around it with `--force`.
 
 A decline is only worth anything if the reason is recorded, because exit 4's
 whole contract is that `resolve.py` prints that reason to a skill that then names
-it in its report. Ask for the reason **in a sentence** — "we fold motion into
-theming" is a reason; "n/a" is silence with a label.
+it in its report. Ask for the reason **in a sentence** — "we track deprecations
+in the changelog's own notes" is a reason; "n/a" is silence with a label.
 
 Add one entry under `declinedRoles` in `.backend-suite/docs.manifest.json`:
 
 ```json
 "declinedRoles": {
-  "motion": {
-    "declined": "folded into the theming document's motion section — no separate doc",
+  "deprecations": {
+    "declined": "tracked in the changelog's own deprecation notes — no separate doc",
     "by": "<who decided>",
     "on": "<YYYY-MM-DD>"
   }
@@ -246,6 +239,6 @@ same one-at-a-time moment as an acceptance.
 - Write any doc content to disk before the user has confirmed it section by
   section
 - Present a reverse-engineered description of current behaviour as validated
-  design intent — flag the difference explicitly
+  intent — flag the difference explicitly
 - Claim this skill has been verified end-to-end against a real zero-docs project
   until it actually has been

@@ -39,10 +39,10 @@ Read `<pipelines.mockApi>/contracts.json` (the registered set) and `<pipelines.m
 
 ## Step 1 — Sweep for unregistered GET candidates
 
-Search the router/screen layer (the route-declaring layer named by `<source.routesFile>`, and any `*_screen.dart`/`*_page_wrapper*.dart`) for the hallmark shapes of a hardcoded data source that was never wired:
+Search the layer that *consumes* this API — the route-declaring layer named by `<source.routesFile>`, plus the view/client-state files behind it — for the hallmark shapes of a hardcoded data source that was never wired. (The concrete shapes below come from the design-era Flutter reference client; on another stack, translate them — the *shape* of the finding is a literal collection of realistic-looking seed data assigned at init time, not any particular language syntax.)
 
-- A `late final List<...>` or `const [...]` literal assigned in `initState`/a field initializer, populated with what looks like realistic seed data (names, dates, IDs) rather than UI configuration.
-- A private stub const (`_stub*`, `_initial*`, `_mock*`) referenced by a screen or adapter.
+- A collection literal assigned at init time, populated with what looks like realistic seed data (names, dates, IDs) rather than configuration.
+- A private stub const (`_stub*`, `_initial*`, `_mock*`) referenced by a view or data layer.
 - A `TODO`/comment mentioning "hardcoded", "stub", "mock", or "wire this up".
 
 For each hit, apply the **same decision rubric `/wire-endpoint` uses** before flagging it as a real gap:
@@ -51,7 +51,7 @@ For each hit, apply the **same decision rubric `/wire-endpoint` uses** before fl
 |---|---|
 | Read once on load, never mutated by the user, no dev-menu dispatcher anywhere near it | 🔴 Likely unwired GET candidate — flag it |
 | Mutated in-session (booked, checked off, submitted) with no separate initial-load path | 🔵 Not a gap — this is exactly what the static-mock rule keeps client-side |
-| Only ever dispatched from a dev-menu/scenario-switcher widget (`grep` for the actual dispatcher before concluding this) | 🔵 Not a gap — confirmed dev-only state |
+| Only ever dispatched from a dev-mode switcher (`grep` for the actual dispatcher before concluding this) | 🔵 Not a gap — confirmed dev-only state |
 | Derived entirely from other already-wired features (a pure composition/aggregation adapter) | 🔵 Not a gap — nothing to wire |
 
 Don't flag anything you haven't traced to its real dispatcher — a value that *looks* static-on-load might be reset by a dev-menu action elsewhere in the file tree.
@@ -64,11 +64,11 @@ List every file under the fixtures directory (from `<pipelines.mockApi>/config.j
 
 ## Step 3 — Sweep for static-mock-rule violations
 
-For every registered contract, check whether the app also calls a POST/PATCH/DELETE against the same or a related path for data that contract's GET returns. If a mutation looks like it round-trips to the mock (rather than staying in local widget/bloc state), flag it — the mock has no scripting, so a "real" mutation there is either dead code or will silently no-op/return a canned response regardless of what was sent.
+For every registered contract, check whether the app also calls a POST/PATCH/DELETE against the same or a related path for data that contract's GET returns. If a mutation looks like it round-trips to the mock (rather than staying in local client state), flag it — the mock has no scripting, so a "real" mutation there is either dead code or will silently no-op/return a canned response regardless of what was sent.
 
 ## Step 4 — Naming and shape conventions
 
-- Every registered contract's `model_file` should follow the nested-parameter-naming convention (`itemJson`/`rangeJson`, never a nested parser shadowing `json`/`map`) — this is what makes `dart_fromjson.py`'s whole-file field scan safe. Grep each registered model file for a nested `fromJson`/parsing helper that reuses `json`/`map` as its own parameter name and flag it as a latent shape-scan hazard, even if `audit_mock_api.py` currently reports it clean (it may just mean no nested field collides with a top-level one yet).
+- Every registered contract's `model_file` should follow the nested-parameter-naming convention the configured schema provider expects (`itemJson`/`rangeJson` for the Dart-model provider that ships today — `dart_fromjson.py` — never a nested parser shadowing `json`/`map`; that shadowing is what would make its whole-file field scan unsafe). Grep each registered model file for a nested `fromJson`/parsing helper that reuses `json`/`map` as its own parameter name and flag it as a latent shape-scan hazard, even if `audit_mock_api.py` currently reports it clean (it may just mean no nested field collides with a top-level one yet).
 - Flag any `contracts.json` entry whose `model_file` or `fixture` path doesn't exist on disk (a stale registration).
 
 ---

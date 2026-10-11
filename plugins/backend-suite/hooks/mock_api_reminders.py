@@ -106,7 +106,7 @@ MARKER_TTL_SECONDS = 7 * 24 * 3600
 
 
 def _state_dir() -> Path:
-    override = os.environ.get("DESIGN_SUITE_HOOK_STATE_DIR")
+    override = os.environ.get("BACKEND_SUITE_HOOK_STATE_DIR")
     return Path(override) if override else Path(tempfile.gettempdir()) / "backend-suite-hook-notices"
 
 

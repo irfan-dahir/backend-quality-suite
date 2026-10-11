@@ -167,13 +167,13 @@ def load_entries(repo: Path) -> list[dict]:
 # Markers are zero-byte files keyed by a hash of (session_id, project, state),
 # so a new session — or a state change, e.g. map added but still empty — says
 # it again. Markers older than a week are pruned on each write, so the
-# directory stays bounded without a cleanup job. DESIGN_SUITE_HOOK_STATE_DIR
+# directory stays bounded without a cleanup job. BACKEND_SUITE_HOOK_STATE_DIR
 # overrides the location (tests use it).
 MARKER_TTL_SECONDS = 7 * 24 * 3600
 
 
 def _state_dir() -> Path:
-    override = os.environ.get("DESIGN_SUITE_HOOK_STATE_DIR")
+    override = os.environ.get("BACKEND_SUITE_HOOK_STATE_DIR")
     return Path(override) if override else Path(tempfile.gettempdir()) / "backend-suite-hook-notices"
 
 
@@ -343,10 +343,11 @@ def run_entry(entry: dict, repo: Path, rel: str | None) -> str | None:
     output = (result.stdout or "").strip()
     fix = entry.get("fixHint")
 
-    # Two signals, because the audits genuinely have two behaviours. The copy gate
-    # exits non-zero on a new violation — that is what makes it a gate. audit_tokens
-    # exits 0 whether it found 144 things or none, because hardcoded values are a
-    # consistency report rather than a build failure. An entry pointed at the second
+    # Two signals, because the audits genuinely have two behaviours. A gating
+    # audit exits non-zero on a new violation — that is what makes it a gate.
+    # A consistency report like audit_doc_staleness exits 0 whether it found
+    # stale docs or none (its findings go to the envelope), because staleness is
+    # a report rather than a build failure. An entry pointed at the second
     # kind with the default signal would report nothing forever, which is
     # indistinguishable from a clean codebase — the exact failure this suite keeps
     # designing against.

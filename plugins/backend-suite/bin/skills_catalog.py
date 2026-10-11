@@ -94,16 +94,13 @@ NAME_RULES: list[tuple[str, str]] = [
 
 GROUP_BUCKET = {
     "Audits — read-only, report-never-fix": "Audit",
-    "Repair — generates a diff, never applies it": "Generate",
     "Documentation lifecycle": "Document",
-    "Discovery — what a project is, and what its config has stopped describing": "Workflow",
-    "Establishing conventions — brand-sensitive": "Document",
-    "Building": "Generate",
-    "Assets — the 3D pipeline": "Assets",
-    "Copy": "Document",
-    "Playbooks": "Workflow",
+    "Discovery": "Workflow",
+    "Building — a mutation on the project's own contract": "Generate",
+    "Playbooks — multi-step, orchestrated flows": "Workflow",
+    "Configuration": "Generate",
     "Capture — what a session produced": "Document",
-    "Demos and reporting": "Generate",
+    "Maintenance — a project's debt and the suite's own health": "Workflow",
     "PR workflow": "Workflow",
 }
 

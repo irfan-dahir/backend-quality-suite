@@ -1,6 +1,6 @@
 ---
 name: wire-endpoint
-description: "Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — model, datasource, bloc, fixture, contract registration, docs, test. Use when asked to wire up or connect a data source."
+description: "Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — fixture, contract registration, docs, test. Use when asked to wire up or connect a data source."
 argument-hint: "<endpoint>"
 invocation: explicit
 maturity: unverified
@@ -20,7 +20,17 @@ maturity: unverified
 > unwritten. Name it and report what needed it as outstanding work — never read a
 > stub's empty content as nothing to flag.
 
-You wire one hardcoded/stub data source to a real (mocked) `GET` endpoint, in the exact shape every other endpoint in this app was wired in — model, datasource, bloc, fixture, contract registration, doc section, mock entry, test — so that no two designers' AI sessions produce differently-shaped integrations. This is the data-layer sibling of `/scaffold-screen`: that skill removes repetition from building a new screen's states; this one removes repetition (and drift risk) from connecting a screen to real data.
+You wire one hardcoded/stub data source to a real (mocked) `GET` endpoint, in the exact shape every other endpoint in this project was wired in — fixture, contract registration, doc section, mock entry, test — so that no two sessions produce differently-shaped integrations. This removes repetition (and drift risk) from connecting a consumer to real data.
+
+> **⚠️ Scope note (honest state of the port).** The concrete step-by-step below
+> is the design-era Flutter reference client's wiring recipe — model, remote
+> datasource, bloc, `flutter analyze` — including verbatim references from that
+> original project. On a backend project, the steps that generalize today are
+> the contract-registration, fixture, docs, and test halves; the client-layer
+> steps (model/datasource/state) describe a stack this suite has no adapter for
+> yet. The `php` re-author of this playbook ships with the PHP mock-api schema
+> provider (see ROADMAP.md). Treat the Flutter specifics as the reference
+> implementation of the *mechanic*, not as instructions for your stack.
 
 **You wire read-only GET flows only. You never invent example values, never fabricate a data shape the screen doesn't already consume, and never touch anything the decision rubric below flags as client-only state.** Reference: `{{dir:plans}}/mock-api-integration.md` (the original phased wiring effort), `{{dir:plans}}/mock-api-hardening-and-portability.md` (drift/enrichment/portability follow-on), `/sync-mock-api`, `/audit-mock-api`.
 
@@ -52,7 +62,7 @@ The same `config.json` also holds `servers` — a `{environment: url}` map namin
 
 ## Step 2 — Confirm the shape with the user
 
-Ask (if not already given), same discipline as `/scaffold-screen`'s Step 0 — you scaffold structure and copy real data, you never invent either:
+Ask (if not already given) — you scaffold structure and copy real data, you never invent either:
 
 - The feature name and endpoint path (e.g. `GET /support/requests`).
 - Which existing hardcoded data source currently backs the screen (a routes-file stub, a widget's local list, etc.) — this becomes the fixture's starting content, not invented data.

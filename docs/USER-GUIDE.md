@@ -14,11 +14,13 @@ Other documents, so you know when to leave this one:
 ## What this is
 
 A set of Claude Code skills that read your code and compare it to your own
-design documents. Where the two disagree, you get a list.
+documents — the API doc, the RFC, the changelog. Where the two disagree, you
+get a list.
 
-It finds things like a hex colour written by hand instead of a token, a screen
-that does not match the design doc, a mock API whose fixture and docs have
-drifted apart, a component nobody documented.
+It finds things like an endpoint the code serves that no doc mentions, a doc
+example that no longer matches the response shape, a mock API whose fixture
+and contract have drifted apart, a changelog that stopped being updated three
+releases ago.
 
 Three things it deliberately does not do:
 
@@ -35,21 +37,20 @@ Three things it deliberately does not do:
 Four questions. If you answer no to all four, the suite will find almost
 nothing, and you should not adopt it.
 
-1. **Do you have design documents, or want them?** The suite checks code against
+1. **Do you have API documents, or want them?** The suite checks code against
    documents. No documents, nothing to check against.
-2. **Is more than one person writing UI code?** A single author holds the
+2. **Is more than one person writing backend code?** A single author holds the
    conventions in their head. A team does not, and that is the gap this fills.
-3. **Do you have design tokens, or a palette, or a component library?** If every
-   colour in the codebase is written by hand on purpose, a token audit is noise.
+3. **Do you have an API contract — an OpenAPI spec, a mock server, a documented
+   error envelope?** If the shape of every response lives only in the code, the
+   contract audits have nothing to compare against yet.
 4. **Does the project outlive the current sprint?** The value is in catching
    drift over months. On a two-week prototype there is no drift yet.
 
 It is **not** the right tool for: linting (use your linter), formatting (use your
-formatter), runtime accessibility testing against a rendered tree (the suite reads
-source only), visual regression testing of screenshots (see `/golden-local-ab`,
-which compares renders you already produce, not a hosted service), or deciding
-what your design system should be. It has no opinions of its own — see
-[What this is](#what-this-is).
+formatter), load testing or other runtime behaviour testing (the suite reads
+source and documents only), or deciding what your API should look like. It has
+no opinions of its own — see [What this is](#what-this-is).
 
 If you try it and it is not for you, [Removing it](#removing-it) is two commands.
 
@@ -62,36 +63,33 @@ up for you — see [What happens when you open a project](#what-happens-when-you
 This section is the manual route.
 
 There is no zero-configuration run. The suite refuses to guess which directory
-holds your UI code or which language adapter reads it, because a wrong guess
+holds your source or which language adapter reads it, because a wrong guess
 produces a confident clean report on the wrong files — see
 [When it refuses to run](#when-it-refuses-to-run). So the shortest honest path is
-one install, one scaffold, three fields, one audit.
+one install, one scaffold, one audit.
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-backend-suite
-claude plugin install backend-suite@ai-backend-suite
+claude plugin marketplace add irfan-dahir/backend-quality-suite
+claude plugin install backend-suite@backend-quality-suite
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
 ```
 
-Open `.backend-suite/profile.json` and fill in exactly three things. Leave every
-other `TODO` alone for now:
-
-| Field | Example value |
-|---|---|
-| `adapters.lang` | `"tsx"` |
-| `source.root` | `"src"` |
-| `source.fileGlob` | `"**/*.tsx"` |
-
-Then:
+Then run the audit that needs the least configuration — it reads documents
+against themselves, so it works on any project with markdown in it:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_tokens.py"
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_proposal_status.py" --findings
 ```
 
-Real output, on a project with one component and one token file:
+Real output, on a project with one proposal doc whose header has stopped
+agreeing with its own body:
 
 ```
-Found 3 hardcoded-value findings across 2 files → .backend-suite/tokens-findings.json
+CRITICAL — 1 finding(s):
+
+  docs/proposals/001-rfc.md states a status in its header that its body contradicts
+
+audit_proposal_status: 4 file(s) scanned, 1 proposal-shaped, 1 critical, 0 advisory
 ```
 
 **What success looks like.** Three specific things, in order:
@@ -99,24 +97,24 @@ Found 3 hardcoded-value findings across 2 files → .backend-suite/tokens-findin
 - **A non-zero exit code.** `1` means it ran and found something. `0` means it
   ran and found nothing. `2` means it could not run, and is not a pass. Check it
   with `echo $?`.
-- **A findings file you can open**, naming a file, a line, and the text it
-  matched — the shape shown under [Job 1](#job-1--find-hardcoded-design-values).
+- **A findings file you can open**, naming a file, a check, and a sentence of
+  detail — the shape shown under [Job 1](#job-1--find-stale-documents).
 - **A finding you recognise as true.** Open the first one. If it is a real
-  hardcoded value in a file you know, the audit is looking at the right tree.
+  contradiction in a file you know, the audit is reading the right tree.
 
 **Confirm it can actually fail.** A 0-finding result proves nothing on its own,
 because a check that is broken and a codebase that is clean print the same thing.
-So once, deliberately, paste a hex colour into a file under your source root and
-re-run. Findings should go up by one. Then take it out again and watch them go
-back down:
+So once, deliberately, write a markdown doc whose header declares a resolved
+status while its body still has open questions, and re-run. Findings should go
+up by one. Then fix the header and watch them go back down:
 
 ```
-Found 0 hardcoded-value findings across 0 files → .backend-suite/tokens-findings.json
+audit_proposal_status: 4 file(s) scanned, 0 proposal-shaped, 0 critical, 0 advisory
 ```
 
 That round trip is the whole argument for trusting anything else in this guide.
-Five minutes, and you now know the suite can both see your code and tell you when
-it cannot.
+Five minutes, and you now know the suite can both read your documents and tell
+you when it cannot.
 
 ---
 
@@ -145,7 +143,7 @@ won't bring it up again in that session.
   Claude to stop reminding you, and it will create the file. It never creates it
   unless you ask.
 - **For everything on your machine:** set the environment variable
-  `DESIGN_SUITE_NO_ONBOARDING=1`.
+  `BACKEND_SUITE_NO_ONBOARDING=1`.
 
 ### The "not configured" notice
 
@@ -172,10 +170,10 @@ can stop and pick up in a later session by running the same command again.
 
 | # | Step | What it does | Writes | Asks first? |
 |---|---|---|---|---|
-| 1 | `/survey` | Works out your stack, where the source lives, which files might hold your design tokens, and which documents you have. It also lists what it *couldn't* work out — read that list. | `.backend-suite/survey.json` | Yes |
-| 2 | `init.py --from-survey`, then `/map-project` | Creates the `.backend-suite/` config, pre-filled from the survey. Then suggests which document is your design doc, what kind of project this is, and which file is the real token source. | `.backend-suite/` config files | Yes, for each half |
+| 1 | `/survey` | Works out your stack, where the source lives, and which documents you have. It also lists what it *couldn't* work out — read that list. | `.backend-suite/survey.json` | Yes |
+| 2 | `init.py --from-survey`, then `/map-project` | Creates the `.backend-suite/` config, pre-filled from the survey. Then suggests which document is your API doc, what kind of project this is (service or library), and which files hold your contract. | `.backend-suite/` config files | Yes, for each half |
 | 3 | `/bootstrap-design-docs` | Drafts missing context documents from what is already built, one at a time. You accept or decline each one. Skipped if you already have the documents. | The documents you accept | Yes, per document |
-| 4 | `/propose-config` | Reads your code and proposes real values for config sections setup left as `TODO` (layer rules, adapter pattern, animated widgets, colour names), each with the evidence behind it. Proposes nothing where the evidence is weak. | Only the sections you approve, marked `inferred` | Yes, per section |
+| 4 | `/propose-config` | Reads your code and proposes real values for config sections setup left as `TODO` (source globs, layer rules, doc roles), each with the evidence behind it. Proposes nothing where the evidence is weak. | Only the sections you approve, marked `inferred` | Yes, per section |
 | 5 | `/repo-health` | Runs every audit once and records where the project starts: which audits work, which find things, which refuse. | Reports inside `.backend-suite/` only (git-ignored) | No — it only reports |
 
 Everything step 2 fills in is marked **`inferred`**: it is the machine's guess.
@@ -193,22 +191,21 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/chain.py" status understand-existing-project
 ## Which stacks it can read
 
 The documentation skills (`/review-docs`, `/sync-docs`, `/bootstrap-design-docs`,
-`/survey`, the resolver) work on any project. Audits that read **source code**
-need an adapter for your language, set as `adapters.lang` in
-`.backend-suite/profile.json`. `/survey` suggests one for you.
+`/survey`, the resolver, `audit-proposal-status`, `audit-doc-staleness`) work on
+any project. Audits that read **source code** need an adapter for your language,
+set as `adapters.lang` in `.backend-suite/profile.json`.
 
-| Adapter | For | Audits that work | Trust level |
-|---|---|---|---|
-| `dart` | Flutter | All source audits, except the two currently switched off (accessibility, copy) | Most tested |
-| `tsx` | React / TypeScript (`.tsx`, `.ts`, `.jsx`, `.js`) | tokens, adapter pattern, layer boundaries, error handling | Checked read-only on one large real codebase |
-| `web` | React/TS plus Vue, Svelte, CSS/SCSS/Sass/Less | tokens, adapter pattern, layer boundaries | Unverified — measured on 5 public projects, not yet enough |
-| `swift` | SwiftUI / UIKit | tokens, reduced motion, adapter pattern | Unverified |
-| `kotlin` | Jetpack Compose | tokens, reduced motion, adapter pattern | Unverified |
+No language adapter ships yet. The UI adapters this suite inherited left with
+the design domain; `php` is the first one being built (see
+[ROADMAP.md](./ROADMAP.md)). Until it lands:
 
-Any audit not listed for your adapter **refuses** and tells you why. It does not
-quietly report zero.
+- Leave `adapters.lang` unset and use the documentation half — it is the half
+  that works today.
+- Every code-shape audit (`audit-error-handling`, `audit-api-consistency`,
+  `audit-contract-headers`, `audit-layer-boundaries`) **refuses with exit 2**,
+  naming the adapter problem. It does not quietly report zero.
 
-When scanning, audits skip vendor and build folders (`node_modules`, `.next`,
+When scanning, audits skip vendor and build folders (`vendor`, `node_modules`,
 `dist`, and similar). Each skip is printed, so you can see what was left out.
 
 ### "Exit 2" or "could not check" — what it means for you
@@ -226,12 +223,11 @@ look. The usual reasons:
 
 - **Your stack isn't supported by that audit** (see the table above). Nothing
   is wrong with your project; that audit just can't help you yet.
-- **A config section is missing**, for example the `arch-rules.json` section
-  the audit reads. Fill it in, or ask Claude to run `doctor.py`.
+- **A config section is missing**, for example the `mockApi` section
+  `audit-mock-api` reads. Fill it in, or ask Claude to run `doctor.py`.
 - **You are in a git repo inside another one, and the inner one isn't set up.**
   Set up the inner repo, or run from the outer one if that's what you meant to
   check.
-- **The audit is switched off** (accessibility and copy, for now).
 
 If a script or CI step reads these exit codes, make it treat 2 as a failure you
 need to look at, never as a pass.
@@ -242,11 +238,10 @@ need to look at, never as a pass.
 
 Audits save their raw reports inside `.backend-suite/`, for example:
 
-- `.backend-suite/tokens-findings.json`
-- `.backend-suite/adapter-pattern-findings.json`
-- `.backend-suite/layer-boundaries-findings.json`
-- `.backend-suite/reduced-motion-findings.json`
-- `.backend-suite/findings/` (the common format every audit writes)
+- `.backend-suite/findings/doc-staleness.json`
+- `.backend-suite/findings/proposal-status.json`
+- `.backend-suite/findings/` (the common envelope every audit writes, passed
+  with `--findings`)
 
 These are **ignored by git** through `.backend-suite/.gitignore`, which
 `init.py` creates. They are kept out of git because reports quote lines of your
@@ -255,33 +250,6 @@ source code. You can delete them at any time; the next run makes them again.
 What you *do* commit in `.backend-suite/` is the config you wrote:
 `profile.json`, `docs.manifest.json`, `exceptions.json`, `baselines/`, and the
 rest.
-
----
-
-## Upgrading from v0.1.0
-
-The next release changes a few things that can affect scripts and CI. The full
-list, with the reason for each, is in
-[CHANGELOG.md — Unreleased › Breaking](../CHANGELOG.md#unreleased). In
-practice:
-
-- [ ] **Delete the old report files**, or untrack them with `git rm --cached`:
-      `token_pipeline/findings.json` (or `<pipelines.tokens>/findings.json`),
-      `scripts/adapter_pattern_findings.json` and
-      `scripts/layer_boundaries_findings.json`. The audits no longer update
-      them, so they would just go stale.
-- [ ] **Update anything that read those paths** (scripts, CI steps, hook
-      entries) to the new `.backend-suite/…-findings.json` names. Or pass `--out`
-      with the old path to keep it.
-- [ ] **Add the new names to `.backend-suite/.gitignore`** if yours was created
-      before this release: `tokens-findings.json`,
-      `adapter-pattern-findings.json`, `layer-boundaries-findings.json`. New
-      projects already get them.
-- [ ] **Treat exit 2 as "could not check"** everywhere you grade audits by exit
-      code. Several refusals that used to exit 1 now exit 2.
-- [ ] **Nested repos:** if you run the tools from a git repo inside another
-      one, the inner repo now needs its own setup, or the tools refuse.
-- [ ] Run `doctor.py` once afterwards to confirm the project still resolves.
 
 ---
 
@@ -300,17 +268,18 @@ grep -rl "urllib\|requests" "${CLAUDE_PLUGIN_ROOT}/bin"
 ```
 
 **The skills are prompts, so they go through the model.** Most of the suite is not
-a script at all: it is instructions for Claude. When you ask Claude to audit a
-screen, Claude reads that screen, and that content goes to the model the same way
+a script at all: it is instructions for Claude. When you ask Claude to review
+your API docs against the code, Claude reads both, and that content goes to the model the same way
 any other Claude Code session's does. Nothing about the suite changes your
 existing data-handling posture — but nothing about it exempts you from it either.
 If the rule on a client repository is that source does not go to a model, that
 rule applies here, and the script-only paths in this guide are the parts that
 still work under it.
 
-**Findings quote your source.** A token finding's `snippet` is a literal line of
-your code, and the literals a token audit greps for are the same shape a
-hardcoded credential has. That is why the scaffolded `.backend-suite/.gitignore`
+**Findings quote your source.** A finding quotes a literal line of your code,
+and on a backend codebase an audit that greps for literals will point at things
+with the same shape as an inline credential. That is why the scaffolded
+`.backend-suite/.gitignore`
 ignores the findings and evidence directories by default: committing them would
 publish code excerpts into the repository's history, which is not a decision a
 scaffolder should make on a team's behalf. If you deliberately want a finding to
@@ -325,11 +294,11 @@ comments in that `.gitignore`; they say which files are which.
 ### 1. Install the plugin
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-backend-suite
-claude plugin install backend-suite@ai-backend-suite
+claude plugin marketplace add irfan-dahir/backend-quality-suite
+claude plugin install backend-suite@backend-quality-suite
 ```
 
-On an internal org project, also install `house-style@ai-backend-suite`.
+On an internal org project, also install `house-style@backend-quality-suite`.
 On a client-facing repo, install `backend-suite` only — the house-style plugin
 carries our letterhead and PR process, which a client repo should not inherit.
 
@@ -365,7 +334,7 @@ to clone the suite at the pinned tag and run the engine out of that clone:
 
 ```bash
 git clone --branch backend-suite--v0.1.0 \
-  git@github.com:irfan-dahir/ai-backend-suite.git /tmp/suite
+  git@github.com:irfan-dahir/backend-quality-suite.git /tmp/suite
 CLAUDE_PROJECT_DIR="$PWD" python3 /tmp/suite/plugins/backend-suite/bin/doctor.py
 ```
 
@@ -383,14 +352,12 @@ Real output:
 ```
 wrote .backend-suite/profile.json
 wrote .backend-suite/docs.manifest.json
-wrote .backend-suite/design-audit-config.json
 wrote .backend-suite/exceptions.json
 wrote .backend-suite/arch-rules.json
 wrote .backend-suite/hooks.map.json
 wrote .backend-suite/known-traps.json
-wrote .backend-suite/component-capabilities.json
-wrote .backend-suite/.gitignore
 wrote .backend-suite/profile.schema.json
+wrote .backend-suite/.gitignore
 ```
 
 Nothing in those files is guessed for you. Every value that matters is the
@@ -416,8 +383,8 @@ survey: wrote .backend-suite/survey.json — 3 file(s) seen, stack='javascript/t
 
 Read the `?` lines as the useful half. The survey tells you what it could not
 work out, because those are exactly the fields you have to decide yourself. It
-will not pick a language adapter for you off a `package.json`, and it will not
-guess where your design tokens live.
+will not pick a language adapter for you off a `package.json`, and it flags its
+own weakest detections rather than pretending certainty.
 
 `survey.py --check` runs the opposite direction later on: it looks at what is on
 disk and tells you what your config has stopped describing.
@@ -429,28 +396,27 @@ most:
 
 | Field | What to put |
 |---|---|
-| `adapters.lang` | Which language adapter reads your source — see the TODO text for the current values |
-| `source.root` / `source.fileGlob` | Where your UI code is, and which files to scan |
-| `tokens.source` / `tokens.accessor` | Where your design tokens are defined, and how code refers to them |
+| `adapters.lang` | Leave unset until an adapter for your stack ships — see [Which stacks it can read](#which-stacks-it-can-read) |
+| `source.root` / `source.fileGlob` | Where your source code is, and which files to scan |
 
 Then open `.backend-suite/docs.manifest.json` and map your documents. The suite
-never refers to a file by name — it asks for a **role**, like `design` or
-`flows`, and your manifest says which of your files plays it. Map only the roles
+never refers to a file by name — it asks for a **role**, like `api` or
+`decisions`, and your manifest says which of your files plays it. Map only the roles
 you actually have. Delete the rest.
 
 Check a mapping resolved:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design
-DESIGN.md
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api
+docs/API.md
 ```
 
 Ask for a role you never mapped and it stops rather than guessing:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" motion
-unknown role 'motion'. Known roles:
-  design
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" flows
+unknown role 'flows'. Known roles:
+  api
 ```
 
 ### 5. Check your work
@@ -466,7 +432,7 @@ well-formed and point at three files that were deleted last month.
 backend-suite doctor — 8 problem(s):
 
   ✗ audits.baselineDir: '.backend-suite/baselines' does not exist
-  ✗ docs.roles.design: 'docs/DESIGN.md' does not exist (delete the role, or move it to externalRoles)
+  ✗ docs.roles.api: 'docs/API.md' does not exist (delete the role, or move it to externalRoles)
   ...
 ```
 
@@ -493,12 +459,11 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/preflight.py"
 
 ```
 preflight against /path/to/project
-20/47 component(s) have every precondition satisfied.
+14/36 component(s) have every precondition satisfied.
 
-🔴 /audit-assets                proven       2 role(s), 5 script(s)
-      ✗ doc role 'assets' is not mapped in docs.manifest.json
-      ✗ doc role 'decisions' is not mapped in docs.manifest.json
-✅ /audit-claude-md-drift       unverified   0 role(s), 1 script(s)
+🔴 /audit-mock-api              proven       1 role(s), 1 script(s)
+      ✗ doc role 'api' is not mapped in docs.manifest.json
+✅ /audit-doc-staleness         unverified   0 role(s), 1 script(s)
 ```
 
 A 🔴 is usually not a bug — it means that skill needs a document you have not
@@ -507,7 +472,7 @@ mapped. Map it, or accept that the skill cannot run here.
 A ✅ means the skill will not fall over on a missing file. It is **not** a promise
 the output is good.
 
-### 7. If you have no design documents
+### 7. If you have no documents yet
 
 Then the audits have almost nothing to check against, and that is the honest
 state of play. Ask Claude for `/bootstrap-design-docs`, which proposes documents
@@ -531,25 +496,24 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --all
 ```
 
 ```
+api	docs/API.md
+api-standard	docs/API-STANDARD.md
 backlog	docs/BACKLOG.md
 decisions	docs/DECISIONS.md
-design	docs/DESIGN.md
-flows	docs/FLOWS.md
-brand-voice	TODO: …	(external)
+pr	TODO: …	(external)
 ```
 
-Creating those four files is worth more than any other single step. On a project
-with none of them, `preflight.py` reported `7/47 component(s) have every
-precondition satisfied`; with the four in place and nothing else changed, the
-same command reported `21/47`. Three times the suite, for four files. Run
-`preflight.py` yourself rather than trusting those numbers — they are one
-project's, and yours will differ.
+Creating those four files is worth more than any other single step. On one
+project measured during adoption, going from none of them to all four tripled
+the number of components `preflight.py` reported as runnable — with nothing
+else changed. Run `preflight.py` yourself rather than trusting that number; it
+was one project's, and yours will differ.
 
 **Then add three commands to your habits**, and nothing else:
 
 | Command | When |
 |---|---|
-| `audit_tokens.py` | The one audit that works on the least configuration |
+| `audit_proposal_status.py` | The one audit that works on the least configuration |
 | `doctor.py` | Whenever the config changes, so it fails on a path rather than on a guess |
 | `repo_health.py` | Once a month, to see what you are not yet covering |
 
@@ -557,14 +521,13 @@ Everything beyond that is opt-in. The full list of what exists is
 [CATALOG.md](./CATALOG.md); the list of what can run *here* is `preflight.py`,
 and those are different questions.
 
-**If you have no design documents at all**, do not start by mapping roles to
+**If you have no documents at all**, do not start by mapping roles to
 files that do not exist. Start at
-[step 7 above](#7-if-you-have-no-design-documents). Until then, the components
+[step 7 above](#7-if-you-have-no-documents-yet). Until then, the components
 that need no document role are the whole of what you have — the `0 role(s)` rows
-in `preflight.py`'s output, seven of them on the project measured above — and
-they are mostly
-housekeeping rather than design checks. That is the honest state of the tool on
-an undocumented project, not a configuration problem to solve.
+in `preflight.py`'s output — and they are mostly housekeeping rather than
+doc-vs-code checks. That is the honest state of the tool on an undocumented
+project, not a configuration problem to solve.
 
 ---
 
@@ -582,18 +545,17 @@ and the first full run will be large. The order that works:
    it. It is a census, not a task list.
 3. Write down what is already true, rather than what you wish were true.
    `/bootstrap-design-docs` reverse-engineers a first draft from what is built.
-   A design document that describes the codebase you have is checkable; one that
-   describes the codebase you want reports every screen as a violation.
+   A document that describes the API you have is checkable; one that describes
+   the API you wish you had reports every endpoint as a violation.
 4. Baseline the existing findings as accepted debt, and gate only on new ones —
    see [When the first run returns 200 findings](#when-the-first-run-returns-200-findings).
 5. Add one more audit per month, not five in a week.
 
 **Greenfield.** You have the opposite problem: nothing to audit yet, and a short
-window in which conventions are still cheap to set. Here the
-convention-setting skills earn their place first, because they are what later
-audits measure against — `/establish-brand-voice` and
-`/establish-interaction-spec` are both `explicit` for exactly this reason: they
-set project-wide conventions, so they wait for a real decision from you.
+window in which conventions are still cheap to set. Here the documents come
+first, because they are what later audits measure against:
+`/bootstrap-design-docs` proposes each one for you to accept or decline, and a
+`DECIDE` marker in a template is genuinely yours to make.
 `/onboard-new-client` is the ordered playbook for this path rather than a new
 capability. `/run-chain` walks a playbook one checkpoint at a time so it survives
 being picked up next week, though it is marked `experimental` in
@@ -603,8 +565,8 @@ findings count is still zero and keeping it there is free.
 
 **Who should own it.** One person, named, and not "the team". Specifically:
 
-- **A `.backend-suite/` owner** — whoever owns the design system, or the most
-  senior UI engineer. They own the profile and the exceptions file, and they are
+- **A `.backend-suite/` owner** — whoever owns the API contract, or the most
+  senior backend engineer. They own the profile and the exceptions file, and they are
   the reviewer for every new entry in it. An exceptions list that grows without a
   reviewer is an audit that has quietly stopped auditing; the file's own header
   says so.
@@ -619,7 +581,7 @@ findings count is still zero and keeping it there is free.
 ## What you can ask it to do
 
 You do not need to memorise command names. Most read-only skills run from plain
-language — "check whether this screen follows our design system" is enough.
+language — "check whether the docs still match the endpoints" is enough.
 Skills that write something, or that set a project-wide convention, wait for you
 to name them.
 
@@ -627,17 +589,14 @@ Some things people actually want, and what answers them:
 
 | What you want | Say something like |
 |---|---|
-| Find hardcoded colours and spacing | "find hardcoded design values in the app" (`/audit-tokens`) |
-| Check a screen against the design system | "audit the settings screen against our design system" (the `design-auditor` agent) |
 | Know what documentation has gone stale | "is anything in our docs out of sync with the code?" (`/review-docs`) |
-| One overall picture of the project | "what's our design debt?" (`/design-debt`), or `/repo-health` for the raw audit posture |
-| Find out whether a component already exists | "is there already a component for a dismissible banner?" (`/suggest-component`) |
-| Build a new screen in the house pattern | `/scaffold-screen` |
+| One overall picture of the project | "what's our quality debt?" (`/design-debt`), or `/repo-health` for the raw audit posture |
+| Check the mock API has not drifted | "is the mock API in sync?" (`/audit-mock-api`, or the `mock-api-auditor` agent) |
 | Connect a stub to a mocked endpoint | `/wire-endpoint` |
-| Check the mock API has not drifted | "is the mock API in sync?" (`/audit-mock-api`) |
-| Critique a mockup before it is built | "critique this mockup" (the `design-critic` agent) |
+| Check a proposal's header still matches its body | "is any RFC's status stale?" (`/audit-proposal-status`) |
 | Record a decision or a backlog item | `/log-decision`, `/capture-backlog` |
-| Set brand voice or motion conventions | `/establish-brand-voice`, `/establish-interaction-spec` |
+| Propose the missing config from the code | `/propose-config` |
+| See how far setup has got | `/map-project`, or `doctor.py` for the paths |
 
 That is a sample, not the list. The full list — with what each one does, whether
 Claude may run it unprompted, and how well-tested it is — is
@@ -648,58 +607,48 @@ it cannot go stale. Read it before relying on anything.
 
 ## Three jobs, start to finish
 
-### Job 1 — find hardcoded design values
+### Job 1 — find stale documents
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_tokens.py"
-Found 3 hardcoded-value findings across 2 files → .backend-suite/tokens-findings.json
+python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_doc_staleness.py" --findings
 ```
 
-The findings file:
+```
+STALE (should fix) — 1 finding(s):
+
+  docs/API.md: footer states 2026-01-04, 281 day(s) ago
+
+audit_doc_staleness: 6 file(s) scanned, 3 with a dated last-updated signal (2 within 90 days, 1 stale), 1 with an unparseable/future value, 2 with no staleness signal at all. Reminder: this is days-since-last-edited, not verification.
+```
+
+The findings file (the common envelope every audit writes):
 
 ```json
 [
   {
-    "file": "src/Card.tsx",
-    "line": 1,
-    "kind": "color",
-    "snippet": "#3A7BD5"
-  },
-  {
-    "file": "src/Card.tsx",
-    "line": 1,
-    "kind": "spacing",
-    "snippet": "padding: \"17px\""
+    "file": "docs/API.md",
+    "check": "stale_by_stated_date",
+    "severity": "should_fix",
+    "detail": "footer states 2026-01-04, 281 day(s) ago"
   }
 ]
 ```
 
-File, line, what kind of value, and the text it matched. No severity, no score —
-a hardcoded colour is a fact, and whether it matters is your call.
+File, which check fired, and a sentence of detail. No composite score, no
+ranking — a stale doc is a fact, and whether 281 days matters is your call.
 
-Note the third finding in that run was inside the token definition file itself.
-That is expected: the audit scans what your profile tells it to scan. If a path
-should be exempt, say so in `.backend-suite/exceptions.json` with a reason,
-rather than narrowing the scan and forgetting why.
+Two honest limits are printed in the output itself. A doc that never carries
+the convention (`_Last updated: YYYY-MM-DD_`, a `Date:` field, or a
+"dated YYYY-MM-DD" phrase) is **not counted**, and the summary says how many
+had "no staleness signal at all". And if nothing in the tree carries the
+convention, the audit exits `2` as INERT rather than printing a clean — a
+project where every doc still has the unfilled template placeholder looks
+exactly like a project the audit cannot read, and it refuses to grade either.
 
-**Fixing them.** For some findings there is a mechanical fix: the literal `16`
-where exactly one of your declared spacing tokens is exactly `16`. Ask for
-`/repair-tokens`. It writes a patch to your screen and stops:
-
-> Review the diff, then `git apply` it yourself if you agree with it.
-
-It never edits your files, under any flag. And it refuses outright if it cannot
-establish what a token is on your project:
-
-```
-REFUSING: the 'tsx' adapter cannot read declared token values (no token_declarations capability)
-
-This is a refusal, not a finding of zero repairable values.
-```
-
-The repair is worth most on code you are touching right now, where the literal
-is new. Run across a whole already-migrated codebase it fixed 0 of 33 findings,
-because everything mechanical had already been done.
+**Fixing them.** There is no repair path for this one, and that is deliberate:
+the fix is opening the doc and deciding whether it is still true. A tool that
+cannot know whether a document is *true* can still tell you it has not been
+*touched* — the second question is yours.
 
 ### Job 2 — one view of the whole project
 
@@ -712,14 +661,17 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/repo_health.py"
 ```
 AUDIT                        STATUS     FINDINGS  TIME   NOTE
 ---------------------------  ---------  --------  -----  ----
-audit_accessibility          ⛔ disabled        -    0.0s  disabled — 100% false positives measured on two projects
-audit_adapter_pattern        ✅ clean           0    0.1s
-audit_focus_order            ⚪ refused         -    0.1s  the 'swift' adapter implements no focus-order checks
-audit_tokens                 🟡 findings        3    0.1s
-...
+audit_api_consistency        ⚪ refused         -    0.1s  no language adapter ships yet
+audit_claude_md_drift        ⚪ refused         -    0.1s  no rule mapping configured — see its --help
+audit_contract_headers       ⚪ refused         -    0.1s  no language adapter ships yet
+audit_doc_staleness          🟡 findings        4    0.1s
+audit_error_handling         ⚪ refused         -    0.1s  no language adapter ships yet
+audit_layer_boundaries       ⚪ refused         -    0.1s  no language adapter ships yet
+audit_mock_api               ⚪ refused         -    0.1s  no mock-API contract configured
+audit_proposal_status        ✅ clean           0    0.1s
+audit_prose_flags            ✅ clean           0    0.2s
 
-19 audit(s): 3 clean, 3 with findings, 8 not configured for this project, 3 unclear
-(exited nonzero without a findings envelope), 0 crashed, 2 disabled (did not run at all).
+9 audit(s): 2 clean, 1 with findings, 6 refused (could not check), 0 crashed, 0 disabled.
 ```
 
 Read the status column carefully, because four of those five words mean very
@@ -735,13 +687,13 @@ different things:
 
 `/design-debt` is the softer version: it reads whatever findings have already
 been collected and grades them per category, with no overall score. There is no
-composite number on purpose — you cannot honestly average a contrast pass-rate
-against a count of hardcoded colours, and one number invites moving the number.
+composite number on purpose — you cannot honestly average a doc-staleness count
+against a mock-API drift count, and one number invites moving the number.
 
 ### Job 3 — prove a big refactor changed nothing
 
-Before a large mechanical change — an extraction, an import rewrite, a token
-migration — record what every audit currently says:
+Before a large mechanical change — an extraction, an import rewrite, an
+error-shape migration — record what every audit currently says:
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/bin/capture-baselines.sh"
@@ -750,10 +702,11 @@ bash "${CLAUDE_PLUGIN_ROOT}/bin/capture-baselines.sh"
 Run it again afterwards. Identical output means you changed no behaviour.
 Different output tells you immediately, at the change that caused it.
 
-Two warnings the script itself will give you:
+Two warnings the script itself will give you. The first, whenever any audit is
+disabled:
 
 ```
-19 discovered: 2 disabled (did not run at all).
+9 discovered: 2 disabled (did not run at all).
 Disabled audits tell you NOTHING about this project — read them as a gap in
 coverage, not as a pass.
 ```
@@ -761,7 +714,7 @@ coverage, not as a pass.
 and, for a check that silently did nothing:
 
 ```
-INERT    audit_reinvented_components    REFUSING TO RUN
+INERT    audit_mock_api             REFUSING TO RUN
 ```
 
 An **INERT** audit is one that could not execute. It is not baselined, because a
@@ -770,9 +723,6 @@ recorded "clean" for a check that never ran would bless it forever.
 And the honest limit: a baseline of 0 findings proves nothing. 0-before and
 0-after look identical whether the check works or not. If you are relying on an
 audit, plant a deliberately broken file once and confirm it gets caught.
-
-For pixels rather than findings, `/golden-local-ab` renders your golden corpus
-before and after and compares byte-for-byte.
 
 ---
 
@@ -788,12 +738,13 @@ buckets, and the suite has a different mechanism for each.
 ### Bucket 1 — fix now
 
 Findings in code you are already touching this week. That is the whole of the
-bucket; resist widening it. A hardcoded colour in a file nobody has opened in a
+bucket; resist widening it. A stale doc in a directory nobody has opened in a
 year is not urgent, and fixing it costs a review and a regression risk for no
 behaviour change.
 
-For hardcoded values there is sometimes a mechanical fix — see
-[Job 1](#job-1--find-hardcoded-design-values). It emits a patch and stops.
+The mechanical-fix paths are deliberately rare and opt-in; see
+[Job 1](#job-1--find-stale-documents) for the shape of a finding and why most
+have no repair.
 
 ### Bucket 2 — accepted debt: baseline it
 
@@ -812,11 +763,10 @@ tells you which audits were baselined, which refused, and which were switched
 off:
 
 ```
-19 audit(s) discovered by audit_discovery.discover()
+9 audit(s) discovered by audit_discovery.discover()
 
-  NEW      audit_prose_flags      no baseline existed — recorded, NOT verified
-  INERT    audit_reinvented_components audit_reinvented_components: REFUSING TO RUN
-  DISABLED audit_copy             disabled — 73% of commit-gating findings wrong, measured on two projects
+  NEW      audit_proposal_status      no baseline existed — recorded, NOT verified
+  INERT    audit_mock_api             audit_mock_api: REFUSING TO RUN
 ```
 
 The mechanism that makes this safe is worth knowing about, because it will refuse
@@ -828,7 +778,7 @@ contains findings the baseline does not, the write **does not happen**:
 ```
 audit_layer_boundaries: REFUSING TO UPDATE THE BASELINE — 1 NEW violation(s) would be absorbed:
 
-  + src/a.tsx -> src/b.tsx
+  + app/Http/Controllers/UserController.php -> app/Http/Resources/UserResource.php
 
 These are not in the current baseline. Writing now would record them as accepted debt without anyone having decided that.
 
@@ -847,8 +797,8 @@ request like any other.
 
 Two different cases, and they take two different mechanisms.
 
-**Wrong about this file, right in general** — a vendored file, the token
-definition file being flagged for defining tokens, a generated directory. That is
+**Wrong about this file, right in general** — a vendored file, a generated
+directory, a fixture the audit cannot know is deliberate. That is
 an accepted exception, and it goes in `.backend-suite/exceptions.json`, keyed by
 the audit category:
 
@@ -865,12 +815,18 @@ the audit category:
 }
 ```
 
+(The example uses the scaffolded template's own `color` category —
+`init.py` still scaffolds the design-era categories `color`, `spacing` and
+`unusedTokens`; they are scheduled to swap to the backend vocabulary with the
+`php` adapter workstream. The mechanism below is what matters, and it is
+category-generic.)
+
 `reason` is not decoration. It is the only record of why a human decided this,
 and in six months it is the difference between an accepted exception and an
 unexplained hole. Re-run, and the suppression is stated rather than silent:
 
 ```
-Found 2 hardcoded-value findings across 1 files → .backend-suite/tokens-findings.json
+Found 2 finding(s) across 1 file(s)
 Suppressed 1 further finding(s) under 1 documented exception(s):
     1  color.allowlistFiles  src/tokens.ts
 ```
@@ -881,8 +837,9 @@ prevent.
 
 Three things about that file are worth knowing:
 
-- **Exceptions are scoped to a category.** A file allowed to hold raw colours is
-  still held to the spacing rules. An untagged check honours no allowlist at all.
+- **Exceptions are scoped to a category.** A file allowed under one category is
+  still held to every other category's rules. An untagged check honours no
+  allowlist at all.
 - **`allowlistRegions` reads narrower than it acts.** Its `scope` field is prose
   for a human; the engine applies the entry at path granularity, exactly like
   `allowlistFiles`. If the exempt part is narrower than the file, keep the file
@@ -893,17 +850,17 @@ Three things about that file are worth knowing:
 
 **Wrong in general** — the rule itself does not fit your project. Do not
 exception it file by file; that is a growing list nobody reviews. Either turn
-the check off for this project, or say so as an issue. Two audits are already
-switched off for exactly this reason, and their own output says what would have
-to change to turn them back on. See
+the check off for this project, or say so as an issue. The disabled registry
+exists for exactly this reason: an audit listed there refuses loudly (exit 2)
+instead of quietly passing, so nobody can mistake its silence for a score. See
 [When it refuses to run](#when-it-refuses-to-run).
 
 ### The rule of thumb
 
 If bucket 3 is more than about a fifth of the findings, stop sorting and fix the
 configuration instead. A high wrong-rate is almost always one bad field in
-`profile.json` — a source root that includes generated code, an adapter that does
-not match the stack — rather than two hundred independent mistakes. Run
+`profile.json` — a source root that includes generated code, an adapter name
+nothing implements yet — rather than two hundred independent mistakes. Run
 `doctor.py` and `survey.py --check` before you triage another hundred.
 
 ---
@@ -934,9 +891,9 @@ team to pass `--no-verify`, and then it gates nothing forever. If the plugin is
 later reinstalled somewhere else, re-run the installer — the shim bakes in an
 absolute path, because git hooks run outside any Claude Code session.
 
-**Before a pull request — the audits that match what you changed.** Touched
-styling, run the token audit. Changed a screen's data, run the mock-API audit.
-Changed documents, run `/review-docs`. This is the one point in the cycle where
+**Before a pull request — the audits that match what you changed.** Changed an
+endpoint's response shape, run the mock-API audit. Changed documents, run
+`/review-docs` and the staleness audit. This is the one point in the cycle where
 a finding is cheap to act on, because the code is still in your head.
 
 **Before merging a large mechanical refactor — the oracle, twice.** Capture
@@ -954,7 +911,7 @@ has stopped describing. `doctor.py` only walks declared → disk, and is blind t
 additions by construction. Run `--check` after any of these:
 
 - a new top-level directory, a new package, a monorepo split
-- moving where tokens or components live
+- moving where your API docs, fixtures, or migrations live
 - adding a language or a framework to the repo
 - a dependency upgrade that relocates generated code
 
@@ -1002,13 +959,12 @@ refusals.** `repo_health.py`'s summary line puts both in the same sentence for
 exactly that reason:
 
 ```
-19 audit(s): 3 clean, 3 with findings, 8 not configured for this project, 3
-unclear (exited nonzero without a findings envelope), 0 crashed, 2 disabled (did
-not run at all).
+9 audit(s): 2 clean, 1 with findings, 6 refused (could not check), 0 crashed,
+0 disabled (did not run at all).
 ```
 
-Three clean out of nineteen is the honest reading of that run. Thirteen of them
-did not look.
+Two clean out of nine is the honest reading of that run. Six of them did not
+look.
 
 Why it is built this way rather than defaulting to a pass is
 [CONCEPTS.md](./CONCEPTS.md#the-finding-that-shapes-everything), not this guide.
@@ -1029,21 +985,22 @@ A skill asked for a document you have not mapped. Add it to
 `docs.manifest.json`, or tell Claude to carry on without it — but expect it to
 say in its report that it did.
 
-**"the 'x' adapter implements no … checks"**
-That check is not implemented for your language. It could have returned zero
+**"the 'x' adapter implements no … checks" / "no language adapter ships yet"**
+That check is not implemented for your language — and today no language adapter
+ships at all, so every code-shape audit says this. It could have returned zero
 findings and looked like good news; instead it says it cannot see. Nothing is
 wrong with your project.
 
 **"REFUSING: … This is a refusal, not a finding of zero."**
-Something the check depends on is missing — usually an undeclared token source
-or an incomplete config. The message names what.
+Something the check depends on is missing — usually an unconfigured mock-API
+contract or an incomplete config section. The message names what.
 
 **"DISABLED — … It refuses (exit 2), not a clean result."**
-Two audits are currently switched off because they were wrong far too often on
-real projects: the accessibility audit and the copy audit. They tell you nothing
-about your project either way. They refuse loudly instead of quietly passing, so
-nobody mistakes their silence for a good score. Their own output explains what
-would have to change to turn them back on.
+No audit ships switched off today: the disabled registry is empty. (The two
+design-domain audits that measured as wrong far too often on real projects left
+with the design domain.) An audit listed in that registry refuses loudly instead
+of quietly passing, so nobody can mistake its silence for a good score, and its
+own output says what would have to change to turn it back on.
 
 If you are scripting around the suite, the exit codes are a stated contract:
 **0** ran and found nothing, **1** ran and found something, **2** could not run.
@@ -1087,7 +1044,7 @@ checked by a gate — and `doctor.py` will tell you if your own
 `hooks.map.json` starts recommending a fix that has not cleared it:
 
 ```
-✗ hooks.map.json entry "…": fixHint suggests '/audit-tokens', which is not on the
+✗ hooks.map.json entry "…": fixHint suggests '/wire-endpoint', which is not on the
 plugin's safe-repairers allowlist … A suggested fix is exactly the sentence shape
 that deleted correct data in issue #116
 ```
@@ -1101,16 +1058,17 @@ the tool being lazy. It is the tool declining to guess with your data.
 
 Stated plainly, so nothing here is a surprise later.
 
-- **It will not write your design documents.** `/bootstrap-design-docs` makes it
-  faster; the decisions are still yours. On a project with no documentation, the
-  suite finds very little, because there is nothing to check against.
-- **It will not fix your code.** Audits report. The one repair path
-  (`/repair-tokens`) emits a patch for you to apply yourself, and only for cases
-  where exactly one token matches exactly.
-- **It cannot check everything in every language.** Coverage varies by adapter,
-  and a check that is not implemented for your stack refuses rather than passing.
-  Each adapter's own module docstring is where its limits are recorded.
-- **Two audits are switched off** — accessibility and copy. See above.
+- **It will not write your documents for you.** `/bootstrap-design-docs` makes
+  it faster; the decisions are still yours. On a project with no documentation,
+  the suite finds very little, because there is nothing to check against.
+- **It will not fix your code.** Audits report. A repair path exists only where
+  the fix is provably mechanical, and every one of them is gated by an
+  allowlist the plugin ships with — which currently holds exactly one
+  invocation. Ask for a repair by name; never let a finding turn into an
+  unreviewed write.
+- **It cannot check everything in every language.** No language adapter ships
+  yet; code-shape coverage begins with `php` (see [ROADMAP.md](./ROADMAP.md)).
+  A check that is not implemented for your stack refuses rather than passing.
 - **Much of it is not verified.** Every component declares a maturity, and a
   large share are `unverified` — meaning nobody has recorded an end-to-end run,
   not that it is broken. Derive the current split rather than trusting a number
@@ -1154,12 +1112,12 @@ Then delete the configuration and the generated output, and uninstall the plugin
 
 ```bash
 rm -rf .backend-suite
-claude plugin uninstall backend-suite@ai-backend-suite
-claude plugin marketplace remove ai-backend-suite
+claude plugin uninstall backend-suite@backend-quality-suite
+claude plugin marketplace remove backend-quality-suite
 ```
 
 Two things do not live under `.backend-suite/` and are worth a `git status` to
-catch: the findings directory an audit writes to, and any design documents
+catch: the findings directory an audit writes to, and any documents
 `/bootstrap-design-docs` created. The documents are yours — they are ordinary
 markdown describing your project, with no dependency on the suite, and they keep
 working as documents after everything above is gone. That is deliberate: the

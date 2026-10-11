@@ -50,15 +50,15 @@ These **14** are marked `invocation: explicit`: they generate content, set proje
 | `/cleanup-worktrees` | Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work. | explicit | ⚠️ use with review | `backend-suite` |
 | `/generate-client-readiness` | Derive a client-facing production-readiness summary from the internal checklist and export it to PDF. | explicit | ✅ proven | `house-style` |
 | `/log-decision` | Draft an entry for the project's decision log in that log's own existing format, for review before anything is written. | explicit | ⚠️ use with review | `backend-suite` |
-| `/map-project` | Propose the mappings a survey cannot: which document is really the design doc, which project kind this is, which candidate token source is the true one — each with the… | explicit | ⚠️ use with review | `backend-suite` |
-| `/onboard-new-client` | Playbook rather than a new capability: the ordered sequence of existing skills for standing up the design-system foundation of a new client project or a greenfield area. | explicit | ⚠️ use with review | `backend-suite` |
+| `/map-project` | Propose the mappings a survey cannot: which document is really the API doc, which project kind this is (service or library), which candidate document source is the true… | explicit | ⚠️ use with review | `backend-suite` |
+| `/onboard-new-client` | Playbook rather than a new capability: the ordered sequence of existing skills for standing up the documentation and contract foundation of a new client project or a… | explicit | ⚠️ use with review | `backend-suite` |
 | `/propose-config` | Propose real values for the TODO sections init.py scaffolds (layer rules, the adapter seam, the animated-widget list, colour token names), each measured from this… | explicit | ⚠️ use with review | `backend-suite` |
 | `/ratify` | Use when asked to ratify, approve, or sign off a profile field, or when doctor reports fields as UNTRUSTED. | explicit | ⚠️ use with review | `backend-suite` |
 | `/run-chain` | Run a multi-skill playbook one step at a time, keeping its position across sessions and stopping at every checkpoint. | explicit | ⚠️ experimental | `backend-suite` |
 | `/sync-docs` | Take new information — client feedback, a call summary, a product decision, a direction change — and update the correct project documents. | explicit | ⚠️ use with review | `backend-suite` |
 | `/sync-mock-api` | Regenerate the generated parts of a mock-API contract from its hand-edited fixture — API docs, mock entry, and derived artifacts. | explicit | ✅ proven | `backend-suite` |
 | `/upgrade-apply` | Use only when explicitly asked to apply or migrate a suite upgrade, after /upgrade-measure and human approval. | explicit | ⚠️ use with review | `backend-suite` |
-| `/wire-endpoint` | Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — model, datasource, bloc, fixture, contract registration, docs, test. | explicit | ⚠️ use with review | `backend-suite` |
+| `/wire-endpoint` | Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — fixture, contract registration, docs, test. | explicit | ⚠️ use with review | `backend-suite` |
 
 ## Agents
 
@@ -113,15 +113,15 @@ Every slash command, by the job you came here to do. Names only.
 
 **Audit** (8) — `/audit-api-consistency` · `/audit-claude-md-drift` · `/audit-contract-headers` · `/audit-doc-staleness` · `/audit-error-handling` · `/audit-layer-boundaries` · `/audit-proposal-status` · `/audit-prose-flags`
 
-**Document** (5) — `/bootstrap-design-docs` · `/capture-backlog` · `/log-decision` · `/review-docs` · `/sync-docs`
+**Document** (6) — `/bootstrap-design-docs` · `/capture-backlog` · `/log-decision` · `/ratify` · `/review-docs` · `/sync-docs`
 
-**Generate** (3) — `/design-debt` · `/generate-client-readiness` · `/wire-endpoint`
+**Generate** (2) — `/propose-config` · `/wire-endpoint`
 
 **Mock API** (2) — `/audit-mock-api` · `/sync-mock-api`
 
-**Workflow** (5) — `/design-review-pr` · `/draft-pr-description` · `/onboard-new-client` · `/run-chain` · `/survey`
+**Workflow** (10) — `/cleanup-worktrees` · `/design-debt` · `/design-review-pr` · `/map-project` · `/onboard-new-client` · `/repo-health` · `/run-chain` · `/survey` · `/upgrade-apply` · `/upgrade-measure`
 
-**Other** (7) — `/cleanup-worktrees` · `/map-project` · `/propose-config` · `/ratify` · `/repo-health` · `/upgrade-apply` · `/upgrade-measure`
+**Other** (2) — `/draft-pr-description` · `/generate-client-readiness`
 
 30 of 30 commands placed.
 

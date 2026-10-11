@@ -10,7 +10,7 @@ the states that need a next step, prints that step as session context:
 
   configured      .backend-suite/profile.json exists          -> says nothing
   declined        .backend-suite-onboarding-declined exists,  -> says nothing
-                  or DESIGN_SUITE_NO_ONBOARDING is set
+                  or BACKEND_SUITE_NO_ONBOARDING is set
   partial         .backend-suite/ exists, no profile.json     -> says so, points at doctor/init
   new             no source files found anywhere             -> offer /onboard-new-client
   existing        source files, no .backend-suite/            -> offer /run-chain understand-existing-project
@@ -60,7 +60,7 @@ from pathlib import Path
 MARKER_DIR = ".backend-suite"
 PROFILE = f"{MARKER_DIR}/profile.json"
 DECLINE_FILE = ".backend-suite-onboarding-declined"
-DECLINE_ENV = "DESIGN_SUITE_NO_ONBOARDING"
+DECLINE_ENV = "BACKEND_SUITE_NO_ONBOARDING"
 
 # A session start must stay fast. Both budgets end the scan early; ending early
 # without having seen source is "unclassifiable", never "new".

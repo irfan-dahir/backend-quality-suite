@@ -7,8 +7,8 @@ maturity: unverified
 
 # /design-debt
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and
@@ -75,8 +75,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/design_debt.py"
 Present the table as-is, then interpret it. Four things to get right:
 
 **Grades are per category, never combined.** There is no overall score and you
-should not invent one — averaging a contrast pass-rate against a count of
-hardcoded colours produces a number that means nothing in either unit, and a
+should not invent one — averaging a doc-staleness count against a count of
+mock-API drifts produces a number that means nothing in either unit, and a
 single figure invites moving the figure instead of fixing the code.
 
 **"All known debt" is not the same as a fresh problem.** A category whose findings

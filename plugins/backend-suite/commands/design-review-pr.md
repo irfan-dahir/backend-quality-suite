@@ -11,12 +11,12 @@ maturity: unverified
 > `--out`). Audit envelopes go to a temporary directory, so
 > `.backend-suite/findings/` — `/design-debt`'s data — is left alone. But it
 > *runs* every live audit, and an audit that saves its own raw report on every
-> run (e.g. `/audit-tokens`) still writes that report, exactly as when run by
+> run (e.g. `/audit-mock-api`) still writes that report, exactly as when run by
 > hand. It never edits source, never stages, never commits, and **never posts
 > anything** unless `--post` is passed.
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 
 **You report; you never fix.** This tells a reviewer what a change touched,
 scoped to the diff. It is not a first step toward editing anything.

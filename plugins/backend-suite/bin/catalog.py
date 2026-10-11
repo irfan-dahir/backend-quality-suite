@@ -90,34 +90,32 @@ MATURITY_LABEL = {
 # listed falls into "Other", which is visible rather than silently dropped.
 GROUPS = [
     ("Audits — read-only, report-never-fix", [
-        "audit-tokens", "audit-accessibility", "audit-semantics", "audit-focus-order", "audit-copy",
-        "audit-mock-api", "audit-contrast", "audit-claude-md-drift",
+        "audit-api-consistency", "audit-error-handling", "audit-contract-headers",
+        "audit-mock-api", "audit-doc-staleness", "audit-proposal-status",
+        "audit-layer-boundaries", "audit-prose-flags", "audit-claude-md-drift",
     ]),
-    # Separate from both "Audits" and "Building": these read an audit's findings
-    # and emit a patch, and the distinction from the group above is the whole
-    # point — an audit reports, a repair generates, and neither applies anything.
-    ("Repair — generates a diff, never applies it", ["repair-tokens"]),
-    ("Interchange — DTCG token files", ["export-tokens-dtcg", "import-tokens-dtcg"]),
     ("Documentation lifecycle", ["review-docs", "sync-docs", "bootstrap-design-docs"]),
-    ("Discovery — what a project is, and what its config has stopped describing", ["survey"]),
-    ("Establishing conventions — brand-sensitive", [
-        "establish-brand-voice", "establish-interaction-spec",
+    # What a project is, and what its config has stopped describing.
+    ("Discovery", ["survey", "map-project"]),
+    ("Building — a mutation on the project's own contract", [
+        "wire-endpoint", "sync-mock-api",
     ]),
-    ("Building", ["scaffold-screen", "wire-endpoint", "sync-mock-api", "promote-component", "suggest-component"]),
-    ("Assets — the 3D pipeline", [
-        "audit-assets", "add-asset", "generate-asset", "animate-asset",
-    ]),
-    ("Copy", ["rewrite-copy"]),
-    ("Playbooks", ["onboard-new-client", "run-chain"]),
-    # No group for design-critic: GROUPS applies to skills, and agents render in
+    ("Playbooks — multi-step, orchestrated flows", ["onboard-new-client", "run-chain"]),
+    ("Configuration", ["propose-config"]),
+    # `session-decisions` is an agent, not a skill, and therefore is not listed in
     # their own section. An entry here for an agent is silently dead config.
     ("Capture — what a session produced", [
-        "session-decisions", "log-decision", "capture-backlog",
+        "log-decision", "capture-backlog", "ratify",
     ]),
-    ("Demos and reporting", [
-        "design-debt", "generate-walkthrough", "generate-client-readiness",
+    # `design-debt` reads an audit's collected findings and reports; it is grouped
+    # here with the suite's own health rather than under "Audits" because its
+    # subject is a project's standing debt, not a single sweep. Renaming this
+    # group's design-era names is Phase C prose work (docs/SWAP-PLAN.md).
+    ("Maintenance — a project's debt and the suite's own health", [
+        "design-debt", "repo-health", "cleanup-worktrees",
+        "upgrade-measure", "upgrade-apply",
     ]),
-    ("PR workflow", ["draft-pr-description", "design-review-pr"]),
+    ("PR workflow", ["design-review-pr"]),
 ]
 
 

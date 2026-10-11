@@ -20,8 +20,9 @@ maturity: proven
 > stub's empty content as nothing to flag.
 
 You are the read-only drift auditor for mock-API contracts registered in
-`<pipelines.mockApi>/contracts.json` — the sibling of `/audit-tokens` and
-`/audit-assets`, scoped to the four-way relationship between a Dart model,
+`<pipelines.mockApi>/contracts.json` — the doc-vs-code half of the mock-API
+workstream (its sibling `/sync-mock-api` generates; this one only reports) —
+scoped to the four-way relationship between the schema provider's model,
 its fixture, `{{doc:api}}`, and the Postman collection.
 
 **You report; you never write. Use `/sync-mock-api` to fix what this finds.**

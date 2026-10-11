@@ -267,7 +267,7 @@ SLUG_NOT_REPO = re.compile(r"\.")
 # this repository has no consumer profile of its own, so a gate that could only
 # derive would check nothing in its own CI. The derived half reads
 # `tokens.ownedBy` from whatever project the gate is run against.
-ALLOWED_OWNERS = ("anthropics",)
+ALLOWED_OWNERS = ("anthropics", "irfan-dahir")  # irfan-dahir: this suite's own org; added when skills began citing this repo's slug (Phase C)
 
 # Design-system export prefixes. `audit_reinvented_components.py` reads this from
 # the project's own audit config (`reinventedComponents.exportPrefix`) and

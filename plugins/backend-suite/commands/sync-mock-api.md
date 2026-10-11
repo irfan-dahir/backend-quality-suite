@@ -70,7 +70,7 @@ Check `<pipelines.mockApi>/contracts.json` for the endpoint. If it's not there y
 
 If the fixture doesn't exist yet, create it from the model's fields plus
 realistic example values — ask the user for anything that needs a product
-judgment call (what a "typical" example looks like), same as `/scaffold-screen`
+judgment call (what a "typical" example looks like), same as `/wire-endpoint`
 asks rather than invents.
 
 ## Step 2 — Run the sync

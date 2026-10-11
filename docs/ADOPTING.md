@@ -6,8 +6,9 @@ For putting this on a project it has never seen. Assumes you've read
 
 **The honest summary:** documentation tooling and doc-role resolution are stack-
 agnostic today and work anywhere. Source scanning depends on a language adapter,
-and five exist (`dart`, `tsx`, `web`, `swift`, `kotlin`). If yours isn't one of them, you get the documentation half
-immediately and the scanning half after writing an adapter.
+and none ships yet — a `php` adapter is the first workstream (see
+[ROADMAP.md](./ROADMAP.md)). Every stack gets the documentation half today and
+the scanning half when its adapter lands.
 
 ---
 
@@ -19,10 +20,10 @@ terminal — install the `backend-suite` command instead. It needs Python 3.9 or
 newer and nothing else.
 
 ```bash
-pipx install /path/to/ai-backend-suite      # or: uv tool install /path/to/ai-backend-suite
+pipx install /path/to/backend-quality-suite # or: uv tool install /path/to/backend-quality-suite
 backend-suite list                          # every command, and the script it runs
 backend-suite doctor                        # run from inside your project
-backend-suite audit tokens                  # any audit: backend-suite audit <name>
+backend-suite audit doc-staleness           # any audit: backend-suite audit <name>
 ```
 
 Without installing, from a checkout: `PYTHONPATH=plugins/backend-suite python3 -m backend_suite list`.
@@ -55,46 +56,31 @@ Which tools read which instruction, skill, hook and MCP files is in
 |---|---|
 | Doc roles, `resolve.py`, `doctor.py` | **No.** Pure JSON + paths |
 | `/review-docs`, `/sync-docs`, `/bootstrap-design-docs` | **No.** Read documents, not source |
+| `audit-doc-staleness`, `audit-proposal-status`, `audit-claude-md-drift`, `audit-prose-flags` | **No.** They read docs and config, not source |
+| `audit-mock-api`, `/sync-mock-api` | **No** — once a mock-API contract is configured |
 | PR drafting, client-readiness reporting | **No** |
-| Token auditing | **Yes** — every adapter does it |
-| Reduced-motion, adapter-pattern, layer-boundary, error-handling audits | **Yes** — some adapters; see the table below |
-| Accessibility auditing, copy extraction | **Yes** — `dart` only, and both audits are currently switched off |
-| Screen scaffolding, asset registration | **Yes** — adapters exist for Flutter and for bundler-driven stacks |
+| `audit-error-handling`, `audit-api-consistency`, `audit-contract-headers`, `audit-layer-boundaries` | **Yes** — they need a language adapter, and today no stack has one |
 
 So the first question isn't "is my language supported" — it's "which half do I
-need first."
+need first," and for every stack right now the answer is: the documentation
+half.
 
 ---
 
-## Step 1 — Pick your adapter
+## Step 1 — Leave the adapter unset (for now)
 
-`adapters.lang` in `.backend-suite/profile.json`:
+`adapters.lang` in `.backend-suite/profile.json` stays a TODO until an adapter
+for your stack ships. `/survey` proposes a value only when it can resolve one
+against the adapters that actually exist — today, none.
 
-| Value | Implements | Doesn't |
-|---|---|---|
-| `dart` | Tokens, reduced motion, focus order, adapter pattern, layer boundaries, error handling, API consistency, unused tokens, unwired roles, widget-shape audits (accessibility and copy are implemented but switched off) | — |
-| `tsx` | Tokens (`.tsx/.ts/.jsx/.js`), adapter pattern, layer boundaries, error handling; focus order and semantics from JSX tags *(unverified)* | Accessibility, copy, reduced motion, API consistency, contract headers, token enumeration, widget-shape audits |
-| `web` *(unverified)* | Tokens — everything `tsx` does, plus `.vue`/`.svelte` (`<style>` blocks, `style="…"`) and `.css/.scss/.sass/.less`; adapter pattern, layer boundaries; error handling (script and SFC files); focus order and semantics from JSX/Vue/Svelte tags | Same as `tsx` |
-| `swift` *(unverified)* | Tokens (`.swift` — `Color(red:…)`/`UIColor`/hex, `.padding(N)`/`spacing:`, `cornerRadius`, animation durations), reduced motion (config-driven, `accessibilityReduceMotion`), `adapter_pattern` (module imports) | Layer boundaries (imports are modules, not paths), error handling, API consistency, focus order, semantics, copy, token enumeration/repair, widget-shape audits |
-| `kotlin` *(unverified)* | Tokens (`.kt` — `Color(0x…)`, `N.dp`, `N.sp`, `RoundedCornerShape`, `tween`/`durationMillis`), reduced motion (config-driven, animator-scale signals), `adapter_pattern` (package imports) | Same as `swift` |
-
-Every adapter refuses (exit 2, named) every capability in their "Doesn't" column — never a zero. `survey.py` proposes `swift` for a root `Package.swift` or `*.xcodeproj`, and `kotlin` for a Gradle build only when a build file enables Compose. `audit_tokens` also refuses a zero-finding sweep when files of a stack its adapter does not read sit under the scan root (a Vue tree on `tsx`); name `web`, or record the choice in `exceptions.json` `acknowledgedUnscanned`.
-
-**If neither fits**, still install and configure the profile. Set
-`adapters.lang` to the nearest thing or leave it unset: the documentation skills
-work regardless, and the source-scanning skills will **refuse with a message
-naming the missing capability** rather than reporting zero findings. That
-refusal is the designed behaviour — see
-[capability negotiation](./CONCEPTS.md#capability-negotiation).
+Setting it anyway to a name nothing resolves makes the code-shape audits refuse
+with exit 2 naming the unknown adapter rather than reporting zero findings.
+That refusal is the designed behaviour — see
+[capability negotiation](./CONCEPTS.md#capability-negotiation) — and it is why
+leaving the field unset and relying on the documentation skills is the honest
+configuration right now.
 
 ---
-
-**You may not need Steps 2 onward by hand.** Opening an unconfigured project in
-Claude Code makes the suite offer `/run-chain understand-existing-project`, which
-surveys the project (including suggesting `adapters.lang`), scaffolds the config
-from the survey, and asks before every write. See the
-[user guide](./USER-GUIDE.md#setting-up-an-existing-project-step-by-step). The
-steps below are what it does underneath, and what to check afterwards.
 
 ## Step 2 — Write the profile
 
@@ -187,7 +173,7 @@ warnings the reference project learned the hard way:
 ## Step 5 — Wire read-only audits into your own CI
 
 This plugin's own `.github/workflows/validate.yml` deliberately does not run
-the design audits — it has no consuming project to point them at (see the
+the code-shape audits — it has no consuming project to point them at (see the
 comment at the top of that file). **Wiring them into CI is your project's
 job, not something adopting the suite does for you.** Skipping this step
 means every audit only ever runs when someone remembers to run it by hand.
@@ -197,24 +183,19 @@ Per `CLAUDE.md`'s tier table, an audit that is read-only and report-only
 only on demand. Add each audit you rely on as a step in your project's CI,
 the same way `validate.yml` lists its own gates.
 
-One audit needs a flag to do this safely: `audit_reinvented_components.py`
-compares against `ds_flutter`'s resolved package, and if that dependency
-can't be resolved (e.g. `flutter pub get` was never run on the runner) it
-now refuses with exit code `2` rather than reporting a clean run — per the
-suite's governing principle, "could not compare anything" must never look
-like "found nothing". Make sure your CI step treats any non-zero exit as a
-failure:
+An audit that cannot check exits `2` (INERT — could not check, not clean)
+rather than reporting a run — per the suite's governing principle, "could not
+compare anything" must never look like "found nothing". Make sure your CI step
+treats any non-zero exit as a failure:
 
 ```yaml
-- name: No private widget reinvents a ds_flutter component
-  run: |
-    flutter pub get
-    python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_reinvented_components.py"
+- name: Docs match the code
+  run: python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_doc_staleness.py"
 ```
 
 Do not swallow that exit code (`|| true`, `continue-on-error: true`,
-grepping stdout for a substring) — doing so silently turns "the dependency
-never resolved" back into the same false-clean result this fix removed.
+grepping stdout for a substring) — doing so silently turns "the check never
+ran" back into the same false-clean result the refusal exists to prevent.
 
 ### Pin the version your CI runs
 
@@ -226,8 +207,8 @@ consumer checkout pins a tag.**
 ```yaml
 - uses: actions/checkout@v4
   with:
-    repository: irfan-dahir/ai-backend-suite
-    ref: backend-suite--v0.2.0   # <sha the tag resolves to> — pin, never track main
+    repository: irfan-dahir/backend-quality-suite
+    ref: backend-suite--v0.1.0   # <sha the tag resolves to> — pin, never track main
     token: ${{ steps.suite-token.outputs.token }}
     path: _backend_suite
 ```
@@ -377,7 +358,7 @@ version checks, audits, tagging, deploy, and a smoke check. The research
 posted on that issue (worth reading in full there) concluded **no** — split
 it. Version consistency is generic; audits are already `gates.py`'s job;
 tagging is a one-line `git`/`gh` call not worth a component; "deploy" only
-generalizes for a docs/static site (a Flutter app has a
+generalizes for a docs/static site (a native mobile app has a
 build+sign+store-submission pipeline instead, which is `/cut-release`'s
 job, near-zero reuse — see the C4 row in [ROADMAP.md](./ROADMAP.md)). Bundling
 these behind one script would hide that the one attractive-sounding
@@ -475,161 +456,40 @@ actions, so this stays a checklist a person runs, not a background job.
 
 ---
 
-## Accessibility pre-flight
+## Validation history, and what validates next
 
-Issue #80 asked for an "accessibility pre-flight bot for PRs." The research
-posted on that issue (worth reading in full there) concluded **no new
-mechanism is needed** — every mechanically-checkable a11y surface this suite
-can reach is already covered by three existing audits, and the "pre-flight"
-behaviour being asked for is already what `bin/run_precommit_audits.py`
-(issue #46) does with any `hooks.map.json` entry marked `"preCommit": true`.
-"Bot" was marketing language for that existing composition, not a gap. A
-real PR-commenting bot would need CI, which is dead per `CLAUDE.md` rule 3 —
-not something to build around.
+The portability evidence this suite inherited from its design-era lineage —
+read-only validation against a real public TypeScript codebase — lives in this
+file's git history, not here: it documented audits that no longer ship. What
+carries over is the method, not the results: validate read-only against a real
+codebase before claiming anything, and publish the coverage gaps found along
+the way.
 
-> 🔴 **`audit_accessibility` is currently DISABLED and this recipe cannot be
-> followed as written.** It was measured at 100% false positives on two real
-> projects (issue #104) and switched off in PR #107: it exits 2, and every
-> reporting surface names it as "NOT RUN — not a clean result" rather than
-> letting the silence read as a pass. The other two audits below are live.
-> The re-enabling bar is in `backend_suite/engine/audit_discovery.DISABLED`;
-> until it is met, adding the first entry buys a gate that checks nothing and
-> says so on every commit.
+This suite's own validation targets, in order (see [ROADMAP.md](./ROADMAP.md)):
 
-So turning on an accessibility gate is a config change, not a new
-component. Add these entries to your project's
-`.backend-suite/hooks.map.json` (see
-[`hooks.map.schema.json`](../plugins/backend-suite/templates/hooks.map.schema.json)
-for the full field contract):
+- [`jikan-me/jikan-rest`](https://github.com/jikan-me/jikan-rest) — a Lumen
+  REST API. GET-only routes, a real error envelope with an exception-class
+  `type` field, per-endpoint cache TTLs, swagger-lume OpenAPI, and tests that
+  hit a live upstream: every one of those is a doc-vs-code surface the suite
+  claims to audit.
+- [`jikan-me/jikan`](https://github.com/jikan-me/jikan) — the PHP parser
+  library behind it: a `library`-kind project, the archetype the 18-role
+  vocabulary carries `changelog` and `deprecations` for.
 
-```json
-{
-  "entries": [
-    {
-      "name": "Accessibility audit",
-      "glob": ["lib/**/*.dart"],
-      "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_accessibility.py",
-                  "--out", ".backend-suite/scratch/hook-a11y.json"],
-      "scopeMode": "dir",
-      "scopeArg": "--dir",
-      "reportWhen": "findings",
-      "findingsPath": ".backend-suite/scratch/hook-a11y.json",
-      "fixHint": "/audit-accessibility",
-      "_disabled": "audit_accessibility exits 2 (issue #104). Leave preCommit false until the DISABLED registry's re-enabling bar is met.",
-      "preCommit": false
-    },
-    {
-      "name": "Focus order audit",
-      "glob": ["lib/**/*.dart"],
-      "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_focus_order.py",
-                  "--out", ".backend-suite/scratch/hook-focus-order.json"],
-      "scopeMode": "dir",
-      "scopeArg": "--dir",
-      "reportWhen": "findings",
-      "findingsPath": ".backend-suite/scratch/hook-focus-order.json",
-      "fixHint": "/audit-focus-order",
-      "preCommit": true
-    },
-    {
-      "name": "Reduced-motion audit",
-      "glob": ["lib/**/*.dart"],
-      "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_reduced_motion.py",
-                  "--out", ".backend-suite/scratch/hook-reduced-motion.json"],
-      "scopeMode": "dir",
-      "scopeArg": "--dir",
-      "reportWhen": "findings",
-      "findingsPath": ".backend-suite/scratch/hook-reduced-motion.json",
-      "fixHint": "/audit-reduced-motion",
-      "preCommit": true
-    }
-  ]
-}
-```
-
-Adjust the `glob` to your own `source.root` (these three audits all default
-`--dir` to the profile's `source.root` when it is omitted, but a hook needs
-a glob to know which staged files to scope the run to at all). Each entry
-writes its findings to a scratch path under `.backend-suite/scratch/`, never
-to the whole-repo findings file an unscoped `/audit-*` run owns — a
-narrowed pre-commit run replacing a full sweep's artefact would make
-`/design-debt` grade the project on a fraction of it, the same failure mode
-`hooks.map.schema.json`'s `command` field warns about for `audit_tokens.py`.
-
-**What this trio does not cover: colour contrast.** That is a deliberate,
-documented exclusion — `/audit-contrast` is a `maturity: pointer` entry
-redirecting to the org's design-system repo's (`<design-system-repo>`) own
-`tooling/scripts/audit_contrast.py --matrix`, because contrast needs real
-rendered-colour maths against a shared palette, not a text scan. See
-[`/audit-contrast`](../plugins/backend-suite/commands/audit-contrast.md) for
-where to run it. A pre-commit a11y gate built from this recipe is
-intentionally silent on contrast; that is this suite staying out of a check
-it does not own, not a hole in the recipe.
-
-Once the entries are in place, install the gate:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/bin/install_precommit_hook.py"
-```
-
-From then on, `git commit` blocks on any accessibility, focus-order, or
-reduced-motion finding in the files you staged — the same fail-closed
-behaviour every other `preCommit: true` entry gets, and no new script.
-
----
-
-## Case study: a real TypeScript codebase
-
-The portability claim was tested rather than asserted. Target:
-[`calcom/cal.com`](https://github.com/calcom/cal.com) — real, actively
-developed, MIT, ~47k stars, TypeScript/React/Tailwind. Read-only: a local shallow
-clone, never pushed to, no fork, no PR. Scope: `packages/ui`, **142 `.tsx`
-files**, no test or story files excluded.
-
-### What worked
-
-| | Result |
-|---|---|
-| `resolve.py` / `doctor.py` | **Caught a real mistake.** The profile I wrote named a token-source path that didn't exist in that repo. The doctor rejected it on a codebase it had never seen — exactly the job |
-| `audit_tokens.py` | **20 genuine findings across 7 files.** Real hex colours (`#111827`, `#FF0000`), real `borderRadius`/`width`/`height` literals. Not zero, not garbage |
-| `audit_accessibility.py`, `extract_copy.py` | **Correctly refused.** `tsx` implements neither capability. Capability negotiation exercised against an unfamiliar project |
-
-### The gap it found, stated rather than hidden
-
-cal.com styles almost entirely with **Tailwind utility classes**
-(`className="h-4 w-4 …"`). In the 142-file scope, only **2** files contain any
-raw hex colour and only **13** use an inline `style={{}}` object at all.
-
-`tsx.py`'s regexes target inline style objects. **So on a Tailwind-first project,
-most of the styling is outside what the adapter can currently see.** The adapter
-isn't wrong; it's incomplete for that styling paradigm. 20 real findings is a
-true result and also not the whole picture.
-
-If your project is Tailwind-first, calibrate accordingly: a low token-audit count
-means "few inline styles," not "few hardcoded values."
-
-### What this does not prove
-
-- **The asset and scaffold seams.** No adapter exists, so there was nothing to
-  test.
-- **Tailwind-class-level auditing.** That needs a new check, not a bigger sample.
-- **Anything about a third language.** Two adapters is evidence of a working
-  seam, not proof of universality.
+Until those runs are recorded, the honest claim is the one in the README:
+"installed" and "known to work" are different facts, and this suite does not
+yet claim the second one.
 
 ---
 
 ## Writing an adapter
 
 `backend_suite/adapters/base.py` defines the contracts: `AdapterContext`,
-`Check`, `CheckSet`, `CapabilityError`, plus `AssetAdapterProtocol` and
-`ScaffoldAdapterProtocol` — all three seams now have implementations to read
-alongside the contract.
-
-Start with `assets/bundler.py`. It is the shortest adapter here and the clearest
-statement of the rule: it implements the two questions it can answer and raises
-`CapabilityError` for the three it cannot. Then `tsx.py` for a language adapter
-that audits two paradigms while still declining accessibility and copy.
-
-Two rules:
+`Check`, `CheckSet`, `CapabilityError`, and the capability protocols. No
+language adapter ships right now — the UI adapters left with the design domain
+— so there is no reference adapter to read beside the contract yet; the `php`
+adapter (see [ROADMAP.md](./ROADMAP.md)) is next and will be the one to copy.
+The contract's behaviour is still proven on every change — two rules to keep it that way:
 
 1. **Declare only capabilities you implement.** A capability that returns empty
    is worse than one that refuses, because empty reads as "clean."
@@ -637,14 +497,13 @@ Two rules:
    checks as a parameter and imports no adapter — that's what keeps the seam
    real.
 
-Then prove the seam still holds:
+Then prove the seam still holds — the script runs a second, synthetic language
+through the same seam, positive and negative controls included. When `php`
+lands, that file gains a `load("php")` leg:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/backend_suite/adapters/verify_seam.py"
 ```
-
-This runs in CI on every change. Without it the seam would silently rot back
-into Dart-shaped assumptions within a few commits.
 
 ---
 
@@ -705,7 +564,7 @@ not decide anything those scripts do not.
 |---|---|---|
 | `project_status` | nothing | Says whether this project is configured, new, existing, partially set up, declined, or could not be told — the same answer the Claude Code start-of-session hook gives — and, if configured, which audits work, which refuse and why, and which are switched off. The agent is told to *offer* onboarding, never to start it. |
 | `survey` | only `.backend-suite/survey.json` (`check: true` writes nothing) | Looks at the project and records what it found. |
-| `resolve_role` | nothing | Says which file plays a document role (e.g. the design doc). |
+| `resolve_role` | nothing | Says which file plays a document role (e.g. the API doc). |
 | `doctor` | nothing | Checks the configuration and lists what is unresolved or still a machine guess. |
 | `repo_health` | audit report files only | Runs every audit and reports clean / findings / refused / disabled. |
 | `init_from_survey`, `map_project` | yes — previewed first | Create or fill in `.backend-suite/` from the survey. |
@@ -756,50 +615,12 @@ write it yourself, use: "At the start of a session, call the
 backend-suite `project_status` tool; if it reports new, existing or partial,
 offer onboarding — do not start it."
 
-## Exchanging tokens with Figma, Tokens Studio and Style Dictionary (DTCG)
-
-Two scripts speak the W3C Design Tokens Community Group format —
-[Design Tokens Format Module 2025.10](https://www.designtokens.org/tr/2025.10/format/),
-a *Final Community Group Report* (stable, but a Community Group report rather
-than a W3C Recommendation). Style Dictionary v4+ reads it natively. Both are
-`maturity: unverified`: tested on synthetic token sets only.
-
-| Script | Invocation | What it writes |
-|---|---|---|
-| `bin/export_tokens_dtcg.py` (`/export-tokens-dtcg`) | explicit | Nothing by default (stdout preview). `--out PATH` writes that one `.tokens.json`; `--report PATH` a JSON summary. Never source. |
-| `bin/import_tokens_dtcg.py` (`/import-tokens-dtcg`) | auto | Nothing by default. `--write-report [PATH]` writes one drift report (default `.backend-suite/dtcg-drift.json`). Never source, never the DTCG file. |
-
-To point the drift check at a file without passing `--file` every time, add
-to the profile:
-
-```json
-"tokens": { "source": { ... }, "accessor": "...", "dtcg": { "path": "design/figma.tokens.json" } }
-```
-
-What to expect per stack: Dart reads `tokens.source` through the adapter's
-existing value enumerator; TSX/web read CSS custom properties (`@theme` or
-`:root`) from a `.css` `tokens.source.path` and **refuse** a JS Tailwind config
-(it is never executed); Swift and Kotlin read `static let` / `val`
-declarations from `tokens.source.path`. A declaration with no faithful DTCG
-form (an `EdgeInsets`, an `oklch()` colour, a `calc()`) is listed by name — on
-stderr, in the report, and inside the exported file's root `$extensions` — and
-the export exits 1, never 0. The drift check counts the same tokens as
-`uncomparable`, never as matching.
-
-Files from older tools in the draft-era shape (hex-string colours, `"16px"`,
-unprefixed `value`/`type`) are refused with exit 2 unless you pass
-`--accept-draft-forms`. Not supported, refused rather than ignored: JSON
-Pointer `$ref` and `$extends`. Not done: making `/audit-tokens` treat the DTCG
-file as its token source — see `commands/import-tokens-dtcg.md`.
-
 ## Known limits, in one place
 
 | Limit | Status |
 |---|---|
-| Accessibility + copy extraction are `dart`-only | Real gap. `tsx` refuses by name rather than under-reporting |
-| Tailwind-class styling largely invisible to `tsx` | Named, tracked gap — see the case study |
-| Tailwind token *enumeration* | `tsx.token_names()` returns None — arbitrary values are audited, but nothing parses `tailwind.config.*` to enumerate the scale |
-| styled-components / Emotion | Hex and duration literals inside template literals are caught; property-level checks tuned for JS object syntax under-report there |
+| No language adapter ships | Real gap. The code-shape audits refuse by name (exit 2) rather than under-reporting; `php` is the next workstream |
+| The profile schema still carries design-era sections (`tokens`, `assets`, …) | Transitional. The schema and its scaffolds swap to the backend vocabulary with the php adapter workstream |
 | house-style duplicates ~40 lines of role resolution | Deliberate. It cannot reach backend-suite's resolver across the plugin cache's per-plugin version hashes. `bin/resolve_role.py` is parity-tested against the real one; extend `resolve.py`, never this |
 | Much of the suite is ⚪ `unverified` | Read the maturity column in [CATALOG.md](./CATALOG.md) before relying on a skill |
 

@@ -1,4 +1,4 @@
-# Claude Instructions — AI Design Suite
+# Claude Instructions — Backend Quality Suite
 
 This repo's documentation is already the instruction layer. This file exists only
 to say **what to read, in what order, and which rules are not written down
@@ -11,7 +11,7 @@ second copy of the rules is a second copy to drift.
 
 | Order | Document | Why |
 |---|---|---|
-| 1 | [README.md](./README.md) | What this is, the design invariants, honest status |
+| 1 | [README.md](./README.md) | What this is, the suite's invariants, honest status |
 | 2 | [docs/CONCEPTS.md](./docs/CONCEPTS.md) | The vocabulary. Context layer, doc roles, seams, capability negotiation, the oracle, INERT |
 | 3 | [docs/CATALOG.md](./docs/CATALOG.md) | Every component with its tier and maturity. **Generated — never hand-edit** |
 | 4 | [docs/ROADMAP.md](./docs/ROADMAP.md) | Workstreams, sequencing, resolved decisions |
@@ -23,10 +23,10 @@ nothing else.
 
 | Task type — CATALOG group | Read | Skip |
 |---|---|---|
-| Fix or extend an audit or a repairer — *Audits*, *Repair* | [CONCEPTS.md#the-finding-that-shapes-everything](./docs/CONCEPTS.md#the-finding-that-shapes-everything) and [#inert-and-the-governing-principle](./docs/CONCEPTS.md#inert-and-the-governing-principle); that audit's own `plugins/backend-suite/commands/<name>.md` | CATALOG, ROADMAP — neither decides what an audit may report |
-| Author a skill, agent, or hook — *Building*, *Assets*, *Copy*, *Capture*, *Demos and reporting*, *Playbooks (`run-chain`)* | [Writing a new skill, agent, hook, or script](#writing-a-new-skill-agent-hook-or-script) below; [CONCEPTS.md#invocation-tiers--auto-and-explicit](./docs/CONCEPTS.md#invocation-tiers--auto-and-explicit); `GROUPS` in [`bin/catalog.py`](./plugins/backend-suite/bin/catalog.py) | CATALOG — it is generated *from* the frontmatter you are about to write |
+| Fix or extend an audit — *Audits* | [CONCEPTS.md#the-finding-that-shapes-everything](./docs/CONCEPTS.md#the-finding-that-shapes-everything) and [#inert-and-the-governing-principle](./docs/CONCEPTS.md#inert-and-the-governing-principle); that audit's own `plugins/backend-suite/commands/<name>.md` | CATALOG, ROADMAP — neither decides what an audit may report |
+| Author a skill, agent, or hook — *Building*, *Capture*, *Maintenance*, *Playbooks (`run-chain`)* | [Writing a new skill, agent, hook, or script](#writing-a-new-skill-agent-hook-or-script) below; [CONCEPTS.md#invocation-tiers--auto-and-explicit](./docs/CONCEPTS.md#invocation-tiers--auto-and-explicit); `GROUPS` in [`bin/catalog.py`](./plugins/backend-suite/bin/catalog.py) | CATALOG — it is generated *from* the frontmatter you are about to write |
 | Adopt the suite in a consumer project, or add a component to one — *Playbooks (`onboard-new-client`)* | [ONBOARDING.md](./ONBOARDING.md), [docs/ADOPTING.md](./docs/ADOPTING.md), and [DOC-ROLES.md](./plugins/backend-suite/docs/DOC-ROLES.md) for doc-role vocabulary and the exit-code contract | ROADMAP — it sequences this repo's work, not a consumer's |
-| Establish a project convention — *Establishing conventions* | [CONCEPTS.md#doc-roles-and-role-resolution](./docs/CONCEPTS.md#doc-roles-and-role-resolution); the relevant `establish-*` command file | CATALOG, ROADMAP |
+| Add or amend a project convention — *Capture* | [CONCEPTS.md#doc-roles-and-role-resolution](./docs/CONCEPTS.md#doc-roles-and-role-resolution); the relevant `capture-backlog`, `log-decision`, or `ratify` command file | CATALOG, ROADMAP |
 
 Two rules keep the map from becoming the cost it exists to avoid:
 
@@ -112,7 +112,7 @@ because it was learned the expensive way, twice.
    It runs every gate and prints the environment the verdict was reached under,
    because a local pass is a claim with conditions attached. Underneath, it
    parses `.github/workflows/validate.yml` and
-   runs 18 of the 18 gates, with none skipped —
+   runs 16 of the 16 gates, with none skipped —
    `run_tests.py` and `gate_consumer_compat.py` are among them, so you do not
    run those separately, and `attest.py` fails the run if either ever stops
    being wired. Exit 0 verified, 1 a gate failed,
@@ -176,9 +176,9 @@ enforce it.
 
 | Never write | Write instead |
 |---|---|
-| `docs/DESIGN.md` | `{{doc:design}}`, resolved via `bin/resolve.py` |
-| `.backend-suite/resolve.py`, `token_pipeline/scripts/…` | `${CLAUDE_PLUGIN_ROOT}/bin/…` |
-| `lib/`, `pubspec.yaml`, `assets/images` | Read it from `.backend-suite/profile.json` |
+| `docs/API.md` | `{{doc:api}}`, resolved via `bin/resolve.py` |
+| `.backend-suite/resolve.py`, `plugins/backend-suite/bin/…` | `${CLAUDE_PLUGIN_ROOT}/bin/…` |
+| `src/`, `composer.json`, `routes/` | Read it from `.backend-suite/profile.json` |
 | The consumer project's name | "this project", or the profile's `project.name` |
 | A language-specific regex in an engine | A module in `backend_suite/adapters/` |
 | A project's accepted exception as a constant | `.backend-suite/exceptions.json` |

@@ -148,14 +148,17 @@ def selftest() -> int:
 
     tmp = Path(tempfile.mkdtemp())
     (tmp / ".backend-suite").mkdir()
-    # `design` is mapped but the file is absent; `flows` is mapped and present;
+    # `api` is mapped but the file is absent; `decisions` is mapped and present;
     # every other role is unmapped. `derived` is deliberately the only directory.
+    # Both roles must be ones the shipped components actually reference via
+    # `{{doc:…}}` — the assertion below is only meaningful if some component
+    # needs the missing one.
     (tmp / ".backend-suite/docs.manifest.json").write_text(json.dumps({
-        "roles": {"design": "docs/DESIGN.md", "flows": "docs/FLOWS.md"},
+        "roles": {"api": "docs/API.md", "decisions": "docs/DECISIONS.md"},
         "directories": {"derived": "docs/derived"},
     }))
     (tmp / "docs").mkdir()
-    (tmp / "docs/FLOWS.md").write_text("# Flows\n")
+    (tmp / "docs/DECISIONS.md").write_text("# Decisions\n")
 
     man = manifest(tmp)
     results = []
@@ -166,19 +169,25 @@ def selftest() -> int:
 
     problems = []
     blocked = [r for r in results if r["status"] == "BLOCKED"]
+    # The role vocabulary's size, read from the source of truth rather than
+    # hardcoded: a literal here went stale the moment the vocabulary was
+    # re-domained, and a stale number in a selftest's own failure text is a
+    # small lie in the one place that exists to tell the truth.
+    _vocab = json.loads((PLUGIN_ROOT / "templates/docs/roles.json").read_text())
+    _nroles = len(_vocab["roles"])
     if not blocked:
         problems.append(
-            "nothing was BLOCKED on a project mapping 2 of 20 roles — detection is "
+            f"nothing was BLOCKED on a project mapping 2 of {_nroles} roles — detection is "
             "not working, and every PASS elsewhere is therefore meaningless")
 
     # The mapped-but-missing file must be caught, not just the unmapped roles.
-    if not any("maps to docs/DESIGN.md, which is missing" in b
+    if not any("maps to docs/API.md, which is missing" in b
                for r in results for b in r["blockers"]):
         problems.append("a role mapped to a nonexistent file was not reported")
 
     # A role that is present must never be reported.
-    if any("'flows'" in b for r in results for b in r["blockers"]):
-        problems.append("'flows' is mapped and present but was reported as a blocker")
+    if any("'decisions'" in b for r in results for b in r["blockers"]):
+        problems.append("'decisions' is mapped and present but was reported as a blocker")
 
     # Scripts live in the plugin, not the project, so they must still all resolve.
     if any("does not exist" in b and "CLAUDE_PLUGIN_ROOT" in b
@@ -187,7 +196,7 @@ def selftest() -> int:
                         "plugin-relative and do not depend on the project")
 
     print(f"preflight selftest: {len(blocked)}/{len(results)} blocked on a synthetic "
-          f"project mapping 2 of 20 roles")
+          f"project mapping 2 of {_nroles} roles")
     if problems:
         print("\nSELFTEST FAILED:")
         for p in problems:

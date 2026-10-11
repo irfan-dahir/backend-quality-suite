@@ -7,8 +7,8 @@ maturity: unverified
 
 # /review-docs
 
-> Documents are referenced by role, e.g. `{{doc:flows}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" flows`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and
@@ -21,7 +21,7 @@ maturity: unverified
 
 You are the documentation auditor for **this project** — whichever one you are invoked in. Your job is to cross-reference all project documents against each other and against the codebase, then produce a prioritised report of what is out of sync, stale, or missing.
 
-**You report and optionally fix mechanical issues. You never write Flutter code. You never make product decisions.**
+**You report and optionally fix mechanical issues. You never write application code. You never make product decisions.**
 
 ---
 
@@ -30,32 +30,32 @@ You are the documentation auditor for **this project** — whichever one you are
 Read all project documents in full:
 
 - `CLAUDE.md`
-- `{{doc:instructions}}`
-- `{{doc:design}}`
-- `{{doc:flows}}`
+- `{{doc:entry-point}}`
+- `{{doc:api}}`
+- `{{doc:api-standard}}`
 - `{{doc:decisions}}`
 - `{{doc:backlog}}`
 - `{{doc:contributing}}`
+- `{{doc:changelog}}`
 - `{{doc:brief}}`
 
 Then gather codebase state:
 
 ```bash
-# All screen files
-find "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" -name "*_screen.dart" | sort
-
-# All widget files
-find "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" -path "*/widgets/*" -name "*.dart" | sort
-# NOT `ls $(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.featureWidgetsGlob)` — a glob returned by
-# command substitution is not re-expanded, so that form silently matches zero.
-find "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.sharedComponentDir)"/.. -name "*.dart" | sort
+# All source files. Read the extension list from the profile's
+# source.fileGlob as you go — this listing is the census, the glob is the filter.
+find "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" -type f | sort
 
 # Router — all registered routes. Read the file that DECLARES the paths, from
-# the profile, not the one that builds the router. On the originating project those
+# the profile, not a per-feature route fragment. On the originating project those
 # stopped being the same file: a refactor split the router and centralised paths
 # elsewhere, so this check read a file with zero routes and reported clean for
 # weeks. An inert check is worse than a missing one.
 cat "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.routesFile)"
+
+# Handlers imported from more than one place — the shared-layer census that
+# check F reasons about. Count import sites, not files.
+grep -rhoE "^(use|import) [A-Za-z0-9_\\/.]+" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" --include="*.php" --include="*.py" --include="*.ts" --include="*.js" --include="*.rb" --include="*.go" --include="*.java" --include="*.kt" | sort | uniq -c | sort -rn | head -40
 
 # Git branches
 git branch -a
@@ -90,43 +90,28 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --all | while IFS=$'\t' read -r r
   fi
 done
 
-# Any screen files missing the Screen Contract Header comment
-# NOTE: the real convention is an all-caps "<SCREEN NAME> CONTRACT" heading
-# (see any existing screen, or .claude/commands/scaffold-screen.md's template) —
-# use -i and match "CONTRACT" alone, not the literal mixed-case phrase "Screen
-# Contract" (a case-sensitive match on that exact phrase was a confirmed false
-# positive: it flagged 69 screens that all had correctly-formed headers).
-grep -rLi "CONTRACT" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" --include="*_screen.dart"
-
-# Any widget files used across multiple features (potential shared candidates)
-grep -rh "import.*widgets" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.root)" --include="*.dart" | sort | uniq -d
-
-# All shared components (source.sharedComponentDir is always a reuse candidate,
-# regardless of current usage count — see check G)
-find "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --profile source.sharedComponentDir)" -name "*.dart" | sort
-
-# Citations that rot: numeric backlog item references (check K) and line-pinned
-# document references (check L). Both name a moving target, so both go stale
+# Citations that rot: numeric backlog item references (check J) and line-pinned
+# document references (check K). Both name a moving target, so both go stale
 # silently — nothing errors, the citation just starts pointing somewhere else.
 backlog=$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" backlog)
 
-# K — every "<backlog doc> item N" citation across all mapped roles, with its line.
+# J — every "<backlog doc> item N" citation across all mapped roles, with its line.
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --all | while IFS=$'\t' read -r role rel mark; do
   [ -f "$rel" ] || continue
-  grep -nEi "(backlog[^ ]* |backlog )item [0-9]+" "$rel" | sed "s|^|CITE-K\t$rel:|"
+  grep -nEi "(backlog[^ ]* |backlog )item [0-9]+" "$rel" | sed "s|^|CITE-J\t$rel:|"
 done
 
-# K — what those numbers resolve to TODAY. Anything not listed here is a gap.
+# J — what those numbers resolve to TODAY. Anything not listed here is a gap.
 grep -nE "^### [0-9]+\. " "$backlog" | sed 's/^/ITEM-NOW\t/'
 
-# L — line-pinned citations (FILE.md:123, widget.dart:116). Correct only against
+# K — line-pinned citations (FILE.md:123, Handler.php:116). Correct only against
 # the revision they were written from; any edit above the cited line silently
 # repoints them. Extension-bounded on purpose: a bare `name:123` would match
 # `host:8080` and every "10:30" in prose.
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" --all | while IFS=$'\t' read -r role rel mark; do
   [ -f "$rel" ] || continue
-  grep -nE "[A-Za-z0-9_/-]+\.(md|dart|ts|tsx|js|py|kt|swift|ya?ml|json):[0-9]+" "$rel" \
-    | sed "s|^|CITE-L\t$rel:|"
+  grep -nE "[A-Za-z0-9_/-]+\.(md|php|py|ts|tsx|js|rb|go|java|kt|ya?ml|json):[0-9]+" "$rel" \
+    | sed "s|^|CITE-K\t$rel:|"
 done
 ```
 
@@ -146,27 +131,24 @@ Work through every check below. Record each finding with its severity before mov
 
 ---
 
-### B. {{doc:design}} screen inventory vs actual screen files
+### B. {{doc:api}} endpoint inventory vs the project's route declarations
 
-For every screen listed in the {{doc:design}} Screen Inventory:
-- If marked ✅ Built — does the file exist at the expected path?
-- If marked 🚧 Placeholder — does a placeholder file exist?
+For every endpoint listed in the {{doc:api}} endpoint inventory:
+- If marked ✅ Documented — does the route exist in `source.routesFile`?
+- If marked 🚧 Partial — is what exists actually what the doc claims?
 - If marked 🔜 Deferred — is there a corresponding entry in {{doc:backlog}}?
 
-For every `*_screen.dart` file found in the codebase:
-- Is it listed in the Screen Inventory? If not, flag it as missing from the inventory.
+For every route declared in `source.routesFile`:
+- Is it documented in {{doc:api}}? If not, flag it as an undocumented endpoint.
+
+**Do not do this check with a path-literal grep.** It fails in both directions, confirmed on the originating project: the footer changelog narrates routes that were deliberately *removed* (12 phantom findings), and endpoints are frequently documented by name or example — "GET /v4/users/{id}" — rather than by the literal path string the router uses (13 false "undocumented"). Read both sides and judge; a grep here produces confident nonsense.
 
 ---
 
-### C. {{doc:flows}} routes vs the project's route declarations
+### C. {{doc:decisions}} vs {{doc:api}} consistency
 
-For every route path documented in {{doc:flows}} (anything that looks like `/some/route`):
-- Does a corresponding route exist in `source.routesFile`?
-
-For every route declared in `source.routesFile`:
-- Is it documented somewhere in {{doc:flows}}? If not, flag it as an undocumented route.
-
-**Do not do this check with a path-literal grep.** It fails in both directions, confirmed on the originating project: the footer changelog narrates routes that were deliberately *removed* (12 phantom findings), and flows are frequently documented by screen and step name — "Onboarding Step 1 (Basic Info)" — rather than by path (13 false "undocumented"). Read both documents and judge; a grep here produces confident nonsense.
+- Read both documents and identify any factual contradiction — where {{doc:decisions}} says X was decided but {{doc:api}} still reflects the old behaviour.
+- Pay special attention to: the error envelope, auth scheme, pagination style, versioning policy, and any endpoint whose documented response shape a later decision changed.
 
 ---
 
@@ -178,42 +160,38 @@ For every route declared in `source.routesFile`:
 
 ---
 
-### E. {{doc:decisions}} vs {{doc:flows}} consistency
+### E. Documented shapes vs {{doc:api-standard}}
 
-- Read both documents and identify any factual contradiction — where {{doc:decisions}} says X was decided but {{doc:flows}} still reflects the old behaviour.
-- Pay special attention to: auth method, coaching chat coach assignment, care plan lifecycle, supplement vs coaching pricing, navigation structure.
-
----
-
-### F. Screen Contract Headers
-
-Every `*_screen.dart` file should have a Screen Contract Header comment near the top. Report any that are missing. Do not auto-fix these — they require a human to write the correct contract.
+Where both documents speak about the same convention, do they agree?
+- The error envelope: does the envelope {{doc:api}} uses in its examples match the one {{doc:api-standard}} declares?
+- Auth scheme and versioning policy: same test.
+- A contradiction here is 🔴 Critical — two documents giving opposite answers to "how do we do X" is exactly what a new contributor will hit first, and they will pick whichever one they read.
 
 ---
 
-### G. Component documentation drift
+### F. Endpoint and handler documentation drift
 
-For every widget file found under `source.featureWidgetsGlob`:
-- Is it documented in {{doc:design}}? Search {{doc:design}} for the widget's class name.
-- If not documented and it is used by more than one screen, flag it as an undocumented shared pattern.
+For every route handler found under `source.root`:
+- Is it documented in {{doc:api}}? Search {{doc:api}} for the handler's class name or its route path.
+- If not documented and it is reached from more than one route, flag it as an undocumented shared pattern.
 
-For every component in `source.sharedComponentDir` — **always in scope, regardless of current usage count**, since anything placed there is presumably intended as a reusable pattern, not a one-off:
-- Is it documented in {{doc:design}}? If not, flag it — a shared component with zero documentation is a drift risk even before a second screen adopts it.
+For every handler or service the import census shows reached from more than one place — **always in scope, regardless of current usage count**, since anything placed in a shared layer is presumably intended as a reusable pattern, not a one-off:
+- Is it documented where {{doc:api}} or {{doc:api-standard}} discusses that layer? If not, flag it — a shared handler with zero documentation is a drift risk even before a second route adopts it.
 
-**Reverse direction — stale documentation:** for every component {{doc:design}} documents by class name, does that class still exist in the codebase (correct name, correct file)? A renamed or deleted component with a surviving doc entry is a false "this is documented" signal for the next person who checks. Flag any {{doc:design}} entry that no longer matches a real widget.
+**Reverse direction — stale documentation:** for every handler {{doc:api}} documents by class name, does that class still exist in the codebase (correct name, correct file)? A renamed or deleted handler with a surviving doc entry is a false "this is documented" signal for the next person who checks. Flag any {{doc:api}} entry that no longer matches a real class.
 
 ---
 
-### H. Document staleness
+### G. Document staleness
 
-For each of the four main living docs ({{doc:design}}, {{doc:flows}}, {{doc:decisions}}, {{doc:backlog}}):
+For each of the four main living docs ({{doc:api}}, {{doc:decisions}}, {{doc:backlog}}, {{doc:changelog}}):
 - Get the date of the last commit that touched it.
 - Get the date of the most recent commit to any source file under `source.root`.
 - If the doc's last update is more than 14 days behind the latest feature commit, flag it as potentially stale.
 
 ---
 
-### I. "Last updated" footer dates
+### H. "Last updated" footer dates
 
 Run this against **every role the manifest maps**, not a chosen few. Scoping it to
 the "main living docs" is how eight documents went stale unnoticed here — the worst
@@ -234,17 +212,17 @@ Two things worth knowing before fixing one:
 
 ---
 
-### J. {{doc:contributing}} component lookup table vs actual widgets
+### I. {{doc:contributing}} conventions table vs actual code
 
-The component lookup table in `{{doc:contributing}}` lists what to use instead of raw Flutter primitives. Check that every widget listed there actually exists in the codebase. Flag any that are missing or have been renamed.
+The conventions table in `{{doc:contributing}}` lists the project's own shared utilities, helpers, and blessed patterns — what to use instead of rolling a new one. Check that every entry listed there actually exists in the codebase. Flag any that are missing or have been renamed.
 
 ---
 
-### K. Numeric `{{doc:backlog}} item N` citations
+### J. Numeric `{{doc:backlog}} item N` citations
 
 Backlog item numbers are **positions in a list, not identifiers.** Every time an item ships or is dropped, the list renumbers and every recorded number silently shifts by one. Nothing errors; the citation just starts meaning a different feature.
 
-Using the `CITE-K` and `ITEM-NOW` output from Step 1, classify **every** numeric citation into one of three buckets. The severity ordering here is counterintuitive and is the point of the check:
+Using the `CITE-J` and `ITEM-NOW` output from Step 1, classify **every** numeric citation into one of three buckets. The severity ordering here is counterintuitive and is the point of the check:
 
 | Bucket | Test | Severity |
 |---|---|---|
@@ -264,13 +242,13 @@ Watch for the rarer case where the citation was **wrong when written** — the n
 
 ---
 
-### L. Line-pinned citations (`FILE.md:123`, `widget.dart:116`)
+### K. Line-pinned citations (`FILE.md:123`, `Handler.php:116`)
 
 A citation naming a line number is correct only against the revision it was written from. Any edit above that line silently repoints it, and the reader has no way to tell — the file still exists, the line still exists, it simply says something else now.
 
-**Citations into source rot faster than citations into docs**, because source churns faster and a refactor can move hundreds of lines at once. Treat a `*.dart:123` pin as higher risk than a `*.md:123` pin, not lower — docs at least tend to be appended to rather than restructured.
+**Citations into source rot faster than citations into docs**, because source churns faster and a refactor can move hundreds of lines at once. Treat a `*.php:123` pin as higher risk than a `*.md:123` pin, not lower — docs at least tend to be appended to rather than restructured.
 
-From the `CITE-L` output, for each line-pinned citation:
+From the `CITE-K` output, for each line-pinned citation:
 
 - Open the cited file at the cited line. Does it still contain what the citing passage claims?
 - If not, flag it 🔴 **Critical** — this is indistinguishable from a correct citation at a glance, so it is trusted.
@@ -280,7 +258,7 @@ From the `CITE-L` output, for each line-pinned citation:
 
 This check exists because of a real incident on the originating project: a status report cited `FLOWS.md:499` for a deferred feature. It was accurate when written — line 499 genuinely was that row — and six days later two commits shifted the file so the same citation pointed at an unrelated table row. The stale line number was the harmless half; the report had also paraphrased the document's `🔜 Deferred — pending customer requirements` as **`BLOCKED`**, inventing a customer-side blocker that never existed. Nothing generated that line mechanically, so nothing could be fixed to prevent it — which is precisely why the citation format itself has to stop inviting it.
 
-**So also check the vocabulary, not just the pointer:** where a passage restates another document's status, does it use that document's own words? A status paraphrased into a stronger word — *deferred* becoming *blocked*, *proposed* becoming *agreed*, *partial* becoming *built* — is a factual change disguised as a summary. Flag any restatement that escalates, and quote both the original and the paraphrase side by side so the escalation is visible.
+**So also check the vocabulary, not just the pointer:** where a passage restates another document's status, does it use that document's own words? A status paraphrased into a stronger word — *deferred* becoming *blocked*, *proposed* becoming *agreed*, *partial* becoming *documented* — is a factual change disguised as a summary. Flag any restatement that escalates, and quote both the original and the paraphrase side by side so the escalation is visible.
 
 ---
 
@@ -297,8 +275,8 @@ Output a structured report using this format. Only include sections where findin
 ### 🔴 Critical — must fix before next PR
 [Contradictions between documents, routes that exist but are undocumented,
  documented routes that no longer exist in the router, direct conflicts
- between {{doc:decisions}} and {{doc:flows}}, citations that now resolve to
- the wrong feature (check K) or the wrong line (check L), and any status
+ between {{doc:decisions}} and {{doc:api}}, citations that now resolve to
+ the wrong feature (check J) or the wrong line (check K), and any status
  paraphrased into a stronger word than the source document uses.]
 
 - [Finding]: [specific detail — quote the conflicting text]
@@ -306,8 +284,8 @@ Output a structured report using this format. Only include sections where findin
 ---
 
 ### 🟡 Should Fix — fix this sprint
-[Missing screen inventory entries, stale backlog items, branches merged
- but still listed as in-progress, undocumented reusable widgets,
+[Missing endpoint inventory entries, stale backlog items, branches merged
+ but still listed as in-progress, undocumented shared handlers,
  missing {{doc:backlog}} entries for deferred decisions.]
 
 - [Finding]: [specific detail]
@@ -315,7 +293,7 @@ Output a structured report using this format. Only include sections where findin
 ---
 
 ### 🔵 FYI — low priority
-[Footer date mismatches, minor staleness, single-use widgets not documented,
+[Footer date mismatches, minor staleness, single-use handlers not documented,
  small formatting inconsistencies, item-number citations pointing at a gap
  (they fail loudly, so they mislead nobody), line-pinned citations that are
  still accurate but will rot on the next edit above them.]
@@ -326,7 +304,7 @@ Output a structured report using this format. Only include sections where findin
 
 ### ✅ Auto-fixable
 [Mechanical issues with no judgement required: footer date updates,
- screen inventory status changes where the evidence is clear.]
+ endpoint inventory status changes where the evidence is clear.]
 
 [List each fix]
 
@@ -366,14 +344,14 @@ and a false one is the failure this whole skill exists to prevent.
 > about to run the commit below in the same turn the audit was requested, stop
 > and ask instead — the confirmation is the whole safety property.
 
-If the designer types `fix` or confirms auto-fixes, apply only the items listed under "Auto-fixable." These are strictly mechanical — footer date updates, screen inventory status changes where a file clearly exists and matches.
+If the user types `fix` or confirms auto-fixes, apply only the items listed under "Auto-fixable." These are strictly mechanical — footer date updates, endpoint inventory status changes where the route clearly exists and matches.
 
 For each fix, show what you changed inline before committing.
 
 Then commit:
 
 ```bash
-git add "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" decisions)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" flows)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" backlog)"
+git add "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api-standard)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" decisions)" "$(python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" backlog)"
 git commit -m "docs(review): apply auto-fixes from /review-docs audit
 
 [bullet list of each auto-fix applied]
@@ -385,13 +363,13 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 
 ## What you must never do
 
-- Write, edit, or suggest any Flutter/Dart code
-- Auto-fix anything that requires a product or design judgement
+- Write, edit, or suggest any application code
+- Auto-fix anything that requires a product or API-design judgement
 - Modify `{{doc:brief}}`
-- Mark a screen as ✅ Built in the inventory unless the file unambiguously exists and matches
+- Mark an endpoint as ✅ Documented in the inventory unless the route unambiguously exists and matches
 - Resolve a contradiction between documents — flag it, do not decide
 - Skip sections of the report because they seem minor
 - Count a stub document (exit 5) as a documented category, or let a declined role (exit 4) drop a check without naming it. An empty stub produces no findings, and no findings is not a pass
-- Edit a historical entry in an append-only log to correct a citation (checks K and L). The citation is an accurate record of what was cited at the time; rewriting it falsifies that. Flag it and recommend a resolution table or a fresh dated correction entry instead
+- Edit a historical entry in an append-only log to correct a citation (checks J and K). The citation is an accurate record of what was cited at the time; rewriting it falsifies that. Flag it and recommend a resolution table or a fresh dated correction entry instead
 - Update a line-pinned citation to its new line number. That buys one edit's worth of accuracy and leaves the same trap armed — recommend a stable anchor
 - Report a pile of harmless gap citations ahead of a single misdirecting one. Severity here is about what a reader is misled into believing, not how many hits the grep returned

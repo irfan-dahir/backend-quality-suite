@@ -1,6 +1,6 @@
 # Onboarding
 
-**For designers. No engineering background assumed.** About 20 minutes to your
+**For developers. No prior knowledge of this suite assumed.** About 20 minutes to your
 first real audit.
 
 If you want the concepts before the commands, read
@@ -14,12 +14,12 @@ installing, that's [docs/CATALOG.md](./docs/CATALOG.md).
 A set of Claude Code skills that check your project's **code** against your
 project's **documents** — and tell you where they've drifted apart.
 
-Not a linter. It has no opinions about your design system. It only knows how to
-check whether the app still matches what you already wrote down.
+Not a linter. It has no opinions about your API's style. It only knows how to
+check whether the code still matches what you already wrote down.
 
 That last part matters, so it's worth saying plainly before you install
 anything: **the suite is only as useful as your documents are.** On a project
-with a real design doc and flows doc, it's genuinely good. On a project with no
+with a real API doc and API standard, it's genuinely good. On a project with no
 documentation, it will find almost nothing, because there's nothing to check
 against. Step 3 below is where you deal with that.
 
@@ -45,7 +45,7 @@ system `python3` is usually enough.
 Two plugins live in one marketplace. Add the marketplace:
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-backend-suite
+claude plugin marketplace add irfan-dahir/backend-quality-suite
 ```
 
 Then install. **Which one you want depends on the project:**
@@ -56,11 +56,11 @@ Then install. **Which one you want depends on the project:**
 | Client-facing project | `backend-suite` **only** |
 
 ```bash
-claude plugin install backend-suite@ai-backend-suite
+claude plugin install backend-suite@backend-quality-suite
 ```
 
 ```bash
-claude plugin install house-style@ai-backend-suite
+claude plugin install house-style@backend-quality-suite
 ```
 
 The house-style plugin carries your org's letterhead, our PR process, and
@@ -70,10 +70,10 @@ process out of their tooling.
 Confirm it worked:
 
 ```bash
-claude plugin details backend-suite@ai-backend-suite
+claude plugin details backend-suite@backend-quality-suite
 ```
 
-You should see `Skills (41)`, `Agents (4)`, `Hooks (2)` for `backend-suite` — the
+You should see `Skills (28)`, `Agents (2)`, `Hooks (2)` for `backend-suite` — the
 counts the plugin's own files carry. Don't trust this sentence over the
 plugin: `docs/CATALOG.md` is generated from that same frontmatter
 (`python3 plugins/backend-suite/bin/catalog.py`) and states the current totals
@@ -87,13 +87,13 @@ on the repo, commit these two blocks into the project's `.claude/settings.json`:
 ```json
 {
   "extraKnownMarketplaces": {
-    "ai-backend-suite": {
-      "source": { "source": "github", "repo": "irfan-dahir/ai-backend-suite" }
+    "backend-quality-suite": {
+      "source": { "source": "github", "repo": "irfan-dahir/backend-quality-suite" }
     }
   },
   "enabledPlugins": {
-    "backend-suite@ai-backend-suite": true,
-    "house-style@ai-backend-suite": true
+    "backend-suite@backend-quality-suite": true,
+    "house-style@backend-quality-suite": true
   }
 }
 ```
@@ -103,7 +103,7 @@ getting this wrong fails quietly — the plugin just doesn't load, with no error
 
 > **The repo is private, permanently.** Anyone installing — including anyone
 > who picks up the repo from this committed config — needs their own read access
-> to `irfan-dahir/ai-backend-suite`. Committing the blocks above makes the
+> to `irfan-dahir/backend-quality-suite`. Committing the blocks above makes the
 > plugin automatic for people who *have* access; it does not grant it. If
 > `marketplace add` fails on auth, that's what it is — request access rather
 > than debugging the command.
@@ -121,7 +121,7 @@ brand-new project with no code yet, it offers `/onboard-new-client` instead. An
 already-configured project hears nothing.
 
 Don't want the offer? Add an empty `.backend-suite-onboarding-declined` file at the
-project root, or set `DESIGN_SUITE_NO_ONBOARDING=1` to turn it off everywhere.
+project root, or set `BACKEND_SUITE_NO_ONBOARDING=1` to turn it off everywhere.
 The steps are described in full in the
 [user guide](./docs/USER-GUIDE.md#setting-up-an-existing-project-step-by-step).
 
@@ -139,13 +139,13 @@ Everything project-specific goes in one directory in *your* repo:
 
 Ask Claude:
 
-> set up the design suite for this project
+> set up the backend suite for this project
 
 It will read your repo and draft both files. **Review the draft** — this is the
 part where being wrong costs you later, and it is guessing about your project
 from the outside.
 
-Faster start, same review obligation — scaffold all eight config files (plus a
+Faster start, same review obligation — scaffold all six config files (plus a
 `.gitignore` and a local copy of the profile schema) from templates instead of
 hand-copying them from another project:
 
@@ -154,8 +154,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
 ```
 
 This writes `.backend-suite/profile.json`, `docs.manifest.json`,
-`design-audit-config.json`, `exceptions.json`, `arch-rules.json`,
-`hooks.map.json`, `known-traps.json`, and `component-capabilities.json`, each
+`exceptions.json`, `arch-rules.json`, `hooks.map.json`, and
+`known-traps.json`, plus the `.gitignore`, each
 with `TODO` markers instead of a guessed value — it does
 not decide anything on your project's behalf, it just gives you the *shape* to
 fill in. Templates live at
@@ -200,8 +200,8 @@ not upgrade it.
 This is the concept the whole suite rests on, so it gets a name.
 
 Your **context layer** is the set of documents that are true because a human
-decided so: the design doc, the flows doc, the decisions log, the brand voice
-guide. Not generated, not derived — written.
+decided so: the API doc, the API standard, the decisions log, the deprecation
+ledger. Not generated, not derived — written.
 
 Everything the suite does is check the codebase against it, or generate something
 from it.
@@ -233,13 +233,14 @@ the real work.
 ## Step 4 — Your first audit
 
 ```
-/audit-tokens
+/audit-doc-staleness
 ```
 
-This finds hardcoded values that should be design tokens — raw hex colours,
-literal spacing numbers, one-off radii. It's the best first audit because it's
-the one with the most recorded evidence behind it, and it needs nothing from you
-but the profile.
+This finds where the code and the documents disagree — an endpoint that exists
+but isn't in the API doc, a documented endpoint whose shape changed, a decision
+the code never implemented. It's the best first audit because it is the suite's
+core idea made concrete, and it needs nothing from you but the profile and the
+doc-role map from Step 3.
 
 You'll get findings grouped by file with line numbers. **It will not fix
 anything.** Every audit in the suite reports; fixes are offered and applied only
@@ -262,15 +263,15 @@ Every skill declares whether Claude may run it on its own:
   read-only, or it asks before writing. Say what you want; don't look up a
   command.
 - **`explicit`** — you have to name it. Reserved for things that set a
-  precedent: brand voice, project-wide conventions, generated content someone
+  precedent: the API standard, project-wide conventions, generated content someone
   signs off on.
 
 The line is **blast radius, not difficulty.** An audit reading 500 files is
-`auto`. A skill writing three sentences of brand voice is `explicit`, because
-those three sentences become the standard every future copy decision is measured
+`auto`. A skill writing three sentences of the API standard is `explicit`, because
+those three sentences become the rule every future endpoint is measured
 against.
 
-[CATALOG.md](./docs/CATALOG.md) lists the tier for every component — 47 of them
+[CATALOG.md](./docs/CATALOG.md) lists the tier for every component — 36 of them
 at the time of writing, but read the count there rather than here: that file is
 generated from the components' own frontmatter, and this sentence is not.
 
@@ -291,26 +292,29 @@ This is on the front page on purpose. **"Installed" and "known to work" are
 different facts**, and a green badge over both is how you end up trusting a skill
 that has never run.
 
-Honest position today: most of the suite is proven on one project, some on two,
-and a real slice is `unverified`.
+Honest position today: this fork's own gate run is the only end-to-end evidence
+that exists; no consumer project has been audited yet, so a real slice of the
+catalogue is `unverified` — and the maturity column, not this sentence, is the
+authority.
 
 ---
 
-## What to expect on a non-Flutter project
+## What to expect before a language adapter ships
 
-Five language adapters exist. Set yours as `adapters.lang` in the profile —
-`/survey` suggests one.
+No language adapter ships yet. The UI adapters left with the design domain this
+suite was re-domained from; a `php` adapter is the first workstream (see
+[docs/ROADMAP.md](./docs/ROADMAP.md)). Leave `adapters.lang` unset until an
+adapter for your stack exists — `/survey` will propose one when it can resolve
+it.
 
-| Adapter | For | Audits that work |
-|---|---|---|
-| `dart` | Flutter | All source audits (except accessibility and copy, which are switched off for everyone) |
-| `tsx` | React / TypeScript | tokens, adapter pattern, layer boundaries, error handling |
-| `web` *(unverified)* | React/TS plus Vue, Svelte, CSS/SCSS | tokens, adapter pattern, layer boundaries |
-| `swift` *(unverified)* | SwiftUI / UIKit | tokens, reduced motion, adapter pattern |
-| `kotlin` *(unverified)* | Jetpack Compose | tokens, reduced motion, adapter pattern |
+The documentation audits work on any stack today: they read the profile and the
+doc roles, not source code — `audit-doc-staleness`, `audit-proposal-status`,
+`audit-claude-md-drift`, `audit-prose-flags`. `audit-mock-api` works too, once
+a mock-API contract is configured (`/sync-mock-api` scaffolds one).
 
-Every other audit **refuses** on that stack with exit code 2 and a message
-saying why, rather than returning nothing.
+The code-shape audits — `audit-error-handling`, `audit-api-consistency`,
+`audit-contract-headers`, `audit-layer-boundaries` — **refuse with exit 2**
+naming the missing adapter, rather than returning nothing.
 
 That refusal is deliberate. **Zero findings and cannot-look are
 indistinguishable in a report**, and one means "you're fine" while the other
@@ -326,7 +330,7 @@ Details, and what to do when no adapter fits your stack, are in
 
 | Symptom | Cause |
 |---|---|
-| `marketplace add` fails on auth | The marketplace is public — an auth failure is local credentials or network, not missing access. Check `gh auth status` and retry |
+| `marketplace add` fails on auth | The marketplace is private — an auth failure means missing read access to `irfan-dahir/backend-quality-suite`. Request access; if you already have it, check `gh auth status` and retry |
 | A script dies on `'str' object has no attribute 'removeprefix'` | `python3` is older than 3.9. Run the backend-suite doctor, which names this directly |
 | Plugin installs but no skills appear | `extraKnownMarketplaces`/`enabledPlugins` written as arrays. They're objects |
 | An audit reports a path that doesn't exist | Stale `profile.json`. Ask Claude to run the backend-suite doctor |
@@ -334,7 +338,7 @@ Details, and what to do when no adapter fits your stack, are in
 | A skill refuses with a capability message | Your adapter doesn't implement that check. Expected, not a bug — see ADOPTING.md |
 | "no .backend-suite/ in this project … nothing is checked on edit" | The project isn't set up, so on-save checks aren't running. Shown once per session. Set the project up to make it go away |
 | A tool exits 2 naming two paths | You're in a git repo nested inside another, and the inner one isn't set up. Set it up, or run from the outer project |
-| Old `scripts/*_findings.json` or `token_pipeline/findings.json` stopped updating | Reports moved into `.backend-suite/` (git-ignored). See [Upgrading from v0.1.0](./docs/USER-GUIDE.md#upgrading-from-v010) |
+| An audit printed nothing to a findings file | Most audits write one only when passed `--findings`; the run's last line names the path when it does |
 
 ---
 

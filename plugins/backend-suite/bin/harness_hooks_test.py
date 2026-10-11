@@ -54,7 +54,7 @@ def snapshot(root: Path) -> dict:
 
 def clean_env(**extra) -> dict:
     env = {k: v for k, v in os.environ.items()
-           if k not in ("CLAUDE_PROJECT_DIR", "DESIGN_SUITE_NO_ONBOARDING")}
+           if k not in ("CLAUDE_PROJECT_DIR", "BACKEND_SUITE_NO_ONBOARDING")}
     env.update(extra)
     return env
 
@@ -78,7 +78,7 @@ class Base(unittest.TestCase):
 
     def edit(self, harness, payload, project_env=False):
         args = [sys.executable, str(EDIT)] + (["--harness", harness] if harness else [])
-        env = clean_env(DESIGN_SUITE_HOOK_STATE_DIR=str(self.state))
+        env = clean_env(BACKEND_SUITE_HOOK_STATE_DIR=str(self.state))
         if project_env:
             env["CLAUDE_PROJECT_DIR"] = str(self.proj)
         return subprocess.run(args, input=json.dumps(payload), capture_output=True,

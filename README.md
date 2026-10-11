@@ -1,14 +1,15 @@
-# AI Design Suite
+# Backend Quality Suite
 
 A drop-in Claude Code plugin marketplace that checks a project's **code** against
 its **documents** — and tells you where they've drifted apart.
 
-Design-system and accessibility auditing, documentation scaffolding that stays
-truthful, copy and brand-voice work, and mock-API contract automation. Built to
-be installed on any project, in any language.
+API-contract and error-shape auditing, documentation scaffolding that stays
+truthful, and mock-API contract automation. Built to be installed on any
+backend project, in any language.
 
-Two plugins — including the full 3D asset pipeline. For how much of what, read
-the counts at the top of **[docs/CATALOG.md](./docs/CATALOG.md)**: they are
+Two plugins — the universal engine and an org-conventions layer. For how much
+of what, read the counts at the top of **[docs/CATALOG.md](./docs/CATALOG.md)**:
+they are
 generated from the plugins' own frontmatter and gated by
 `catalog.py --check`. A hand-written count here has now been wrong four times,
 and this is the one file no gate covers, so the number lives where it can be
@@ -20,7 +21,7 @@ derived rather than being copied to a front page that cannot be checked.
 
 | | |
 |---|---|
-| **[ONBOARDING.md](./ONBOARDING.md)** | Designer-first. Zero to your first audit in ~20 minutes |
+| **[ONBOARDING.md](./ONBOARDING.md)** | Backend-first. Zero to your first audit in ~20 minutes |
 | **[docs/CATALOG.md](./docs/CATALOG.md)** | Every skill, agent and hook — with invocation tier and maturity. Generated from the plugins themselves, so it cannot go stale |
 | **[docs/CONCEPTS.md](./docs/CONCEPTS.md)** | The vocabulary and architecture: context layer, derived collaterals, doc roles, the oracle, seams |
 | **[docs/ADOPTING.md](./docs/ADOPTING.md)** | Putting it on a stack it hasn't seen, plus the real portability case study |
@@ -38,7 +39,7 @@ range, and how:
 
 | Version | Status |
 |---|---|
-| **3.9** | The real floor, and **executed** — the full gate run (`bin/attest.py`, all 18 gates) passes on 3.9.6 |
+| **3.9** | The real floor, and **executed** — the full gate run (`bin/attest.py`, all 16 gates) passes on 3.9.6 |
 | 3.10 | **Inferred, not executed.** Nothing in the source is incompatible, but no run has been observed |
 | 3.11 | **Inferred, not executed.** `.github/workflows/validate.yml` targets it, but Actions billing is off, so that workflow is not running — see [Contributing](#contributing) |
 | 3.8 and older | **Unsupported.** `str.removeprefix` is used in the engine and in `bin/`, and it does not exist before 3.9 |
@@ -52,16 +53,16 @@ rather than letting an audit die partway through on a missing stdlib method.
 ### Then
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-backend-suite
+claude plugin marketplace add irfan-dahir/backend-quality-suite
 ```
 
 ```bash
-claude plugin install backend-suite@ai-backend-suite
+claude plugin install backend-suite@backend-quality-suite
 ```
 
 | Plugin | Scope | Install into |
 |---|---|---|
-| **`backend-suite`** | Universal engine — audits, doc scaffolding, screen scaffolding, adapters | Any project |
+| **`backend-suite`** | Universal engine — audits, doc scaffolding, mock-API automation | Any project |
 | **`house-style`** | Org-level conventions — client-readiness reporting, letterhead, PR reminders | Internal projects only |
 
 Split deliberately: **a client-facing repo takes the engine without inheriting
@@ -77,7 +78,7 @@ say yes:
 - **Already set up** → you hear nothing.
 
 Don't want the offer? Add an empty `.backend-suite-onboarding-declined` file to
-the project root, or set `DESIGN_SUITE_NO_ONBOARDING=1`.
+the project root, or set `BACKEND_SUITE_NO_ONBOARDING=1`.
 
 Prefer to do it by hand? See [ONBOARDING.md](./ONBOARDING.md) step 2. Which
 stacks are supported, where reports go, and how to upgrade from v0.1.0 are in
@@ -96,10 +97,10 @@ Same scripts, same exit codes. Details, including how it locates itself without
 ## The idea in one paragraph
 
 Your **context layer** is the set of documents that are true because a human
-decided so — design doc, flows, decisions log, brand voice. The suite never
+decided so — API doc, API standard, decisions log, deprecation ledger. The suite never
 hardcodes a path to any of them; it refers to them by **role** and resolves the
 role per project. That indirection is the whole trick. It's why a skill written
-for a Flutter app runs unchanged on a Next.js one, and it's what took the
+for a Lumen service runs unchanged on a Rails one, and it's what took the
 reference project from **252 hardcoded documentation paths to 0** — a bigger
 obstacle to reuse than anything language-specific.
 
@@ -110,12 +111,12 @@ Full vocabulary in [docs/CONCEPTS.md](./docs/CONCEPTS.md).
 
 ---
 
-## Design invariants
+## Suite invariants
 
 New components are expected to honour these:
 
 1. **Report, never auto-fix.** Audits produce findings; a human decides. Anything
-   touching brand, visual design, or copy requires an explicit decision point.
+   touching an API's contract, error shape, or published docs requires an explicit decision point.
 2. **One direction of truth.** Skills read the context layer and write derived
    artifacts, never the reverse.
 3. **Zero dependencies.** Engine scanners are stdlib-only Python. No install step.
@@ -139,50 +140,48 @@ plugins/backend-suite/
 ├── bin/                                CLI entry points; hold no language knowledge
 └── backend_suite/
     ├── engine/     LAYER 1  stdlib-only, zero project literals, imports no adapter
-    ├── adapters/   LAYER 2  the stack seams — dart.py, tsx.py, web.py, swift.py, kotlin.py
+    ├── adapters/   LAYER 2  the stack seams — none ship yet; php.py is next (see ROADMAP)
     └── project.py           resolves the project under audit
 
 <consuming repo>/.backend-suite/         LAYER 3  data only, no code
-├── profile.json           adapter choice, source globs, token source, exemptions
+├── profile.json           adapter choice, source globs, exemptions
 ├── docs.manifest.json     role → path map
 └── baselines/             recorded audit output (the oracle)
 ```
 
 Each layer knows strictly less about specifics than the one below it names. The
 engine takes checks as a parameter and imports no adapter, so there's no path by
-which it could reach `dart.py`; `verify_seam.py` proves that behaviourally in CI.
+which it could reach an adapter; `verify_seam.py` proves that behaviourally in CI,
+with a second, synthetic language.
 
 ---
 
 ## Honest status
 
-- **All three seams implemented.** Language (`dart`, `tsx`, `web`, `swift`, `kotlin`), asset
-  (`flutter_pubspec`, `bundler`), scaffold (`flutter`). `dart` does tokens,
-  focus order and reduced motion; `tsx` does tokens — including Tailwind arbitrary
-  values — and **refuses the rest by name** rather than returning empty. `web`
-  (unverified — measured once on five public projects, see
-  [the measurement](./docs/MEASUREMENT-2026-10-08-web-adapter.md)) extends `tsx` to Vue/Svelte SFCs and
-  CSS/SCSS stylesheets. `swift` (SwiftUI/UIKit) and `kotlin` (Jetpack Compose),
-  also unverified, do tokens, reduced motion and the adapter-pattern audit, and
-  refuse the rest by name.
-- **Two audits are switched off**, and the README says so rather than letting
-  them pad the list above. `audit_accessibility` and `audit_copy` are `disabled`
-  in `backend_suite/engine/audit_discovery.DISABLED` — measured false-positive
-  rates of 100% and 73% on real consumer projects (issues #104, #109). They
-  **refuse with exit 2** rather than exiting 0, so nothing baselines them as
-  clean. `dart` still implements `a11y_checks` and copy extraction; the audits
-  on top of them are off, and that is the honest way round to state it. Each
-  entry carries its measured evidence and the bar for re-enabling it.
-- **One adapter exists to refuse correctly.** `bundler` covers stacks with no asset
-  registry, where "is this registered?" has no answer, and raises instead of
-  inventing a boolean.
-- **Validated on a second, real codebase** — read-only against
-  [`calcom/cal.com`](https://github.com/calcom/cal.com): 20 genuine token
-  findings, two skills correctly refusing, and one real coverage gap found and
-  named. That gap — Tailwind utility classes being invisible to `tsx.py` — is now
-  closed: arbitrary values like `h-[17px]` are audited, while scale references like
-  `h-4` are correctly left alone. Details in
-  [docs/ADOPTING.md](./docs/ADOPTING.md#case-study-a-real-typescript-codebase).
+- **No language adapter ships yet.** The UI adapters left with the
+  design domain this suite was re-domained from; a `php` adapter is the
+  first workstream of the backend re-domaining (see
+  [docs/ROADMAP.md](./docs/ROADMAP.md)). The seam itself is proven:
+  `verify_seam.py` runs a second, synthetic language through the same
+  `Check` / `scan_tree` interface in CI — positive and negative
+  controls included — and the registry's structural contract (`NAME`,
+  `FILE_GLOBS`, `checks(ctx)`) is verified against every module it
+  discovers.
+- **The disabled-audit registry is empty.** When an audit's measured
+  false-positive rate forces it off, it lands in
+  `backend_suite/engine/audit_discovery.DISABLED` with its measured
+  evidence and the bar for re-enabling — and it **refuses with exit 2**
+  rather than exiting 0, so nothing baselines it as clean. An empty
+  registry is a fact about this fork today, not a claim that nothing
+  ever warranted disabling.
+- **Not yet validated on a second codebase in this suite's current
+  form.** The first validation targets are
+  [`jikan-me/jikan-rest`](https://github.com/jikan-me/jikan-rest) (a
+  Lumen REST API) and [`jikan-me/jikan`](https://github.com/jikan-me/jikan)
+  (its PHP parser library); the API-domain audits that will run against
+  them are the next workstream (see ROADMAP). "Installed" and "known to
+  work" are different facts, and this suite does not yet claim the
+  second one.
 - **Maturity is declared per component**, and a meaningful slice is ⚪
   `unverified` — meaning no evidence of an end-to-end run was found, not that
   it's broken. Read the column in [docs/CATALOG.md](./docs/CATALOG.md) before

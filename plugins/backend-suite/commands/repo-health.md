@@ -10,10 +10,10 @@ maturity: unverified
 > **What it writes.** Never fixes anything, but it is not read-only: it runs
 > every audit with `--findings`, so each audit writes its envelope under
 > `.backend-suite/findings/`, and audits that save a raw report on every run
-> (e.g. `/audit-tokens`, `/audit-adapter-pattern`) write that too.
+> (e.g. `/audit-mock-api`) write that too.
 
-> Documents are referenced by role, e.g. `{{doc:design}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" design`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
+> Documents are referenced by role, e.g. `{{doc:api}}` — resolve with
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve.py" api`. See `${CLAUDE_PLUGIN_ROOT}/docs/DOC-ROLES.md`.
 >
 > **Exit 4 — declined:** the project has recorded that it has no such document,
 > and `resolve.py` prints the reason on stdout. Skip the check that needed it and

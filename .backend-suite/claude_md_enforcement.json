@@ -3,7 +3,7 @@
   "rules": [
     {
       "id": "gates-count",
-      "statement": "gates.py parses .github/workflows/validate.yml and runs 18 of the 18 gates, with none skipped",
+      "statement": "gates.py parses .github/workflows/validate.yml and runs 16 of the 16 gates, with none skipped",
       "check": {
         "kind": "value_match",
         "claudeMdPattern": "runs (\\d+) of the \\d+ gates",
@@ -55,7 +55,7 @@
     {
       "id": "prepush-hook-is-opt-in-and-removable",
       "statement": "opt in to running attest.py on every push with install_prepush_hook.py, and --uninstall removes it",
-      "_note": "The test covers the three properties the rule promises — nothing installed until asked, removable, and never overwriting a hook it did not write — each paired with the positive case it must not swallow.",
+      "_note": "The test covers the three properties the rule promises \u2014 nothing installed until asked, removable, and never overwriting a hook it did not write \u2014 each paired with the positive case it must not swallow.",
       "check": {
         "kind": "command_exits_zero",
         "command": "python3 plugins/backend-suite/bin/install_prepush_hook_test.py >/dev/null"
