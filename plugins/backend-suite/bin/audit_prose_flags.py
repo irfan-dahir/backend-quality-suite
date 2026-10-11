@@ -185,9 +185,15 @@ def _help_text(script_path: Path, probe_root: Path) -> str | None:
         return None
     env = dict(os.environ)
     env["CLAUDE_PROJECT_DIR"] = str(probe_root)
+    # Run from the workspace root (the repo containing the script) so that
+    # relative paths in the script (e.g., plugins/house-style/bin/...) resolve correctly.
+    # Find the workspace root by walking up from the script until we hit a .git dir.
+    workspace_root = path.parent
+    while workspace_root != workspace_root.parent and not (workspace_root / ".git").is_dir():
+        workspace_root = workspace_root.parent
     try:
         proc = subprocess.run([sys.executable, str(path), "--help"], env=env,
-                              cwd=str(probe_root), capture_output=True, text=True,
+                              cwd=str(workspace_root), capture_output=True, text=True,
                               timeout=60)
     except subprocess.TimeoutExpired:
         return None
@@ -300,7 +306,18 @@ def harvest(root: Path) -> list[tuple[Path, int, Path, str]]:
     for pattern in SCAN_GLOBS:
         for md in sorted(root.glob(pattern)):
             # <root>/<plugin>/commands/... — the plugin owning this prose.
-            plugin_root = root / md.relative_to(root).parts[0]
+            # The plugin root is the directory containing the commands/ or agents/ subdirectory.
+            rel = md.relative_to(root)
+            # Find the plugin root: walk up from the markdown file to find the
+            # directory that contains commands/ or agents/
+            plugin_root = md.parent
+            while plugin_root != root and plugin_root.name not in ("commands", "agents"):
+                plugin_root = plugin_root.parent
+            if plugin_root == root:
+                plugin_root = root / rel.parts[0]  # fallback
+            else:
+                plugin_root = plugin_root.parent  # go up from commands/ or agents/ to plugin root
+            
             for lineno, line in enumerate(md.read_text(encoding="utf-8",
                                                        errors="replace").splitlines(), 1):
                 hits: dict[int, Path] = {}

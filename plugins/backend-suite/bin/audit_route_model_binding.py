@@ -198,9 +198,29 @@ def check_bindings(
                 })
         
         # Check controller signatures if enabled
-        if check_sigs and controller_class in str(controllers):
-            # TODO: match controller class to file
-            pass
+        if check_sigs:
+            # Match controller class to its file and check method signatures
+            for controller_file, methods in controllers.items():
+                if controller_class in controller_file or controller_class.replace("Controller", "") in controller_file:
+                    for method_name, params in methods.items():
+                        for param in params:
+                            param_type = param["type"]
+                            param_name = param["name"]
+                            
+                            # Check if this parameter type is a known model
+                            if param_type in ["Model", "Eloquent"]:
+                                continue  # too generic
+                            
+                            # Check if it's a model we know about
+                            if param_type not in models and not param_type.startswith("Illuminate\\"):
+                                # Could be a missing model or a non-model type
+                                findings.append({
+                                    "kind": "untyped_or_missing_model_param",
+                                    "file": str(controller_file),
+                                    "line": 0,  # would need more parsing for exact line
+                                    "detail": f"Controller parameter '{param_name}: {param_type}' in {controller_file} may be an implicit route model binding for missing model '{param_type}'",
+                                    "severity": "should_fix",
+                                })
     
     # Check controller signatures against bindings
     if check_sigs:
