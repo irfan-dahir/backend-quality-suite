@@ -300,6 +300,7 @@ def main() -> int:
                     f.get("detail") or "", severity=F.CRITICAL if f.get("severity") == "critical" else F.SHOULD_FIX,
                     file=f.get("file"), line=f.get("line"))
              for f in findings],
+            scanned=len(models) + len(bindings) + len(controllers),
         )
     
     # Print summary
