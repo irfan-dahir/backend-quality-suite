@@ -52,6 +52,15 @@ AUDIT = MOCKAPI / "audit_mock_api.py"
 SYNC = MOCKAPI / "sync_mock_api.py"
 GENERATE = MOCKAPI / "generate_openapi.py"
 
+# The provider itself, imported directly for the level the engine cannot
+# show: which PHP members are (and are not) on the wire. PLUGIN puts the
+# `backend_suite` package on the path; MOCKAPI puts the top-level
+# `providers` package there — the same two sys.path entries the mockapi
+# scripts add for themselves.
+sys.path.insert(0, str(PLUGIN))
+sys.path.insert(0, str(MOCKAPI))
+import providers.schema.php_model_fields as php_provider  # noqa: E402
+
 CONTRACT = "manuscripts"
 ANCHOR = "### GET /manuscripts"
 
@@ -64,6 +73,25 @@ class Item {
     cadence: json['cadence'] as String,
     weekday: json['weekday'] as int?,
   );
+}
+"""
+
+# The same wire shape through the php_model_fields provider's convention:
+# public instance properties. private/protected/static members are planted
+# deliberately — they are NOT on the wire, and the provider-level case below
+# proves they are not counted as fields.
+PHP_MODEL_SRC = """<?php
+
+class Item
+{
+    public string $id;
+    public string $name;
+    public string $cadence;
+    public ?int $weekday;
+
+    private string $internalToken;
+    protected array $cache = [];
+    public static array $registry = [];
 }
 """
 
@@ -81,12 +109,16 @@ def build_project(
     optional_fields: dict | None = None,
     servers: dict | None = DECLARED_SERVERS,
     project_name: str | None = "Synthetic",
+    php: bool = False,
 ) -> Path:
     """A complete synthetic consumer project rooted at `root`.
 
     `records` are the fixture's records. `mock_records` are what the Postman
     example and the API doc's example block hold; `None` means "identical to
     the fixture", which is the in-sync baseline every drift case perturbs.
+    `php=True` swaps the schema seam only — a PHP model with public
+    properties instead of a Dart model with fromJson — so the second
+    provider runs through the identical pipeline.
     """
     if root.exists():
         shutil.rmtree(root)
@@ -99,7 +131,7 @@ def build_project(
                     "pipelines": {"mockApi": "mock_api"}}, indent=2))
 
     contract: dict = {
-        "model_file": "lib/item_model.dart",
+        "model_file": "src/Item.php" if php else "lib/item_model.dart",
         "fixture": "test/fixtures/items.json",
         "fixture_list_key": "items",
         "mock_folder": "Items",
@@ -111,7 +143,7 @@ def build_project(
 
     (root / "mock_api").mkdir()
     config: dict = {
-        "schema_provider": "dart_fromjson",
+        "schema_provider": "php_model_fields" if php else "dart_fromjson",
         "doc_provider": {"kind": "markdown_api", "file": "docs/API.md"},
         "mock_provider": {"kind": "postman", "file": "mock_api/collection.json"},
     }
@@ -121,8 +153,12 @@ def build_project(
     (root / "mock_api" / "contracts.json").write_text(
         json.dumps({CONTRACT: contract}, indent=2))
 
-    (root / "lib").mkdir()
-    (root / "lib" / "item_model.dart").write_text(MODEL_SRC)
+    if php:
+        (root / "src").mkdir()
+        (root / "src" / "Item.php").write_text(PHP_MODEL_SRC)
+    else:
+        (root / "lib").mkdir()
+        (root / "lib" / "item_model.dart").write_text(MODEL_SRC)
 
     (root / "test" / "fixtures").mkdir(parents=True)
     (root / "test" / "fixtures" / "items.json").write_text(
@@ -453,6 +489,43 @@ class ReportPathTest(TempProjectTest):
         text = (Path(__file__).resolve().parent.parent
                 / "templates/dot-backend-suite/gitignore.template").read_text()
         self.assertIn("\nmock-api-findings.json\n", text)
+
+
+class PhpSchemaProviderTest(TempProjectTest):
+    """The second schema provider, through the identical pipeline.
+
+    Only the schema seam swaps (php_model_fields over a PHP model's public
+    properties); contracts, fixture, doc and collection are the dart
+    fixtures' own. A clean audit here proves the php provider's fields flow
+    through the engine exactly like the dart one's, and the drift case
+    proves the shape it reports is the shape the checks compare against.
+    The provider-level case covers what the engine cannot show: private,
+    protected and static members are not on the wire and are not counted.
+    """
+
+    def test_in_sync_project_audits_clean(self):
+        build_project(self.root, records=[DAILY], php=True,
+                      optional_fields={"weekday": {"when": WEEKLY_CONDITION}})
+        proc, findings = audit(self.root)
+        self.assertEqual(of_check(findings, "model_vs_fixture"), [])
+        self.assertEqual(of_check(findings, "model_vs_mock"), [])
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+
+    def test_missing_required_field_drifts_like_the_dart_fixture(self):
+        no_name = {k: v for k, v in DAILY.items() if k != "name"}
+        build_project(self.root, records=[no_name], php=True,
+                      optional_fields={"weekday": {"when": WEEKLY_CONDITION}})
+        proc, findings = audit(self.root)
+        breaks = [f for f in of_check(findings, "model_vs_fixture")
+                  if "'name'" in f["detail"]]
+        self.assertEqual(len(breaks), 1)
+        self.assertEqual(breaks[0]["severity"], "critical")
+        self.assertEqual(proc.returncode, 1)
+
+    def test_private_protected_and_static_members_are_not_on_the_wire(self):
+        build_project(self.root, records=[DAILY], php=True)
+        fields = php_provider.read_fields(self.root / "src" / "Item.php")
+        self.assertEqual(fields, ["id", "name", "cadence", "weekday"])
 
 
 class NoProfileRefuses(unittest.TestCase):
