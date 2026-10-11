@@ -51,9 +51,18 @@ Status legend: `[ ]` open · `[x]` done (with commit).
 - [ ] `bin/audit_report_paths_test.py` — report-path mechanics
   (`--out` wins, defaults inside `.backend-suite/`, scaffolded .gitignore
   covers them) against adapter-backed audits.
-- [ ] `bin/audit_contract_headers_test.py` — mockapi seed tests built on
-  `adapters.dart` → php fixtures. (`bin/audit_error_handling_test.py`
-  re-authored separately: (D5b-1, this commit) 23 in-process cases on
+- [x] (D5b-2, this commit) `bin/audit_contract_headers_test.py` — mockapi
+  seed tests built on `adapters.dart` → php fixtures: 53 cases over a
+  Lumen-shaped fixture (screens = controllers with a CONTRACT header over
+  `private …Contract $contract;`), with the engine/contracts `Sections`
+  cases carried over verbatim (language-agnostic) and every dart hazard
+  re-measured against `adapters/php.py` before being asserted. The audit
+  itself needed no changes: all six fixture mismatches found on the first
+  run were bugs in my fixtures (notably `screenClassPattern` must keep the
+  class-name suffix inside the capture — `(\w+Controller)`, not
+  `(\w+)Controller` — or the loose-parameter and widget_own branches look
+  up a name no class declares). (`bin/audit_error_handling_test.py`
+  re-authored separately in D5b-1/fd10e05: 23 in-process cases on
   `php.ERROR_HANDLING` + a php vocabulary; surfaced and fixed two defects —
   the `inline_error_without_shared_state` member match was dot-only, so it
   could never fire on the shipped adapter, and the mangling/dead-state
