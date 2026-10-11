@@ -5,7 +5,7 @@
     "Decision 2 keeps these six unfixed in the consumer repositories on purpose: they",
     "are the survey's acceptance test, and a survey that does not surface them has not",
     "earned trust. This file is the scorecard for that, so the number cannot regress",
-    "quietly — issue #114 scored 4 of 6 the first time it was run by hand.",
+    "quietly — acceptance test scored 4 of 6 the first time it was run by hand.",
     "",
     "It lives in docs/ and not in plugins/backend-suite/ because every expectation here",
     "names a specific real project. The scorer that reads it (bin/score_acceptance.py)",

@@ -1046,7 +1046,7 @@ checked by a gate — and `doctor.py` will tell you if your own
 ```
 ✗ hooks.map.json entry "…": fixHint suggests '/wire-endpoint', which is not on the
 plugin's safe-repairers allowlist … A suggested fix is exactly the sentence shape
-that deleted correct data in issue #116
+that deleted correct data that was found during validation
 ```
 
 When an audit tells you two things disagree, the next step is yours. That is not

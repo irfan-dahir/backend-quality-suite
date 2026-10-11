@@ -15,7 +15,7 @@ the decisions log — this document stays as the record of what was proposed
 and why.
 
 **Evidence base:** five parallel research tracks, recorded on
-[issue #92](https://github.com/irfan-dahir/ai-backend-suite/issues/92), run
+**2026-08-10** (recorded in RFC-0002 §1), run
 against four real repositories — two consumer projects ([Client A] mobile and web portal),
 `<design-system-repo>` (a genuine zero-state case: no `.backend-suite/` at all),
 and this repo. Every number below is measured, not estimated.
@@ -85,7 +85,7 @@ engineering tried round-trip generation in the 2000s and failed
 measures whether a specification is sufficient; it does not build the project
 from it.
 
-Full working: [issue #101](https://github.com/irfan-dahir/ai-backend-suite/issues/101).
+Full working: **recorded in RFC-0002 §2**.
 
 ## 1. Summary
 
@@ -717,7 +717,7 @@ Amended again 2026-09-15, after three lifecycle/value research tracks:
    and exception aggregation are about what the suite *does*, not about dropping
    in, and belong in their own document rather than bloating this one.
 
-**Scaffolding matrix** (full working: [issue #95](https://github.com/irfan-dahir/ai-backend-suite/issues/95)):
+**Scaffolding matrix** (full working: **recorded in RFC-0002 §3**):
 36 roles, up from 22 — 6 universal core, 13 `app`, 16 `design-system` (3 shared
 back to `app`), 4 any-archetype, and deliberately **0 for `docs-site`**, since no
 real example exists to ground it; the kind stays declarable so it refuses rather

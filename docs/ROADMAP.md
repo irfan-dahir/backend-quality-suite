@@ -105,7 +105,7 @@ repos, unreadable from here. And a mechanical verify run is not the end-to-end r
 ### Accepted follow-on: RFC-0001
 
 [RFC-0001](proposals/RFC-0001-evidence-and-tool-promotion.md) (accepted 2026-09-14,
-tracked in issue #75) extends A1/A2's scope to a project's own bespoke tooling, plus a
+recorded in RFC-0001 §8) extends A1/A2's scope to a project's own bespoke tooling, plus a
 gated promotion pipeline for tools that prove themselves via that evidence. Per its own
 §8, it stays gated — it does not begin until A1 (now built) has actually run against real
 project tooling and surfaced at least one real promotion candidate, not synthetic data.

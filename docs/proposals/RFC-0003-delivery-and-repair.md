@@ -12,10 +12,9 @@
 A proposal, not a decision.
 
 **Evidence base:** three research tracks run 2026-09-15 —
-[#98](https://github.com/irfan-dahir/ai-backend-suite/issues/98) (report vs.
-fix),
-[#99](https://github.com/irfan-dahir/ai-backend-suite/issues/99) (lifecycle),
-[#100](https://github.com/irfan-dahir/ai-backend-suite/issues/100) (fleet) —
+*Report vs. fix* (recorded in RFC-0003 §2),
+*Lifecycle* (recorded in RFC-0003 §3),
+*Fleet* (recorded in RFC-0003 §4) —
 measured against the same four repositories as RFC-0002.
 
 ---
@@ -247,7 +246,7 @@ that fix deliberately closed.
 ## 7. Open questions
 
 - ~~What false-positive ceiling do we hold ourselves to?~~ **Resolved 2026-09-15,
-  from measurement rather than precedent** ([#104](https://github.com/irfan-dahir/ai-backend-suite/issues/104)).
+  from measurement rather than precedent** (recorded in RFC-0003 §2).
   The bar is **≤5% wrong, ≤20% total noise, and 0% for band-1 repair** — stricter
   than Tricorder's 10%, and deliberately so: per §0, the reader is an agent that
   *acts* on a finding rather than a human who glances at one, so a ceiling
@@ -269,7 +268,7 @@ that fix deliberately closed.
   theirs). Both were fixed the same day: the first disabled with a stated bar for
   re-enabling, the second retargeted to the consumer project.
 - ~~Does "scoped to changed lines" mean changed lines only, or changed files?~~
-  **Files. Decided 2026-09-15 (issue #104), after lines was built, measured and
+  **Files. Decided 2026-09-15 (recorded in RFC-0003 §2), after lines was built, measured and
   reverted.** Lines is stricter, and on this codebase it is also wrong: findings
   are anchored at the *matched expression*, not the offending literal.
   `engine/scan.py` records `line_of(source, match.start())`, and an adapter

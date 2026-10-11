@@ -529,7 +529,7 @@ A project that installs `house-style` inherits a `Verification-Tier:` /
 mirroring the `Co-Authored-By:` commit trailer convention. Vocabulary —
 `unverified` / `self-tested` / `cross-verified` / `human-reviewed` — comes from
 [`verification-tier.schema.json`](../plugins/backend-suite/templates/verification-tier.schema.json)
-(issue #55); a PR takes the **lowest** tier among its bundled commits.
+(recorded in `verification-tier.schema.json`); a PR takes the **lowest** tier among its bundled commits.
 
 The rule that matters most: **an agent may self-report `unverified` or
 `self-tested`, never `cross-verified` or `human-reviewed`** — those two require
