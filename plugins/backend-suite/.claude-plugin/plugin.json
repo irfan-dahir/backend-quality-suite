@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "backend-suite",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Project-agnostic backend and data-API tooling. Every project specific — paths, globs, route roots, accepted exceptions, doc locations — is read from a .backend-suite/ profile in the consuming repo, never hardcoded here.",
+  "author": {
+    "name": "Irfan Dahir",
+    "url": "https://github.com/irfan-dahir"
+  },
+  "homepage": "https://github.com/irfan-dahir/backend-quality-suite",
+  "keywords": [
+    "backend",
+    "api",
+    "rest",
+    "documentation",
+    "audit",
+    "mock-api"
+  ],
+  "mcpServers": {
+    "backend-suite-audits": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/audit_server.py"]
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 Issue #104. The first measurement
 ([MEASUREMENT-2026-10-08-web-adapter.md](./MEASUREMENT-2026-10-08-web-adapter.md))
-tuned `design_suite/adapters/web.py` and judged it on the same five projects.
+tuned `backend_suite/adapters/web.py` and judged it on the same five projects.
 This is the held-out re-measurement it asked for. **It is a test, not a tuning
 pass: `web.py` is not changed by this branch.**
 
@@ -27,9 +27,9 @@ from memory of the ecosystem before cloning, not by inspecting findings:
 **Run, exactly as a new user would**, in a shallow clone under `mktemp -d`:
 
 ```bash
-python3 $SUITE/plugins/design-suite/bin/survey.py --project-root .
-python3 $SUITE/plugins/design-suite/bin/init.py --dir . --from-survey
-python3 $SUITE/plugins/design-suite/bin/audit_tokens.py      # no --dir: the profile's source.root
+python3 $SUITE/plugins/backend-suite/bin/survey.py --project-root .
+python3 $SUITE/plugins/backend-suite/bin/init.py --dir . --from-survey
+python3 $SUITE/plugins/backend-suite/bin/audit_tokens.py      # no --dir: the profile's source.root
 ```
 
 No `exceptions.json` edits, no `--dir` override. If init does not seed
@@ -162,7 +162,7 @@ Three of these, stories, data objects and HTML entities, account for 66 of the
 **The bar, quoted.** `docs/CONCEPTS.md` defines ✅ **proven** as "Recorded
 evidence of a real end-to-end run". The numeric bar for this suite's
 precision-measured components, from the `DISABLED` registry in
-`design_suite/engine/audit_discovery.py` (issue #104), is "<=5% wrong AND
+`backend_suite/engine/audit_discovery.py` (issue #104), is "<=5% wrong AND
 demonstrated non-zero true-positive capacity", re-measured "on two real
 consumer projects".
 

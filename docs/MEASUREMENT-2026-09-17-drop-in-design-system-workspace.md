@@ -41,7 +41,7 @@ workspace:
 
 Three workspace members. One root manifest that is a stub. A `tokens/` tree of
 JSON that generates Dart, CSS and Figma output. 137 component pages under
-`docs/components/`. No `.design-suite/`.
+`docs/components/`. No `.backend-suite/`.
 
 Commit surveyed: `162f3367ce83befde6a8d41dd5fd11c252495a06`, branch `main`,
 `workingTreeDirty: false`.
@@ -53,7 +53,7 @@ Commit surveyed: `162f3367ce83befde6a8d41dd5fd11c252495a06`, branch `main`,
 ### 1a. `survey.py --stdout`
 
 ```
-$ python3 $SUITE/plugins/design-suite/bin/survey.py --project-root $EDS --stdout
+$ python3 $SUITE/plugins/backend-suite/bin/survey.py --project-root $EDS --stdout
 ```
 
 Exit 0. Key values, verbatim from the JSON:
@@ -92,8 +92,8 @@ the best-behaved part of the whole run.
 ### 1b. `survey.py --check`
 
 ```
-$ python3 $SUITE/plugins/design-suite/bin/survey.py --project-root $EDS --check
-survey --check: no .design-suite/ in $EDS — there is no declared side to diff
+$ python3 $SUITE/plugins/backend-suite/bin/survey.py --project-root $EDS --check
+survey --check: no .backend-suite/ in $EDS — there is no declared side to diff
 against. Run the survey first; refusing to report a clean completeness check on
 a project that declares nothing.
 $ echo $?
@@ -106,8 +106,8 @@ would be exactly the indistinguishable silence the suite exists to prevent.
 ### 1c. `doctor.py`
 
 ```
-$ python3 $SUITE/plugins/design-suite/bin/doctor.py --profile $EDS/.design-suite/profile.json
-no profile at $EDS/.design-suite/profile.json
+$ python3 $SUITE/plugins/backend-suite/bin/doctor.py --profile $EDS/.backend-suite/profile.json
+no profile at $EDS/.backend-suite/profile.json
 $ echo $?
 1
 ```
@@ -121,7 +121,7 @@ refusal does.
 
 ```
 $ cp -R $EDS $COPY
-$ python3 $SUITE/plugins/design-suite/bin/init.py --dir $COPY --from-survey
+$ python3 $SUITE/plugins/backend-suite/bin/init.py --dir $COPY --from-survey
 ```
 
 ### What it seeds
@@ -173,16 +173,16 @@ scaffold artifact, while leaving five correct mappings on the floor.
 ### What `doctor.py` then says
 
 ```
-$ cd $COPY && python3 $SUITE/plugins/design-suite/bin/doctor.py
+$ cd $COPY && python3 $SUITE/plugins/backend-suite/bin/doctor.py
 doctor: provenance — 0 of 24 field(s) carry a human decision ('declared' or 'approved').
   24 field(s) are UNTRUSTED.
 ...
-design-suite doctor — 12 problem(s):
+backend-suite doctor — 12 problem(s):
   ✗ source.root: "TODO: repo-relative source root, e.g. 'lib' or 'src'" does not exist
   ✗ source.sharedComponentDir: 'TODO or delete: ...' does not exist
   ✗ source.testRoot: 'TODO or delete: ...' does not exist
   ✗ tokens.source.path: "TODO: repo-relative path to the token source, ..." does not exist
-  ✗ audits.baselineDir: '.design-suite/baselines' does not exist
+  ✗ audits.baselineDir: '.backend-suite/baselines' does not exist
   ✗ docs.roles.design: 'docs/DESIGN.md' does not exist (delete the role, or move it to externalRoles)
   ✗ docs.roles.flows: 'docs/FLOWS.md' does not exist (delete the role, or move it to externalRoles)
   ✗ docs.roles.decisions: 'docs/DECISIONS.md' does not exist (delete the role, or move it to externalRoles)
@@ -208,7 +208,7 @@ root, no token source) are buried among them.
 ### `preflight.py`
 
 ```
-$ cd $COPY && python3 $SUITE/plugins/design-suite/bin/preflight.py
+$ cd $COPY && python3 $SUITE/plugins/backend-suite/bin/preflight.py
 preflight against $COPY
 7/47 component(s) have every precondition satisfied.
 ...
@@ -231,7 +231,7 @@ assertion is true, but no profile field exists that could ever declare it), or
 **wrong** (the assertion is false).
 
 ```
-$ cd $COPY && python3 $SUITE/plugins/design-suite/bin/survey.py --check
+$ cd $COPY && python3 $SUITE/plugins/backend-suite/bin/survey.py --check
 ...
 14 finding(s). This is the disk → declared direction; every doctor.py check runs
 declared → disk and is blind to additions by construction.
@@ -319,7 +319,7 @@ output.** `config_files()` counts `survey.json` on the declared side — it is o
 of the nine — so any path the survey happened to inventory becomes "declared":
 
 ```
-$ python3 -c "import json; d=json.load(open('.design-suite/survey.json')); \
+$ python3 -c "import json; d=json.load(open('.backend-suite/survey.json')); \
   print([x['path'] for x in d['documents']['documents'] if 'hosting' in x['path']])"
 ['docs_hosting/README.md', 'gallery_hosting/README.md']
 ```
@@ -337,18 +337,18 @@ is careful about.
 | Prior claim | Reproduces? | Now |
 |---|---|---|
 | `sourceRoots: []`, survey refuses because `pubspec.yaml` declares `workspace:` | **Yes** | Refusal intact, well-worded, and cites RFC-0002 §3g #3 by name |
-| Real roots are three; `resolve.py` models one | **Yes** | `packages/ds_flutter`, `packages/ds_tokens_client_a`, `gallery`. `grep -n root $SUITE/plugins/design-suite/bin/resolve.py` returns two hits, both `project_root` / `REPO` — no multi-root notion at all |
+| Real roots are three; `resolve.py` models one | **Yes** | `packages/ds_flutter`, `packages/ds_tokens_client_a`, `gallery`. `grep -n root $SUITE/plugins/backend-suite/bin/resolve.py` returns two hits, both `project_root` / `REPO` — no multi-root notion at all |
 | Token detection wrong — 1 candidate at 0.5, `docs/stylesheets/tokens.css` | **Yes, exactly** | And the candidate's own first line reads `/* GENERATED by tooling/generate.py from tokens/**.json — DO NOT EDIT. */`. The detector nominated a generated artifact; the real chain is `tokens/**.json` → `tooling/generate.py` → `packages/ds_flutter/lib/src/theme/tokens.g.dart` (483 lines, also generated). Nothing in that chain matches the detector's shapes |
 | **231 unmapped docs** | **No — now 245** | Not a fix; the repository grew. Record it as a moving number, not a measurement of the detector |
 | **8 top-level doc stems ARE vocabulary roles** | **Yes, exactly 8** | `ADAPTIVE-PATTERNS`, `COMMON-MISTAKES`, `DEPRECATIONS`, `FIGMA`, `GALLERY`, `PATTERNS`, `RELEASE`, `THEMING` — each a file in `docs/`, each a role in `roles.json`, none reachable from `ROLE_BY_STEM` |
 | **`ROLE_BY_STEM` lags `roles.json` by 18 roles** | **Yes, exactly 18** | 22 stems reach 18 distinct roles; `roles.json` defines 35. 18 unreachable. One stem maps to `instructions`, which is not a role in `roles.json` |
 | ~130 `docs/components/*.md`; need a directory-valued `components` role | **Partly fixed** | Now **137** pages (`ls $EDS/docs/components/*.md \| wc -l`). The `components` role **now exists** in `roles.json`, marked `"archetypes": {"design-system": "expected"}` and `"workspace": "per-member"`, with both a `template` and a `pageTemplate`. But `init.py` does not scaffold it, `--from-survey` does not seed it, and the 137 pages still land in `unmapped` |
-| `projectKind` never inferred — `grep projectKind survey.py` returns 0 | **Yes** | `grep -c projectKind $SUITE/plugins/design-suite/bin/survey.py` → `0`. The archetype the whole of RFC-0002 §2c turns on is the one thing the survey does not even guess at, and `init.py` leaves it out of the profile entirely |
+| `projectKind` never inferred — `grep projectKind survey.py` returns 0 | **Yes** | `grep -c projectKind $SUITE/plugins/backend-suite/bin/survey.py` → `0`. The archetype the whole of RFC-0002 §2c turns on is the one thing the survey does not even guess at, and `init.py` leaves it out of the profile entirely |
 
 Reproduction command for the two role counts:
 
 ```
-$ cd $SUITE/plugins/design-suite/bin && python3 -c "
+$ cd $SUITE/plugins/backend-suite/bin && python3 -c "
 import importlib.util, json
 spec = importlib.util.spec_from_file_location('s', 'survey.py')
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
@@ -411,19 +411,19 @@ pages cannot be named by either without one entry each.
 profile, same tree, different answers:
 
 ```
-$ cd $SUITE && python3 plugins/design-suite/bin/doctor.py --profile $COPY/.design-suite/profile.json
-design-suite doctor — 9 problem(s):
+$ cd $SUITE && python3 plugins/backend-suite/bin/doctor.py --profile $COPY/.backend-suite/profile.json
+backend-suite doctor — 9 problem(s):
   ...
-  ✗ audits.configFile: '.design-suite/design-audit-config.json' does not exist
-  ✗ audits.exceptionsFile: '.design-suite/exceptions.json' does not exist
-  ✗ audits.archRulesFile: '.design-suite/arch-rules.json' does not exist
-  ✗ docs.manifest: '.design-suite/docs.manifest.json' does not exist
+  ✗ audits.configFile: '.backend-suite/design-audit-config.json' does not exist
+  ✗ audits.exceptionsFile: '.backend-suite/exceptions.json' does not exist
+  ✗ audits.archRulesFile: '.backend-suite/arch-rules.json' does not exist
+  ✗ docs.manifest: '.backend-suite/docs.manifest.json' does not exist
 
-$ cd $COPY && python3 $SUITE/plugins/design-suite/bin/doctor.py
-design-suite doctor — 12 problem(s):
+$ cd $COPY && python3 $SUITE/plugins/backend-suite/bin/doctor.py
+backend-suite doctor — 12 problem(s):
 ```
 
-All four of those files do exist (`ls $COPY/.design-suite/`). Passing
+All four of those files do exist (`ls $COPY/.backend-suite/`). Passing
 `--profile` an absolute path outside the cwd yields four confidently-wrong "does
 not exist" claims and hides the seven docs/hooks problems the in-tree run finds.
 An option that accepts an absolute path and then resolves that profile's own

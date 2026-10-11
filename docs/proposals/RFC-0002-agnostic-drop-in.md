@@ -15,9 +15,9 @@ the decisions log — this document stays as the record of what was proposed
 and why.
 
 **Evidence base:** five parallel research tracks, recorded on
-[issue #92](https://github.com/irfan-dahir/ai-design-suite/issues/92), run
+[issue #92](https://github.com/irfan-dahir/ai-backend-suite/issues/92), run
 against four real repositories — two consumer projects ([Client A] mobile and web portal),
-`<design-system-repo>` (a genuine zero-state case: no `.design-suite/` at all),
+`<design-system-repo>` (a genuine zero-state case: no `.backend-suite/` at all),
 and this repo. Every number below is measured, not estimated.
 
 ---
@@ -85,7 +85,7 @@ engineering tried round-trip generation in the 2000s and failed
 measures whether a specification is sufficient; it does not build the project
 from it.
 
-Full working: [issue #101](https://github.com/irfan-dahir/ai-design-suite/issues/101).
+Full working: [issue #101](https://github.com/irfan-dahir/ai-backend-suite/issues/101).
 
 ## 1. Summary
 
@@ -211,10 +211,10 @@ hard part; **agnostic across project kinds** is.
 
 ## 3. Proposal
 
-### 3a. `design-suite survey` — a derived collateral, not a context layer
+### 3a. `backend-suite survey` — a derived collateral, not a context layer
 
 A new read-only command that walks an unknown project and writes
-`.design-suite/survey.json`: detected stack and candidate adapter, candidate
+`.backend-suite/survey.json`: detected stack and candidate adapter, candidate
 source roots, **candidate** token sources (ranked, never singular), the document
 inventory with proposed roles and a confidence per proposal, and — load-bearing —
 an explicit list of **what it could not determine and why**.
@@ -232,7 +232,7 @@ deleted last month" is the exact failure `CONCEPTS.md` already names.
 
 ### 3b. Candidate profile generation, with per-field provenance
 
-`design-suite init --from-survey` writes a **candidate** profile in which every
+`backend-suite init --from-survey` writes a **candidate** profile in which every
 field carries how it got there:
 
 ```
@@ -449,7 +449,7 @@ into a merged RFC before being checked.
 ### 3e. Token-source detection: candidates, never conclusions
 
 Token discovery measured worst of everything tried. The detector matched
-`.design-suite/findings/tokens.json` — **the audit's own output** — on both
+`.backend-suite/findings/tokens.json` — **the audit's own output** — on both
 consumers, and on both real projects the true token source **is not in the repo
 at all** (`package:ds_flutter`, resolved via `package_config.json`).
 
@@ -486,18 +486,18 @@ and `CapabilityError` on a missing or stale snapshot rather than a clean report.
 |---|---|---|---|
 | 1 | ~~Regenerable output committed by default~~ | ✅ **Fixed in #93** | — |
 | 2 | Version contract: `supportedProfileVersions`, checked in `doctor.py`/`resolve.py` | `profileVersion` is `const: 1` and **nothing** compares plugin↔profile version; skew degrades into a silently narrower audit | S |
-| 3 | Upward profile discovery (nearest `.design-suite/`), optional workspace index | `resolve.py:58` hardcodes the repo-root profile; one adapter, one `source.root`. This repo itself has two plugins and no profile | M |
+| 3 | Upward profile discovery (nearest `.backend-suite/`), optional workspace index | `resolve.py:58` hardcodes the repo-root profile; one adapter, one `source.root`. This repo itself has two plugins and no profile | M |
 | 4 | `schemaSyncedFrom` version+sha stamp, `sync_schema.py`, org sweep over `doctor --json` | The 2-repo drift check does not scale to 50. The sweep also derives `PROJECT_NAMES` (at the time a hardcoded one-name tuple at `audit_skill_paths.py:108`, since replaced by a hashed denylist), closing ROADMAP B3 and B5 | M |
 | 5 | `exceptions.json` entries require `reason`/`reviewedBy`/`expires`; counts surfaced in `/design-debt` | No expiry, reviewer, or cap today — an exception list is how audits get silenced permanently | M |
 
-Governance belongs in `house-style` (org floor) over `design-suite`
+Governance belongs in `house-style` (org floor) over `backend-suite`
 (universal). The existing two-plugin split is the right seam; no third layer.
 
 ### 3h. Staying accurate: the lifecycle half
 
 Everything above is a day-one mechanism. §2b's correction shows why that is not
 enough, and the measurement behind it is stark. Comparing `HEAD` against the
-commit that last touched `.design-suite/`:
+commit that last touched `.backend-suite/`:
 
 | | Portal | Mobile |
 |---|---|---|
@@ -717,7 +717,7 @@ Amended again 2026-09-15, after three lifecycle/value research tracks:
    and exception aggregation are about what the suite *does*, not about dropping
    in, and belong in their own document rather than bloating this one.
 
-**Scaffolding matrix** (full working: [issue #95](https://github.com/irfan-dahir/ai-design-suite/issues/95)):
+**Scaffolding matrix** (full working: [issue #95](https://github.com/irfan-dahir/ai-backend-suite/issues/95)):
 36 roles, up from 22 — 6 universal core, 13 `app`, 16 `design-system` (3 shared
 back to `app`), 4 any-archetype, and deliberately **0 for `docs-site`**, since no
 real example exists to ground it; the kind stays declarable so it refuses rather

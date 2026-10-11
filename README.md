@@ -52,16 +52,16 @@ rather than letting an audit die partway through on a missing stdlib method.
 ### Then
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-design-suite
+claude plugin marketplace add irfan-dahir/ai-backend-suite
 ```
 
 ```bash
-claude plugin install design-suite@ai-design-suite
+claude plugin install backend-suite@ai-backend-suite
 ```
 
 | Plugin | Scope | Install into |
 |---|---|---|
-| **`design-suite`** | Universal engine — audits, doc scaffolding, screen scaffolding, adapters | Any project |
+| **`backend-suite`** | Universal engine — audits, doc scaffolding, screen scaffolding, adapters | Any project |
 | **`house-style`** | Org-level conventions — client-readiness reporting, letterhead, PR reminders | Internal projects only |
 
 Split deliberately: **a client-facing repo takes the engine without inheriting
@@ -76,7 +76,7 @@ say yes:
 - **Brand-new project** → `/onboard-new-client`.
 - **Already set up** → you hear nothing.
 
-Don't want the offer? Add an empty `.design-suite-onboarding-declined` file to
+Don't want the offer? Add an empty `.backend-suite-onboarding-declined` file to
 the project root, or set `DESIGN_SUITE_NO_ONBOARDING=1`.
 
 Prefer to do it by hand? See [ONBOARDING.md](./ONBOARDING.md) step 2. Which
@@ -86,8 +86,8 @@ the [user guide](./docs/USER-GUIDE.md#what-happens-when-you-open-a-project).
 ### Outside Claude Code
 
 Using Codex, Cursor, Copilot, Gemini CLI or another tool? Install the
-`design-suite` command with `pipx install .` (or `uv tool install .`) from a
-checkout — Python 3.9+, no other dependencies — then run `design-suite list`.
+`backend-suite` command with `pipx install .` (or `uv tool install .`) from a
+checkout — Python 3.9+, no other dependencies — then run `backend-suite list`.
 Same scripts, same exit codes. Details, including how it locates itself without
 `${CLAUDE_PLUGIN_ROOT}`: [docs/ADOPTING.md](./docs/ADOPTING.md#install-outside-claude-code).
 
@@ -134,15 +134,15 @@ places. See [the governing principle](./docs/CONCEPTS.md#inert-and-the-governing
 ## Architecture — three layers
 
 ```
-plugins/design-suite/
+plugins/backend-suite/
 ├── commands/  agents/  hooks/  docs/   skill, agent, hook definitions + runtime refs
 ├── bin/                                CLI entry points; hold no language knowledge
-└── design_suite/
+└── backend_suite/
     ├── engine/     LAYER 1  stdlib-only, zero project literals, imports no adapter
     ├── adapters/   LAYER 2  the stack seams — dart.py, tsx.py, web.py, swift.py, kotlin.py
     └── project.py           resolves the project under audit
 
-<consuming repo>/.design-suite/         LAYER 3  data only, no code
+<consuming repo>/.backend-suite/         LAYER 3  data only, no code
 ├── profile.json           adapter choice, source globs, token source, exemptions
 ├── docs.manifest.json     role → path map
 └── baselines/             recorded audit output (the oracle)
@@ -167,7 +167,7 @@ which it could reach `dart.py`; `verify_seam.py` proves that behaviourally in CI
   refuse the rest by name.
 - **Two audits are switched off**, and the README says so rather than letting
   them pad the list above. `audit_accessibility` and `audit_copy` are `disabled`
-  in `design_suite/engine/audit_discovery.DISABLED` — measured false-positive
+  in `backend_suite/engine/audit_discovery.DISABLED` — measured false-positive
   rates of 100% and 73% on real consumer projects (issues #104, #109). They
   **refuse with exit 2** rather than exiting 0, so nothing baselines them as
   clean. `dart` still implements `a11y_checks` and copy extraction; the audits
@@ -188,7 +188,7 @@ which it could reach `dart.py`; `verify_seam.py` proves that behaviourally in CI
   it's broken. Read the column in [docs/CATALOG.md](./docs/CATALOG.md) before
   relying on a skill. "Installed" and "known to work" are different facts.
 - **`house-style` carries its own minimal resolver.** It cannot call
-  `design-suite`'s — the plugin cache nests each plugin under its own version
+  `backend-suite`'s — the plugin cache nests each plugin under its own version
   hash, so no sibling-relative path is stable. `bin/resolve_role.py` re-reads the
   manifest and mirrors the exit-code contract; it is parity-tested against the
   real resolver, and its docstring explains why the duplication is deliberate.
@@ -203,7 +203,7 @@ paragraph deliberately does not restate it or count it, because a second copy of
 a list is a second thing to keep in sync. To see what runs, and to run it:
 
 ```bash
-python3 plugins/design-suite/bin/gates.py          # -k filters; a filter matching nothing exits 2
+python3 plugins/backend-suite/bin/gates.py          # -k filters; a filter matching nothing exits 2
 ```
 
 It parses the workflow, so it names every gate and says which it could not run
@@ -224,7 +224,7 @@ pass; those named failures are this fork's clean.
 Regenerate the catalogue after adding or changing a component:
 
 ```bash
-python3 plugins/design-suite/bin/catalog.py
+python3 plugins/backend-suite/bin/catalog.py
 ```
 
 ---

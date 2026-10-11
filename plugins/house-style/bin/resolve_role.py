@@ -3,20 +3,20 @@
 
 ## Why this exists at all
 
-`design-suite/bin/resolve.py` is the real resolver and the only one that should
+`backend-suite/bin/resolve.py` is the real resolver and the only one that should
 ever be extended. This is a deliberate, minimal duplicate, and the duplication
 needs justifying because it is the kind of thing a future reader will want to
 delete.
 
-`house-style` cannot call design-suite's copy:
+`house-style` cannot call backend-suite's copy:
 
   * `${CLAUDE_PLUGIN_ROOT}` points at *this* plugin, which has no `bin/` of its
     own beyond this file.
   * The plugin cache nests every plugin under its own version hash
     (`cache/<marketplace>/<plugin>/<hash>/`), so no sibling-relative path from
-    here is stable across updates. `../../design-suite/*/bin/resolve.py` depends
+    here is stable across updates. `../../backend-suite/*/bin/resolve.py` depends
     on cache internals that are explicitly documented as ephemeral.
-  * `resolve.py` imports `_bootstrap`, which puts design-suite's package on
+  * `resolve.py` imports `_bootstrap`, which puts backend-suite's package on
     `sys.path`. Copying the file alone would not work; copying the package would
     be a far worse duplication than this.
 
@@ -58,12 +58,12 @@ import os
 import sys
 from pathlib import Path
 
-MARKER = ".design-suite"
+MARKER = ".backend-suite"
 MANIFEST = f"{MARKER}/docs.manifest.json"
 
 
 def project_root() -> Path:
-    """Same contract as design_suite.project.project_root — exit rather than guess.
+    """Same contract as backend_suite.project.project_root — exit rather than guess.
 
     A plain `cwd` fallback would silently treat a subdirectory as the whole
     project, which reports fewer findings and reads like an improvement.
@@ -72,7 +72,7 @@ def project_root() -> Path:
     if env and (Path(env) / MARKER).is_dir():
         return Path(env)
     here = Path.cwd().resolve()
-    # The decision is design_suite.project's own walk(), generated below — not a
+    # The decision is backend_suite.project's own walk(), generated below — not a
     # hand-kept lookalike. Only the refusal wording is local.
     found, git_root, _outer = walk(here)
     if found is not None:
@@ -87,8 +87,8 @@ def project_root() -> Path:
     raise SystemExit(2)
 
 
-# BEGIN GENERATED walk — from design-suite/design_suite/project.py by
-# design-suite/bin/sync_house_style_walk.py. Do not hand-edit.
+# BEGIN GENERATED walk — from backend-suite/backend_suite/project.py by
+# backend-suite/bin/sync_house_style_walk.py. Do not hand-edit.
 def walk(here: Path) -> tuple[Path | None, Path | None, Path | None]:
     """(configured root, blocking git root, outer configured root) from `here` up.
 
@@ -108,27 +108,27 @@ def walk(here: Path) -> tuple[Path | None, Path | None, Path | None]:
 # END GENERATED walk
 
 
-# Parity with the `aliases` in design-suite's templates/docs/roles.json. This is
+# Parity with the `aliases` in backend-suite's templates/docs/roles.json. This is
 # a local copy for the same reason is_stub is: this script cannot import the
 # engine across the plugin cache's per-plugin version hashes. Without it, a
 # manifest written against the new vocabulary answers `entry-point` with exit 2
-# — unknown role — while design-suite's own resolver answers it fine, which is
+# — unknown role — while backend-suite's own resolver answers it fine, which is
 # exactly the drift the parity test exists to catch.
 ALIASES = {"instructions": "entry-point"}
 
-# design-suite's resolver follows the rename in BOTH directions
+# backend-suite's resolver follows the rename in BOTH directions
 # (archetypes.canonical_role for old -> new, archetypes.aliases_of for new ->
 # old), because the two directions are different real situations: a manifest
 # written before the rename answering a skill written after it, and a manifest
 # written after it answering a caller written before. This copy only had the
 # forward map, so a pre-rename manifest answered `entry-point` with exit 2 while
-# design-suite's resolver answered it fine — a live parity gap, found by the
+# backend-suite's resolver answered it fine — a live parity gap, found by the
 # alias assertions added to resolve_test.py rather than by anything in the field.
 ALIASES_REVERSED = {new: old for old, new in ALIASES.items()}
 
 
 def is_stub(path: Path) -> bool:
-    """Parity with design_suite.engine.doc_roles.is_stub — `status: stub` in the
+    """Parity with backend_suite.engine.doc_roles.is_stub — `status: stub` in the
     document's leading `---` frontmatter block."""
     try:
         with path.open(encoding="utf-8", errors="replace") as handle:

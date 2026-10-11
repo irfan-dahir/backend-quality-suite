@@ -46,7 +46,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import pathlib, sys
-          sys.path.insert(0, 'plugins/design-suite/bin')
+          sys.path.insert(0, 'plugins/backend-suite/bin')
           from catalog import frontmatter
           try:
               import yaml
@@ -92,7 +92,7 @@ jobs:
         #      plugin no longer has. This repo produced three separate wrong
         #      hand-written claims about its own contents before the catalogue was
         #      generated, which is why this is a gate and not a convention.
-        run: python3 plugins/design-suite/bin/catalog.py --check
+        run: python3 plugins/backend-suite/bin/catalog.py --check
 
       - name: The user-facing catalogue is current
         # docs/SKILLS.md is the same class of document as docs/CATALOG.md — a list
@@ -103,15 +103,15 @@ jobs:
         # if the audit discovery comes back empty, if the disabled registry cannot
         # be read, or if an agent has gained a writing tool — cases where the
         # honest output is an error, not a confident-looking blank table.
-        run: python3 plugins/design-suite/bin/skills_catalog.py --check
+        run: python3 plugins/backend-suite/bin/skills_catalog.py --check
 
       - name: The field guide's generated regions are current
-        # docs/design-suite-guide.html carries the same facts as docs/SKILLS.md in
+        # docs/backend-suite-guide.html carries the same facts as docs/SKILLS.md in
         # a browsable form, so it drifts the same way — and worse, because the page
         # LOOKS authored, nobody would think to regenerate it. Only the marked
         # regions are compared; the authored prose around them is the template and
         # is carried through byte-for-byte, so editing the writing never trips this.
-        run: python3 plugins/design-suite/bin/skills_catalog.py --html --check
+        run: python3 plugins/backend-suite/bin/skills_catalog.py --html --check
 
       - name: Every script a skill tells Claude to run actually exists
         # Added after every skill in the plugin was found citing its old
@@ -119,7 +119,7 @@ jobs:
         # invoke them were dead — and nothing above caught it. Manifests parsed,
         # Python compiled, the seam check passed, `claude plugin validate` was
         # clean. A plugin can be perfectly valid and completely unusable.
-        run: python3 plugins/design-suite/bin/audit_skill_paths.py
+        run: python3 plugins/backend-suite/bin/audit_skill_paths.py
 
       - name: Every repair recommended anywhere in the plugin is vetted safe
         # Added after a repair recommendation cost real data TWICE: audit_copy's
@@ -128,18 +128,18 @@ jobs:
         # correct fixture data on a real consumer (issue #116). A script existing
         # (the gate above) says nothing about whether running it is safe — this
         # gate requires every "run <script>", "Fix with: <script>", or
-        # "run /<skill>" sentence under bin/, design_suite/engine/, hooks/,
+        # "run /<skill>" sentence under bin/, backend_suite/engine/, hooks/,
         # commands/, or agents/ to name something on templates/safe-repairers.json,
         # attested to not write destructively and to have a demonstrated refusal
         # on a data-loss case — or to be exempted here with a stated reason.
-        run: python3 plugins/design-suite/bin/audit_safe_repairers.py
+        run: python3 plugins/backend-suite/bin/audit_safe_repairers.py
 
       - name: preflight can actually report a blocker
         # preflight tells an adopter which skills can run against their project.
         # A checker that only ever says PASS is indistinguishable from one whose
         # detection is broken, so this asserts it BLOCKS on a synthetic project
         # mapping 2 of 20 doc roles. Without it, every PASS is worthless.
-        run: python3 plugins/design-suite/bin/preflight.py --selftest
+        run: python3 plugins/backend-suite/bin/preflight.py --selftest
 
       - name: Every bin/*_test.py runs, and none of them is silently absent
         # The repo had 13 test files and nothing ran any of them — not this
@@ -152,7 +152,7 @@ jobs:
         # failure rather than a file that quietly stops contributing, a unittest
         # run that skipped everything is a failure, and the file and case counts
         # are printed so a reader can tell 13-ran-all-passed from 0-ran-nothing.
-        run: python3 plugins/design-suite/bin/run_tests.py
+        run: python3 plugins/backend-suite/bin/run_tests.py
 
       - name: Every eval fixture really produces the state its cases branch on
         # The eval suite's cases branch on exit 4 (declined), exit 5 (stub),
@@ -162,7 +162,7 @@ jobs:
         # measuring nothing. That is this repo's governing failure relocated
         # into the test harness, so the fixtures are asserted for free, here,
         # before any model is paid to look at them.
-        run: python3 plugins/design-suite/bin/eval_fixture_selftest.py
+        run: python3 plugins/backend-suite/bin/eval_fixture_selftest.py
 
       - name: Every eval case for a writing skill carries its mandatory guards
         # A suite that can pass by omission is the exact failure this repo
@@ -171,14 +171,14 @@ jobs:
         # never call (a `min: 0, max: 0` tool_used), and must grade both the
         # result and the process — a result-only case passes on a right answer
         # reached by a forbidden route.
-        run: python3 plugins/design-suite/bin/eval_suite_lint.py
+        run: python3 plugins/backend-suite/bin/eval_suite_lint.py
 
       - name: Every --flag a skill's prose names really exists in that script
         # audit_skill_paths.py proves the script exists; nothing proved the
         # invocation works. A renamed or never-built flag leaves a documented
         # recipe that dies at argparse, and the path gate passes on it because
         # the path is fine.
-        run: python3 plugins/design-suite/bin/audit_prose_flags.py
+        run: python3 plugins/backend-suite/bin/audit_prose_flags.py
 
       - name: No unacknowledged consumer-breaking change since the last release
         # Every gate above asks whether this repository is internally consistent.
@@ -195,7 +195,7 @@ jobs:
         # `suite_upgrade.py compat`; nobody ran it. That is the whole difference
         # between a capability and a gate.
         #
-        # It compares the latest `design-suite--v*` tag — the release consumers
+        # It compares the latest `backend-suite--v*` tag — the release consumers
         # are actually pinned to — against HEAD. No such tag is exit 2, "cannot
         # determine", never a pass: a gate that goes green because it could not
         # find its baseline is this repo's governing failure mode exactly.
@@ -210,9 +210,9 @@ jobs:
         # migration note is mandatory and checked at load, so an entry saying
         # only "accepted" is refused rather than counted — otherwise this
         # becomes a rubber stamp, which is an audit that reports nothing.
-        run: python3 plugins/design-suite/bin/gate_consumer_compat.py
+        run: python3 plugins/backend-suite/bin/gate_consumer_compat.py
 
       - name: Python compiles
         run: python3 -m compileall -q plugins
       - name: The engine still runs a non-Dart adapter
-        run: python3 plugins/design-suite/design_suite/adapters/verify_seam.py
+        run: python3 plugins/backend-suite/backend_suite/adapters/verify_seam.py

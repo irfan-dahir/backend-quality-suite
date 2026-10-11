@@ -1,7 +1,7 @@
 # Measurement — `web` adapter precision on public OSS, 2026-10-08
 
 Issue #104 tracks per-audit false-positive rates. The `web` adapter
-(`plugins/design-suite/design_suite/adapters/web.py`) shipped `unverified`, with
+(`plugins/backend-suite/backend_suite/adapters/web.py`) shipped `unverified`, with
 only planted fixtures behind it. This measures it on real code, tunes it, and
 measures again.
 
@@ -33,9 +33,9 @@ focus-order, semantics and token-usage refuse with exit 2 for this adapter, as
 they do for `tsx`. So `audit_tokens.py` is the only audit measured here.
 
 ```bash
-python3 $SUITE/plugins/design-suite/bin/survey.py --project-root .
-python3 $SUITE/plugins/design-suite/bin/init.py --dir . --from-survey
-python3 $SUITE/plugins/design-suite/bin/audit_tokens.py --dir <scan dir> --out <file>
+python3 $SUITE/plugins/backend-suite/bin/survey.py --project-root .
+python3 $SUITE/plugins/backend-suite/bin/init.py --dir . --from-survey
+python3 $SUITE/plugins/backend-suite/bin/audit_tokens.py --dir <scan dir> --out <file>
 ```
 
 ## 2. Method

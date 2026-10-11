@@ -1,12 +1,12 @@
 # Catalogue
 
-**Generated — do not edit by hand.** Regenerate with `python3 plugins/design-suite/bin/catalog.py`; CI fails if this file is stale.
+**Generated — do not edit by hand.** Regenerate with `python3 plugins/backend-suite/bin/catalog.py`; CI fails if this file is stale.
 
 A catalogue is a list of file-existence facts, and hand-written prose about those has already gone wrong three times in this project's history. So it is generated from the plugins' own frontmatter instead.
 
 **30 skills · 2 agents · 4 hooks** across 2 plugins.
 
-**19 documentation templates** across **19 roles** — 18 in `design-suite`, 1 in `house-style`. 0 role(s) have no template and cannot be scaffolded: . Vocabulary by group: any 4, core 6, library 3, service 6. Roles applicable per archetype: library 18, service 19.
+**19 documentation templates** across **19 roles** — 18 in `backend-suite`, 1 in `house-style`. 0 role(s) have no template and cannot be scaffolded: . Vocabulary by group: any 4, core 6, library 3, service 6. Roles applicable per archetype: library 18, service 19.
 
 ## How to read this
 
@@ -22,14 +22,14 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 | ↗️ pointer | Not an implementation. Tells you where the real thing lives |
 | ⛔ disabled | **Switched off. It refuses (exit 2) rather than running.** Not a confidence level — a decision, taken against measured evidence. Its own file states the reason and the bar for re-enabling it |
 
-## `design-suite`
+## `backend-suite`
 
 ### Audits — read-only, report-never-fix
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/audit-mock-api` | auto | ✅ proven | Report-only drift audit for registered mock-API contracts — never edits a contract artifact, but writes its findings to .design-suite/mock-api-findings.json (pass --out to redirect), and finds disagreement between the model, the fixture, the API docs and the mock server. Use when asked whether the mock API is in sync. |
-| `/audit-claude-md-drift` | auto | ⚪ unverified | Use when asked whether CLAUDE.md is still accurate, or before trusting a rule it states. Checks its prose against what enforces it: stale gate counts, rules whose script left CI, rules with no enforcement. Never edits, but runs the shell commands .design-suite/claude_md_enforcement.json declares, so review that config like a hook. |
+| `/audit-mock-api` | auto | ✅ proven | Report-only drift audit for registered mock-API contracts — never edits a contract artifact, but writes its findings to .backend-suite/mock-api-findings.json (pass --out to redirect), and finds disagreement between the model, the fixture, the API docs and the mock server. Use when asked whether the mock API is in sync. |
+| `/audit-claude-md-drift` | auto | ⚪ unverified | Use when asked whether CLAUDE.md is still accurate, or before trusting a rule it states. Checks its prose against what enforces it: stale gate counts, rules whose script left CI, rules with no enforcement. Never edits, but runs the shell commands .backend-suite/claude_md_enforcement.json declares, so review that config like a hook. |
 
 ### Documentation lifecycle
 
@@ -43,7 +43,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/survey` | auto | ⚪ unverified | Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .design-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .design-suite/survey.json, creating that directory if it is absent. |
+| `/survey` | auto | ⚪ unverified | Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .backend-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .backend-suite/survey.json, creating that directory if it is absent. |
 
 ### Building
 
@@ -70,7 +70,7 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/design-debt` | auto | ⚪ unverified | Use when asked for an overall picture of design health or design debt across audits. Grades findings already collected in .design-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes. |
+| `/design-debt` | auto | ⚪ unverified | Use when asked for an overall picture of design health or design debt across audits. Grades findings already collected in .backend-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes. |
 
 ### PR workflow
 
@@ -88,15 +88,15 @@ Not assigned to a group in `catalog.py`. Visible rather than dropped.
 | `/audit-contract-headers` | auto | ✅ proven | Use when asked whether screen contracts or adapter interfaces are still accurate, or after adding or removing an adapter field. Checks each screen's contract header against its adapter: omitted fields, dangling entries, unread fields. Read-only: reports findings, never edits. |
 | `/audit-doc-staleness` | auto | ⚪ unverified | Use when asked how stale a doc is by its own stated date, or before relying on an old doc. Flags docs whose last-updated footer/Date: field is past a threshold. Days since last edit, not proof the doc is still true. Read-only: reports findings, never edits. |
 | `/audit-error-handling` | auto | ✅ proven | Use when asked about error-handling coverage, or before wiring a new endpoint. Checks every failure reaches the user: no call bypassing the shared guard, no raw exception text on screen, no unmatched failure state, no per-screen error widget. Read-only: reports findings, never edits. |
-| `/audit-layer-boundaries` | auto | ⚪ unverified | Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package. Rules and directories come from this project's arch-rules.json. Ratcheted against a committed baseline: new violations fail, known ones are listed. Never changes your code; saves its report to .design-suite/layer-boundaries-findings.json on every run. Use when asked whether the layering still holds, or before an extraction. |
+| `/audit-layer-boundaries` | auto | ⚪ unverified | Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package. Rules and directories come from this project's arch-rules.json. Ratcheted against a committed baseline: new violations fail, known ones are listed. Never changes your code; saves its report to .backend-suite/layer-boundaries-findings.json on every run. Use when asked whether the layering still holds, or before an extraction. |
 | `/audit-proposal-status` | auto | ⚪ unverified | Use when asked whether a proposal's status is current, or before relying on a roadmap/proposal doc's header. Checks the header's open-question count and framing against its own Decisions section markers; a cheaper, one-document /review-docs. Read-only: reports findings, never edits. |
 | `/audit-prose-flags` | auto | ⚪ unverified | Use when maintaining this plugin's own skills, or after renaming or removing a script flag. Checks every flag a skill's markdown names beside a bin/*.py script exists in that script. Suite-maintenance, not consumer-project. Read-only: reports findings, never edits. |
 | `/cleanup-worktrees` | explicit | ⚪ unverified | Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work. Reports every git worktree (.claude/worktrees/ and ../suite-<topic>) and removes stale ones; refuses by name on locked, uncommitted, or unmerged ones. Dry-run by default; destructive under --apply. |
 | `/map-project` | explicit | ⚪ unverified | Propose the mappings a survey cannot: which document is really the design doc, which project kind this is, which candidate token source is the true one — each with the reasoning it was argued from. Every value it proposes is written with provenance `inferred` and nothing else, so no downstream check trusts it until a human ratifies. Proposes and argues; never decides. |
-| `/propose-config` | explicit | ⚪ unverified | Propose real values for the TODO sections init.py scaffolds (layer rules, the adapter seam, the animated-widget list, colour token names), each measured from this project's code with its evidence, and write a section only after the user confirms it. Writes .design-suite/ config, so it is never invoked without an explicit instruction. Use after /map-project when /repo-health shows audits refusing on TODO placeholders. |
-| `/ratify` | explicit | ⚪ unverified | Use when asked to ratify, approve, or sign off a profile field, or when doctor reports fields as UNTRUSTED. Records one field as 'declared' or 'approved', signed, dated and commit-stamped. Writes to .design-suite/profile.json, so never invoked without an explicit instruction. |
+| `/propose-config` | explicit | ⚪ unverified | Propose real values for the TODO sections init.py scaffolds (layer rules, the adapter seam, the animated-widget list, colour token names), each measured from this project's code with its evidence, and write a section only after the user confirms it. Writes .backend-suite/ config, so it is never invoked without an explicit instruction. Use after /map-project when /repo-health shows audits refusing on TODO placeholders. |
+| `/ratify` | explicit | ⚪ unverified | Use when asked to ratify, approve, or sign off a profile field, or when doctor reports fields as UNTRUSTED. Records one field as 'declared' or 'approved', signed, dated and commit-stamped. Writes to .backend-suite/profile.json, so never invoked without an explicit instruction. |
 | `/repo-health` | auto | ⚪ unverified | Use when starting a session on an unfamiliar project, or asked for overall audit/health status in one read. Runs every audit fresh and reports one JSON posture: configured, clean, findings, refused. Never changes your code, but saves every audit's report files as it runs. |
-| `/upgrade-apply` | explicit | ⚪ unverified | Use only when explicitly asked to apply or migrate a suite upgrade, after /upgrade-measure and human approval. Syncs the profile schema copy, scaffolds a missing hooks map, names newly-required keys, re-baselines reviewed findings. Writes to .design-suite/, one refusable action at a time; never rewrites profile.json. |
+| `/upgrade-apply` | explicit | ⚪ unverified | Use only when explicitly asked to apply or migrate a suite upgrade, after /upgrade-measure and human approval. Syncs the profile schema copy, scaffolds a missing hooks map, names newly-required keys, re-baselines reviewed findings. Writes to .backend-suite/, one refusable action at a time; never rewrites profile.json. |
 | `/upgrade-measure` | auto | ⚪ unverified | Use before upgrading the suite in a project, or on a suite PR before merging. Runs both versions' audits on throwaway copies and diffs exit codes and finding counts, checks two revisions for consumer breaks, and lists which projects are on which version. Read-only: never writes to the measured project. |
 
 ### Agents
@@ -112,7 +112,7 @@ Automatic by definition, so they carry no invocation tier. They are harness-only
 
 | Event | Matcher | Script | Nudge |
 |---|---|---|---|
-| SessionStart | `startup|clear` | `session_start_onboarding.py` | Checking whether this project is set up for design-suite... |
+| SessionStart | `startup|clear` | `session_start_onboarding.py` | Checking whether this project is set up for backend-suite... |
 | PostToolUse | `Write|Edit` | `mock_api_reminders.py` | Checking for mock-API contract changes... |
 | PostToolUse | `Write|Edit|Bash` | `audit_on_edit.py` | Running audits mapped to this change... |
 
@@ -142,7 +142,7 @@ Automatic by definition, so they carry no invocation tier. They are harness-only
 
 Every row above is a file-existence fact, which is all a generator can honestly assert. **Capability limits are not listed here** — a claim that something *cannot* be done is not checkable from the filesystem, and a stale one of those already shipped in this file once. Read them where they are gated instead:
 
-- **Per-language limits** — each adapter's module docstring in `design_suite/adapters/`, beside the code and covered by that adapter's own self-test.
+- **Per-language limits** — each adapter's module docstring in `backend_suite/adapters/`, beside the code and covered by that adapter's own self-test.
 - **External toolchain** (Blender, `cwebp`, `rsvg-convert`) — run `pipeline.py check`, which probes for them rather than asserting anything.
 - **Whether a component has ever actually been run** — the `maturity` column, and `verify.py` for the evidence behind it.
 

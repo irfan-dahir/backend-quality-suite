@@ -9,7 +9,7 @@ adapter on projects that have never been used.
 
 ## 1. Protocol (committed before any of these projects was cloned)
 
-**Adapter under test:** `design_suite/adapters/web.py` at the commit that
+**Adapter under test:** `backend_suite/adapters/web.py` at the commit that
 precedes this file's results section. It is not changed during the run. If a
 defect is found, it is reported here and fixed on a later branch.
 
@@ -139,7 +139,7 @@ real values, so they count as TRUE.
 
 ## 6. Decision
 
-**The bar, quoted** from `design_suite/engine/audit_discovery.py` (issue #104):
+**The bar, quoted** from `backend_suite/engine/audit_discovery.py` (issue #104):
 "<=5% wrong AND demonstrated non-zero true-positive capacity, re-measured on two
 real consumer projects".
 

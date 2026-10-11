@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/irfan-dahir/ai-backend-suite/consumer-compat-acks.schema.json",
+  "title": "consumer-compat-acks.json",
+  "description": "Acknowledged consumer-visible breaks for the release currently being assembled. The companion to `suite_upgrade.py compat`: that command reports what a merge would change for a project pinned to the latest release tag, and this file is where a human says, in writing, that a specific one of those changes is intended and states how a consumer migrates across it. An unacknowledged critical finding fails the gate; an acknowledged one passes and is listed. Lives beside known-traps.json at the root of the repository whose release it describes — it is a property of THIS repo's pending release, not a template a consumer project scaffolds, and not an artefact of any single consumer. It is expected to be emptied when a release ships and its entries graduate into that release's migration notes. Every entry MUST carry `migration`: an acknowledgement that says only 'accepted' turns this gate into a rubber stamp, so the loader refuses an entry without it rather than treating it as acknowledged.",
+  "type": "object",
+  "required": ["entries"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_readme": { "type": "string" },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["id", "category", "subject", "break", "consumerInvocation", "migration"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable slug for this acknowledgement, e.g. 'reinvented-require-resolution-removed'. Referenced from a PR description or a release note without repeating its prose.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "category": {
+          "type": "string",
+          "description": "The finding category this acknowledges, verbatim from the compat report: one of exit-contract-changed, audit-newly-disabled, config-key-newly-required, script-removed, flag-removed, new-gating-flag, output-path-moved. Matched exactly — a typo does not acknowledge anything, and the gate says so rather than passing.",
+          "enum": [
+            "exit-contract-changed",
+            "audit-newly-disabled",
+            "config-key-newly-required",
+            "script-removed",
+            "flag-removed",
+            "new-gating-flag",
+            "output-path-moved"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "description": "The finding's `subject` field, verbatim — a path (`plugins/backend-suite/bin/audit_tokens.py`), a path and flag (`plugins/backend-suite/bin/audit_reinvented_components.py --require-resolution`), a path and output flag or constant for output-path-moved (`plugins/backend-suite/bin/audit_adapter_pattern.py --out`), an audit name, or a schema pointer. Category plus subject is the identity of a finding; nothing else is matched on, because detail prose is rewritten and would silently un-acknowledge an entry."
+        },
+        "break": {
+          "type": "string",
+          "description": "What the break actually is, stated so a reader who was not in the room recognises it — 'audit_tokens now exits 1 when it finds hardcoded values, where it always exited 0'. Not 'exit code changed'."
+        },
+        "consumerInvocation": {
+          "type": "string",
+          "description": "Which consumer-side invocation this affects, concretely: the CI step, hook-map entry, or runbook line that stops behaving the way it did. This is the field that turns an abstract diff into a named blast radius, and it is why a reviewer can judge whether the acknowledgement is proportionate."
+        },
+        "migration": {
+          "type": "string",
+          "description": "What a consumer must actually DO to cross this break — the command to run, the flag to add, the config key to supply, the baseline to re-accept. MANDATORY, and enforced at load: an entry without a migration path is a rubber stamp, and the loader refuses the whole file rather than counting it as acknowledged. 'No action needed' is an acceptable migration only when it is followed by why."
+        },
+        "acknowledgedBy": {
+          "type": "string",
+          "description": "Who decided this is intended. A human or team, not a tool. Optional because the git history already records the author of the commit that added the entry, but useful when the deciding party is not the committing one."
+        },
+        "acknowledgedOn": {
+          "type": "string",
+          "description": "ISO date (YYYY-MM-DD) the acknowledgement was made.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "issue": {
+          "type": "string",
+          "description": "Issue or PR reference where this break was discussed, e.g. '#127'."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/irfan-dahir/ai-backend-suite/hooks.map.schema.json",
+  "title": "hooks.map.json",
+  "description": "Which audit runs when a file changes, for hooks/audit_on_edit.py. Lives at .backend-suite/hooks.map.json in the project being audited, because what is worth auditing on save is a property of the project, not of the suite. The runner is advisory-only: nothing declared here can block a tool call or write a file.",
+  "type": "object",
+  "required": ["entries"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_readme": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": ["name", "command"],
+      "oneOf": [
+        { "required": ["glob"] },
+        { "required": ["commandPattern"] }
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "What the user sees when this entry has something to say."
+        },
+        "glob": {
+          "description": "fnmatch pattern(s) against the repo-relative path of the changed file. Fires on Write/Edit/NotebookEdit only.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "commandPattern": {
+          "type": "string",
+          "description": "Regex against a Bash tool call's command. Fires on Bash only. This is the shape pr_reminders.py uses to catch `git commit` / `gh pr create`."
+        },
+        "command": {
+          "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded. IMPORTANT: an audit run at narrowed scope must not write to the artefact its whole-repo run owns. audit_tokens.py defaults --out to .backend-suite/tokens-findings.json; a hook that scopes it to one directory and lets it write there replaces a full sweep with a partial one, and /design-debt then grades the project on a fraction of it. Redirect --out (and never pass --findings) in a scoped entry.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "scopeMode": {
+          "type": "string",
+          "enum": ["file", "dir"],
+          "description": "What scopeArg passes: the changed file, or its containing directory. Every audit in bin/ takes --dir and cannot audit a single file, so \"dir\" is what those entries need.",
+          "default": "file"
+        },
+        "scopeArg": {
+          "description": "How the changed path is passed to the command — a flag like \"--file\" (flag then path), or true to append the path bare. REQUIRED unless wholeRepo is set: an unscoped audit on every save re-runs CI's work on a keystroke loop, which is the mistake this field exists to make visible.",
+          "oneOf": [
+            { "type": "string" },
+            { "const": true }
+          ]
+        },
+        "wholeRepo": {
+          "type": "boolean",
+          "description": "Declare that this entry deliberately audits the whole project on every trigger. Only correct when the audit is genuinely cheap or the artefact is one combined document — mock_api_reminders.py regenerates openapi.json this way, and says why in its docstring. Set `reason` alongside it."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why wholeRepo is justified for this entry. Read by humans, not the runner."
+        },
+        "reportWhen": {
+          "type": "string",
+          "enum": ["nonzero", "findings"],
+          "description": "What counts as something worth saying. \"nonzero\" suits a gate that fails on a violation (the copy gate). \"findings\" suits a report that always exits 0 (audit_tokens exits 0 on 144 findings and on none) — the runner reads findingsPath instead and reports the count. Pointing an entry at a report with \"nonzero\" makes it permanently silent, which reads as a clean codebase.",
+          "default": "nonzero"
+        },
+        "findingsPath": {
+          "type": "string",
+          "description": "Where this entry's command wrote its findings envelope (its --findings path). Required when reportWhen is \"findings\". Use a scratch path, never the whole-repo findings file."
+        },
+        "fixHint": {
+          "type": "string",
+          "description": "Command to suggest when this entry reports something, e.g. \"/sync-mock-api <contract>\"."
+        },
+        "reportClean": {
+          "type": "boolean",
+          "description": "Say so even when the audit passes. Off by default — a confirmation on every save trains people to stop reading these.",
+          "default": false
+        },
+        "repair": {
+          "type": "object",
+          "description": "An optional repair command for this entry's findings, run by bin/run_precommit_audits.py at commit time. It is handed ONLY the changed files that this commit touched, and only ever for the on-change bucket: whole-repo band-1 repair was measured at 0 of 33 findings fixed on an already-migrated codebase (RFC-0003 §3a), because on cold code the deterministic cases are already migrated and the survivors are band 2 and band 3 by construction. The command must emit a unified diff on stdout and write nothing (RFC-0003 §3c) — the runner prints the diff and never applies it, stages it, or commits it. A repair offer never removes a finding from the report: a finding with no available fix is listed with the reason there is none, because an unfixed finding that prints like a fixed one is the failure this suite is built against.",
+          "required": ["command", "filesArg"],
+          "properties": {
+            "command": {
+              "description": "Argv to run, from the project root. ${CLAUDE_PLUGIN_ROOT} is expanded.",
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            },
+            "filesArg": {
+              "type": "string",
+              "description": "Flag the changed file paths are appended after, e.g. \"--files\". REQUIRED: without it the runner would have to run the repairer repo-wide, which is both the 0-of-33 shape and an offer to rewrite code this commit never touched. Declared without it, the runner refuses and says no fix was offered."
+            },
+            "bandsArg": {
+              "type": "string",
+              "description": "Optional flag for a path the command writes {file, line, kind, band} records to (bin/repair_tokens.py's --bands-json). Without it the runner cannot attribute an offer to a specific finding and says so per finding rather than guessing."
+            }
+          },
+          "additionalProperties": false
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "Keep the entry, stop running it.",
+          "default": false
+        },
+        "preCommit": {
+          "type": "boolean",
+          "description": "Eligible to run in bin/run_precommit_audits.py, the pre-commit hook this suite can install (see bin/install_precommit_hook.py). Distinct from being wired into audit_on_edit.py (which every entry is, regardless of this flag): the on-save runner is advisory-only and never blocks, while a pre-commit run gates the commit — reportWhen decides pass/fail the same way it decides what audit_on_edit.py reports ('nonzero' fails on a bad exit code, 'findings' fails on a non-empty findingsPath). Only set this on an entry that is genuinely fast (seconds, not minutes — this runs on every commit, not every push) and invariant (a real regression, not a judgment call a human still has to make). Most entries in this file should NOT set it: a slow or fuzzy audit that gates every commit trains people to reach for --no-verify, which is worse than not gating at all. Note that the pre-commit runner scopes findings to the lines the commit actually changed (RFC-0003 §3a), which only works for an entry whose reportWhen is \"findings\" — a \"nonzero\" entry emits no {file, line} records to filter, so it is run and reported whole and labelled as unscoped rather than being reported clean.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

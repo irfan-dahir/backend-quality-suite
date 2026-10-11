@@ -23,9 +23,9 @@ nothing else.
 
 | Task type — CATALOG group | Read | Skip |
 |---|---|---|
-| Fix or extend an audit or a repairer — *Audits*, *Repair* | [CONCEPTS.md#the-finding-that-shapes-everything](./docs/CONCEPTS.md#the-finding-that-shapes-everything) and [#inert-and-the-governing-principle](./docs/CONCEPTS.md#inert-and-the-governing-principle); that audit's own `plugins/design-suite/commands/<name>.md` | CATALOG, ROADMAP — neither decides what an audit may report |
-| Author a skill, agent, or hook — *Building*, *Assets*, *Copy*, *Capture*, *Demos and reporting*, *Playbooks (`run-chain`)* | [Writing a new skill, agent, hook, or script](#writing-a-new-skill-agent-hook-or-script) below; [CONCEPTS.md#invocation-tiers--auto-and-explicit](./docs/CONCEPTS.md#invocation-tiers--auto-and-explicit); `GROUPS` in [`bin/catalog.py`](./plugins/design-suite/bin/catalog.py) | CATALOG — it is generated *from* the frontmatter you are about to write |
-| Adopt the suite in a consumer project, or add a component to one — *Playbooks (`onboard-new-client`)* | [ONBOARDING.md](./ONBOARDING.md), [docs/ADOPTING.md](./docs/ADOPTING.md), and [DOC-ROLES.md](./plugins/design-suite/docs/DOC-ROLES.md) for doc-role vocabulary and the exit-code contract | ROADMAP — it sequences this repo's work, not a consumer's |
+| Fix or extend an audit or a repairer — *Audits*, *Repair* | [CONCEPTS.md#the-finding-that-shapes-everything](./docs/CONCEPTS.md#the-finding-that-shapes-everything) and [#inert-and-the-governing-principle](./docs/CONCEPTS.md#inert-and-the-governing-principle); that audit's own `plugins/backend-suite/commands/<name>.md` | CATALOG, ROADMAP — neither decides what an audit may report |
+| Author a skill, agent, or hook — *Building*, *Assets*, *Copy*, *Capture*, *Demos and reporting*, *Playbooks (`run-chain`)* | [Writing a new skill, agent, hook, or script](#writing-a-new-skill-agent-hook-or-script) below; [CONCEPTS.md#invocation-tiers--auto-and-explicit](./docs/CONCEPTS.md#invocation-tiers--auto-and-explicit); `GROUPS` in [`bin/catalog.py`](./plugins/backend-suite/bin/catalog.py) | CATALOG — it is generated *from* the frontmatter you are about to write |
+| Adopt the suite in a consumer project, or add a component to one — *Playbooks (`onboard-new-client`)* | [ONBOARDING.md](./ONBOARDING.md), [docs/ADOPTING.md](./docs/ADOPTING.md), and [DOC-ROLES.md](./plugins/backend-suite/docs/DOC-ROLES.md) for doc-role vocabulary and the exit-code contract | ROADMAP — it sequences this repo's work, not a consumer's |
 | Establish a project convention — *Establishing conventions* | [CONCEPTS.md#doc-roles-and-role-resolution](./docs/CONCEPTS.md#doc-roles-and-role-resolution); the relevant `establish-*` command file | CATALOG, ROADMAP |
 
 Two rules keep the map from becoming the cost it exists to avoid:
@@ -47,10 +47,10 @@ every task equally, and giving it one would imply the other rows may skip it.
 
 The rest of this file's "rules that live only here" are also machine-queryable,
 extracted into [`known-traps.json`](./known-traps.json) (schema:
-[`plugins/design-suite/templates/known-traps.schema.json`](./plugins/design-suite/templates/known-traps.schema.json)).
+[`plugins/backend-suite/templates/known-traps.schema.json`](./plugins/backend-suite/templates/known-traps.schema.json)).
 Read it the way you'd read this file — it's this repo's own populated instance
 of the known-traps registry, not a substitute for the prose below. A consumer
-project's own instance lives at `.design-suite/known-traps.json`, scaffolded by
+project's own instance lives at `.backend-suite/known-traps.json`, scaffolded by
 `bin/init.py`.
 
 ---
@@ -106,7 +106,7 @@ because it was learned the expensive way, twice.
    a missing check is never a pass. One command is the whole verdict:
 
    ```bash
-   python3 plugins/design-suite/bin/attest.py
+   python3 plugins/backend-suite/bin/attest.py
    ```
 
    It runs every gate and prints the environment the verdict was reached under,
@@ -122,7 +122,7 @@ because it was learned the expensive way, twice.
    reviewer receives; `gate_consumer_compat.py` diffs committed blobs, so
    uncommitted work is invisible to it; and it saw one Python on one machine.
    Commit first, then attest. Opt in to running it on every push with
-   `python3 plugins/design-suite/bin/install_prepush_hook.py` — `--uninstall`
+   `python3 plugins/backend-suite/bin/install_prepush_hook.py` — `--uninstall`
    removes it, and it never overwrites a hook it did not write.
 
    **Known-red in this fork, by design.** Two test files pin regression fixture
@@ -156,13 +156,13 @@ because it was learned the expensive way, twice.
    (`.github/PULL_REQUEST_TEMPLATE.md`), mirroring the `Co-Authored-By:` commit
    trailer convention — `unverified` / `self-tested` / `cross-verified` /
    `human-reviewed`, vocabulary from
-   `plugins/design-suite/templates/verification-tier.schema.json` (issue #55). A
+   `plugins/backend-suite/templates/verification-tier.schema.json` (issue #55). A
    PR takes the **lowest** tier among its bundled commits, never the highest or
    an average. An agent may self-report `unverified` or `self-tested` about its
    own work but must never self-assign `cross-verified` or `human-reviewed` —
    those require an actual independent party, not the author's own say-so.
    Presence (not truthfulness) can be spot-checked with
-   `python3 plugins/design-suite/bin/check_pr_verification_trailer.py <pr-number>`;
+   `python3 plugins/backend-suite/bin/check_pr_verification_trailer.py <pr-number>`;
    this is a manual script, not a CI gate — CI is dead per rule 3, and issue
    #59's research is why it stays that way rather than becoming a gate.
 
@@ -177,14 +177,14 @@ enforce it.
 | Never write | Write instead |
 |---|---|
 | `docs/DESIGN.md` | `{{doc:design}}`, resolved via `bin/resolve.py` |
-| `.design-suite/resolve.py`, `token_pipeline/scripts/…` | `${CLAUDE_PLUGIN_ROOT}/bin/…` |
-| `lib/`, `pubspec.yaml`, `assets/images` | Read it from `.design-suite/profile.json` |
+| `.backend-suite/resolve.py`, `token_pipeline/scripts/…` | `${CLAUDE_PLUGIN_ROOT}/bin/…` |
+| `lib/`, `pubspec.yaml`, `assets/images` | Read it from `.backend-suite/profile.json` |
 | The consumer project's name | "this project", or the profile's `project.name` |
-| A language-specific regex in an engine | A module in `design_suite/adapters/` |
-| A project's accepted exception as a constant | `.design-suite/exceptions.json` |
+| A language-specific regex in an engine | A module in `backend_suite/adapters/` |
+| A project's accepted exception as a constant | `.backend-suite/exceptions.json` |
 
 `house-style` is org-scope by definition and is exempt from the
-project-name rule. It also cannot reach `design-suite`'s resolver across the
+project-name rule. It also cannot reach `backend-suite`'s resolver across the
 plugin cache's per-plugin version hashes, so it ships its own parity-tested
 `bin/resolve_role.py` — extend `resolve.py`, never that copy.
 
@@ -196,7 +196,7 @@ and a frontmatter key by that name would be silently ignored — as `auto` /
 frontmatter. `disabled` is not a confidence level: it means the component is
 switched off — its backing script refuses with exit 2, and every reporting
 surface names it as disabled rather than letting its silence read as a pass.
-The registry is `design_suite/engine/audit_discovery.DISABLED`, and each entry
+The registry is `backend_suite/engine/audit_discovery.DISABLED`, and each entry
 carries the measured reason and the bar for re-enabling it. Tier
 is decided by **blast radius, not difficulty**: read-only and report-only run
 automatically, content-generating and convention-setting stay explicit.
@@ -223,7 +223,7 @@ cannot see a write behind a flag or inside a helper — those are still on you.
 Capture the oracle first, and know what it cannot tell you:
 
 ```bash
-bash plugins/design-suite/bin/capture-baselines.sh
+bash plugins/backend-suite/bin/capture-baselines.sh
 ```
 
 A 0-finding baseline proves nothing — 0-before and 0-after look identical

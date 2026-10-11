@@ -45,7 +45,7 @@ system `python3` is usually enough.
 Two plugins live in one marketplace. Add the marketplace:
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-design-suite
+claude plugin marketplace add irfan-dahir/ai-backend-suite
 ```
 
 Then install. **Which one you want depends on the project:**
@@ -53,14 +53,14 @@ Then install. **Which one you want depends on the project:**
 | Project | Install |
 |---|---|
 | Internal (your org's own) project | Both |
-| Client-facing project | `design-suite` **only** |
+| Client-facing project | `backend-suite` **only** |
 
 ```bash
-claude plugin install design-suite@ai-design-suite
+claude plugin install backend-suite@ai-backend-suite
 ```
 
 ```bash
-claude plugin install house-style@ai-design-suite
+claude plugin install house-style@ai-backend-suite
 ```
 
 The house-style plugin carries your org's letterhead, our PR process, and
@@ -70,13 +70,13 @@ process out of their tooling.
 Confirm it worked:
 
 ```bash
-claude plugin details design-suite@ai-design-suite
+claude plugin details backend-suite@ai-backend-suite
 ```
 
-You should see `Skills (41)`, `Agents (4)`, `Hooks (2)` for `design-suite` — the
+You should see `Skills (41)`, `Agents (4)`, `Hooks (2)` for `backend-suite` — the
 counts the plugin's own files carry. Don't trust this sentence over the
 plugin: `docs/CATALOG.md` is generated from that same frontmatter
-(`python3 plugins/design-suite/bin/catalog.py`) and states the current totals
+(`python3 plugins/backend-suite/bin/catalog.py`) and states the current totals
 across both plugins.
 
 ### Committing it for the team
@@ -87,13 +87,13 @@ on the repo, commit these two blocks into the project's `.claude/settings.json`:
 ```json
 {
   "extraKnownMarketplaces": {
-    "ai-design-suite": {
-      "source": { "source": "github", "repo": "irfan-dahir/ai-design-suite" }
+    "ai-backend-suite": {
+      "source": { "source": "github", "repo": "irfan-dahir/ai-backend-suite" }
     }
   },
   "enabledPlugins": {
-    "design-suite@ai-design-suite": true,
-    "house-style@ai-design-suite": true
+    "backend-suite@ai-backend-suite": true,
+    "house-style@ai-backend-suite": true
   }
 }
 ```
@@ -103,7 +103,7 @@ getting this wrong fails quietly — the plugin just doesn't load, with no error
 
 > **The repo is private, permanently.** Anyone installing — including anyone
 > who picks up the repo from this committed config — needs their own read access
-> to `irfan-dahir/ai-design-suite`. Committing the blocks above makes the
+> to `irfan-dahir/ai-backend-suite`. Committing the blocks above makes the
 > plugin automatic for people who *have* access; it does not grant it. If
 > `marketplace add` fails on auth, that's what it is — request access rather
 > than debugging the command.
@@ -113,14 +113,14 @@ getting this wrong fails quietly — the plugin just doesn't load, with no error
 ## Step 2 — Tell it about your project (10 minutes)
 
 **Usually the suite offers this for you.** Open the project in Claude Code. If it
-has code but no `.design-suite/` folder, Claude offers
+has code but no `.backend-suite/` folder, Claude offers
 `/run-chain understand-existing-project`. That is a guided setup: survey the
 project, create the config from the survey, suggest which document plays which
 role, then draft any missing docs. It asks before every step that writes. On a
 brand-new project with no code yet, it offers `/onboard-new-client` instead. An
 already-configured project hears nothing.
 
-Don't want the offer? Add an empty `.design-suite-onboarding-declined` file at the
+Don't want the offer? Add an empty `.backend-suite-onboarding-declined` file at the
 project root, or set `DESIGN_SUITE_NO_ONBOARDING=1` to turn it off everywhere.
 The steps are described in full in the
 [user guide](./docs/USER-GUIDE.md#setting-up-an-existing-project-step-by-step).
@@ -131,7 +131,7 @@ for you underneath.
 Everything project-specific goes in one directory in *your* repo:
 
 ```
-.design-suite/
+.backend-suite/
 ├── profile.json          where things are, which adapter, what's exempt
 ├── docs.manifest.json    which of your files plays which documentation role
 └── baselines/            recorded audit output (created later, not now)
@@ -153,13 +153,13 @@ hand-copying them from another project:
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
 ```
 
-This writes `.design-suite/profile.json`, `docs.manifest.json`,
+This writes `.backend-suite/profile.json`, `docs.manifest.json`,
 `design-audit-config.json`, `exceptions.json`, `arch-rules.json`,
 `hooks.map.json`, `known-traps.json`, and `component-capabilities.json`, each
 with `TODO` markers instead of a guessed value — it does
 not decide anything on your project's behalf, it just gives you the *shape* to
 fill in. Templates live at
-[`plugins/design-suite/templates/dot-design-suite/`](./plugins/design-suite/templates/dot-design-suite/).
+[`plugins/backend-suite/templates/dot-backend-suite/`](./plugins/backend-suite/templates/dot-backend-suite/).
 `--force` overwrites files that already exist; `--only profile.json` writes a
 subset. Then check its work:
 
@@ -327,14 +327,14 @@ Details, and what to do when no adapter fits your stack, are in
 | Symptom | Cause |
 |---|---|
 | `marketplace add` fails on auth | The marketplace is public — an auth failure is local credentials or network, not missing access. Check `gh auth status` and retry |
-| A script dies on `'str' object has no attribute 'removeprefix'` | `python3` is older than 3.9. Run the design-suite doctor, which names this directly |
+| A script dies on `'str' object has no attribute 'removeprefix'` | `python3` is older than 3.9. Run the backend-suite doctor, which names this directly |
 | Plugin installs but no skills appear | `extraKnownMarketplaces`/`enabledPlugins` written as arrays. They're objects |
-| An audit reports a path that doesn't exist | Stale `profile.json`. Ask Claude to run the design-suite doctor |
+| An audit reports a path that doesn't exist | Stale `profile.json`. Ask Claude to run the backend-suite doctor |
 | A skill says a role is unmapped | That role isn't in `docs.manifest.json`. It exits rather than guessing — add the mapping |
 | A skill refuses with a capability message | Your adapter doesn't implement that check. Expected, not a bug — see ADOPTING.md |
-| "no .design-suite/ in this project … nothing is checked on edit" | The project isn't set up, so on-save checks aren't running. Shown once per session. Set the project up to make it go away |
+| "no .backend-suite/ in this project … nothing is checked on edit" | The project isn't set up, so on-save checks aren't running. Shown once per session. Set the project up to make it go away |
 | A tool exits 2 naming two paths | You're in a git repo nested inside another, and the inner one isn't set up. Set it up, or run from the outer project |
-| Old `scripts/*_findings.json` or `token_pipeline/findings.json` stopped updating | Reports moved into `.design-suite/` (git-ignored). See [Upgrading from v0.1.0](./docs/USER-GUIDE.md#upgrading-from-v010) |
+| Old `scripts/*_findings.json` or `token_pipeline/findings.json` stopped updating | Reports moved into `.backend-suite/` (git-ignored). See [Upgrading from v0.1.0](./docs/USER-GUIDE.md#upgrading-from-v010) |
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "_readme": "This repo's own populated known-traps registry (issue #47 / backlog item #38-19), extracted from CLAUDE.md. Field contract: plugins/design-suite/templates/known-traps.schema.json. Placed at the repo root rather than under .design-suite/known-traps.json because this repo IS the plugin source, not a project that has adopted the suite — it has no .design-suite/ directory of its own. A real consumer project's instance belongs at .design-suite/known-traps.json, scaffolded by `plugins/design-suite/bin/init.py`. Read this at the start of a session the way you would CLAUDE.md; it does not restate CLAUDE.md's prose so much as make it a queryable list of {trigger, trap, correctAction} rather than paragraphs a human has to remember to reread.",
+  "_readme": "This repo's own populated known-traps registry (issue #47 / backlog item #38-19), extracted from CLAUDE.md. Field contract: plugins/backend-suite/templates/known-traps.schema.json. Placed at the repo root rather than under .backend-suite/known-traps.json because this repo IS the plugin source, not a project that has adopted the suite — it has no .backend-suite/ directory of its own. A real consumer project's instance belongs at .backend-suite/known-traps.json, scaffolded by `plugins/backend-suite/bin/init.py`. Read this at the start of a session the way you would CLAUDE.md; it does not restate CLAUDE.md's prose so much as make it a queryable list of {trigger, trap, correctAction} rather than paragraphs a human has to remember to reread.",
   "schemaVersion": 1,
   "entries": [
     {
@@ -35,10 +35,10 @@
       "title": "The local run is the authority, not a fallback",
       "trigger": "Finished a change and are checking whether it's safe to proceed — tempted to treat 'no CI check has failed yet' as a green light, or to run one verification script by hand and call that verified.",
       "trap": "GitHub Actions is unavailable and staying that way, so a missing check is not a pass — nothing was verified at all. The subtler version: running `gates.py` alone, or reading an exit 0 while a step could not run, and reporting that as a clean tree. Every gate that ran passing is not the same claim as every gate having run.",
-      "correctAction": "Run the one entry point: `python3 plugins/design-suite/bin/attest.py`. It runs all 18 gates (`run_tests.py` and `gate_consumer_compat.py` among them — do not run those separately) and reports the environment the verdict was reached under, because a local pass is a claim with conditions attached. Exit 0 verified, 1 a gate failed, 2 partial — and 2 is not a softer 0. Opt in to running it on every push with `install_prepush_hook.py` (`--uninstall` removes it; it never overwrites a hook it did not write). Use `gates.py -k` only while iterating, never as the verdict.",
+      "correctAction": "Run the one entry point: `python3 plugins/backend-suite/bin/attest.py`. It runs all 18 gates (`run_tests.py` and `gate_consumer_compat.py` among them — do not run those separately) and reports the environment the verdict was reached under, because a local pass is a claim with conditions attached. Exit 0 verified, 1 a gate failed, 2 partial — and 2 is not a softer 0. Opt in to running it on every push with `install_prepush_hook.py` (`--uninstall` removes it; it never overwrites a hook it did not write). Use `gates.py -k` only while iterating, never as the verdict.",
       "severity": "high",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/attest.py",
+      "enforcedBy": "plugins/backend-suite/bin/attest.py",
       "tags": [
         "ci",
         "verification"
@@ -53,7 +53,7 @@
       "correctAction": "Commit first, then attest — so the tree being verified is the tree a reviewer receives. Read the ENVIRONMENT and LIMITS sections `attest.py` prints on every run, not only its last line; they name the conditions the verdict is conditional on. Treat exit 2 (partial) as a failure to verify, never as a pass, and never paper over a named skip.",
       "severity": "high",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/attest.py",
+      "enforcedBy": "plugins/backend-suite/bin/attest.py",
       "tags": [
         "ci",
         "verification",
@@ -83,7 +83,7 @@
       "correctAction": "Never hand-edit docs/CATALOG.md — regenerate it via `bin/catalog.py` from component frontmatter. Never hand-write template coverage counts — they come from templates/docs/roles.json.",
       "severity": "medium",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/catalog.py --check",
+      "enforcedBy": "plugins/backend-suite/bin/catalog.py --check",
       "tags": [
         "generated-files",
         "docs"
@@ -93,9 +93,9 @@
     {
       "id": "project-literal-in-universal-plugin",
       "title": "No project literal may appear in the universal plugin",
-      "trigger": "Writing a new skill, agent, hook, or script under plugins/design-suite/, and about to write a literal path, filename, or the consuming project's own name/framework detail directly into it (e.g. `docs/DESIGN.md`, `lib/`, `pubspec.yaml`, a hardcoded language regex, a project's accepted-exception constant).",
+      "trigger": "Writing a new skill, agent, hook, or script under plugins/backend-suite/, and about to write a literal path, filename, or the consuming project's own name/framework detail directly into it (e.g. `docs/DESIGN.md`, `lib/`, `pubspec.yaml`, a hardcoded language regex, a project's accepted-exception constant).",
       "trap": "The component works for the one project it was written against and silently misbehaves or refuses on every other consumer, because it baked in that project's shape instead of reading it from configuration.",
-      "correctAction": "Route project-specific facts through configuration instead: `{{doc:design}}` resolved via bin/resolve.py (not a literal doc path), `${CLAUDE_PLUGIN_ROOT}/bin/...` (not a project-local script path), `.design-suite/profile.json` (not a hardcoded lib/asset path), \"this project\" or profile.project.name (not the consumer's real name), a module in design_suite/adapters/ (not a language-specific regex inline), `.design-suite/exceptions.json` (not a baked-in accepted-exception constant).",
+      "correctAction": "Route project-specific facts through configuration instead: `{{doc:design}}` resolved via bin/resolve.py (not a literal doc path), `${CLAUDE_PLUGIN_ROOT}/bin/...` (not a project-local script path), `.backend-suite/profile.json` (not a hardcoded lib/asset path), \"this project\" or profile.project.name (not the consumer's real name), a module in backend_suite/adapters/ (not a language-specific regex inline), `.backend-suite/exceptions.json` (not a baked-in accepted-exception constant).",
       "severity": "high",
       "scope": "repo",
       "tags": [
@@ -108,8 +108,8 @@
       "id": "house-style-resolver-copy",
       "title": "house-style ships its own resolve_role.py — don't extend the wrong copy",
       "trigger": "Adding doc-role resolution logic and about to edit whichever resolve.py-shaped file is closest at hand, inside the house-style plugin.",
-      "trap": "house-style is org-scope and cannot reach design-suite's resolver across the plugin cache's per-plugin version hashes, so it carries its own parity-tested bin/resolve_role.py. Extending the wrong one either has no effect for that plugin or creates two resolvers that quietly diverge.",
-      "correctAction": "Extend plugins/design-suite/bin/resolve.py for design-suite consumers. For house-style specifically, extend its own bin/resolve_role.py and keep it parity-tested against resolve.py — never let the two drift.",
+      "trap": "house-style is org-scope and cannot reach backend-suite's resolver across the plugin cache's per-plugin version hashes, so it carries its own parity-tested bin/resolve_role.py. Extending the wrong one either has no effect for that plugin or creates two resolvers that quietly diverge.",
+      "correctAction": "Extend plugins/backend-suite/bin/resolve.py for backend-suite consumers. For house-style specifically, extend its own bin/resolve_role.py and keep it parity-tested against resolve.py — never let the two drift.",
       "severity": "medium",
       "scope": "repo",
       "tags": [
@@ -123,10 +123,10 @@
       "title": "A 0-finding baseline proves nothing before or after a refactor",
       "trigger": "About to claim a refactor was behaviour-preserving on the strength of an audit reporting 0 findings both before and after.",
       "trap": "0-before and 0-after look identical whether the check actually works or is silently broken (e.g. self-skipping because it can't find what it's meant to scan) — a clean diff is not evidence the audit ran at all.",
-      "correctAction": "Capture the oracle first with `bash plugins/design-suite/bin/capture-baselines.sh`, then plant a broken file and confirm the audit actually catches it before trusting a 0-finding result as meaningful.",
+      "correctAction": "Capture the oracle first with `bash plugins/backend-suite/bin/capture-baselines.sh`, then plant a broken file and confirm the audit actually catches it before trusting a 0-finding result as meaningful.",
       "severity": "high",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/capture-baselines.sh",
+      "enforcedBy": "plugins/backend-suite/bin/capture-baselines.sh",
       "tags": [
         "audits",
         "verification"
@@ -141,7 +141,7 @@
       "correctAction": "Every component declares `invocation` (`auto` / `explicit`) and `maturity` (`proven` / `unverified` / `experimental` / `pointer` / `disabled`) — the two vocabularies `catalog.py` actually reads and validates. Read-only and report-only stay `auto`; anything that generates content or sets a convention stays `explicit`, regardless of how simple it was to implement. `disabled` is not a confidence level: it means the component is switched off, its backing script refuses with exit 2, and every reporting surface must name it as disabled rather than letting its silence read as a pass.",
       "severity": "medium",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/catalog.py --check",
+      "enforcedBy": "plugins/backend-suite/bin/catalog.py --check",
       "tags": [
         "plugin-authoring",
         "frontmatter"
@@ -186,7 +186,7 @@
       "correctAction": "Write the whole entry, in the same commit that causes the break, so a reviewer reads the excuse next to the change: what the break is, which consumer invocation it hits, and the command/flag/config key/re-baseline a consumer needs. The loader refuses the entire file on an entry missing `migration` or `consumerInvocation` (exit 2, not a pass), and there is deliberately no --acknowledge flag — acknowledging must be a diff, never a side effect of running the tool. If the break is not actually intended, fix it instead; the escape exists because the pinning contract ships breaks in version bumps, not because breaks are cheap.",
       "severity": "high",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/gate_consumer_compat.py",
+      "enforcedBy": "plugins/backend-suite/bin/gate_consumer_compat.py",
       "tags": [
         "ci",
         "consumers",
@@ -199,7 +199,7 @@
       "id": "eval-run-without-scaffold-reads-as-skill-defect",
       "title": "An eval run without --scaffold fails every file grader, and it reads as a skill defect",
       "trigger": "Reading an eval result where a family of cases scored low and many graders failed identically with `grader threw: grader focus file \"<path>\": path \"<path>\" does not exist` — and about to conclude the skill did not write the file.",
-      "trap": "`--scaffold` is off by default, so unless it was passed NO fixture is materialised for ANY case: every case runs against an empty working directory. Every file-target grader then errors rather than evaluating, and the run looks exactly like a skill that argued well and wrote nothing. The measured 2026-09-18 run is the worked example — all four `map-project-*` cases lost every file grader, including `not_contains` graders on fixtures (`app`, `pre-ratified`, `docs-site`) that really do ship a `.design-suite/profile.json` and really do satisfy those patterns. A per-case fixture explanation cannot account for that; only 'no fixture was built at all' can. Chasing the per-case explanation costs a fixture rewrite that changes nothing about the score.",
+      "trap": "`--scaffold` is off by default, so unless it was passed NO fixture is materialised for ANY case: every case runs against an empty working directory. Every file-target grader then errors rather than evaluating, and the run looks exactly like a skill that argued well and wrote nothing. The measured 2026-09-18 run is the worked example — all four `map-project-*` cases lost every file grader, including `not_contains` graders on fixtures (`app`, `pre-ratified`, `docs-site`) that really do ship a `.backend-suite/profile.json` and really do satisfy those patterns. A per-case fixture explanation cannot account for that; only 'no fixture was built at all' can. Chasing the per-case explanation costs a fixture rewrite that changes nothing about the score.",
       "correctAction": "Discriminate before diagnosing: a `not_contains` grader CANNOT fail against a file that exists and lacks the pattern, so a failing `not_contains` on a file target proves the file was absent, not that the skill misbehaved. If the same file graders failed across cases using DIFFERENT fixtures, suspect the run, not the cases. Re-run with `claude plugin eval . --case '<family>-*' --scaffold` before changing any fixture, grader or skill. Confirm scaffolding by checking the fixture is on disk in the run's working directory — the result JSON does NOT record whether `--scaffold` was passed, so it cannot be recovered after the fact once the trace directory under /tmp is gone.",
       "severity": "high",
       "scope": "repo",
@@ -209,7 +209,7 @@
         "fixtures",
         "false-diagnosis"
       ],
-      "enforcedBy": "plugins/design-suite/evals/README.md (documented only — nothing mechanically detects a no-scaffold run)",
+      "enforcedBy": "plugins/backend-suite/evals/README.md (documented only — nothing mechanically detects a no-scaffold run)",
       "source": "Measured on eval run results/2026-09-18T03-06-49-269Z while investigating map-project-inferred-only scoring 0.17",
       "addedOn": "2026-09-18",
       "status": "active"
@@ -218,8 +218,8 @@
       "id": "eval-fixture-cannot-satisfy-its-own-graders",
       "title": "A case whose fixture cannot satisfy its graders fails BOTH arms, and reads as a bad skill",
       "trigger": "Reading an eval result where one case scores low and its plugin and ablated arms are within noise of each other — and about to conclude the skill is weak at whatever that case tests.",
-      "trap": "A grader its fixture makes UNPASSABLE fails identically in both arms, so the delta is 0.00 and nothing in a results summary distinguishes it from a skill that simply did badly. Measured: `map-project-inferred-only` scored 0.17/0.175 in the complete clean run (`--scaffold` passed, fixtures materialised, zero skipped graders) because it used the `zero-state` fixture — 'source files and nothing else, no `.design-suite/` at all' — while nine of its graders target `.design-suite/profile.json` and its prompt asks for the mappings on disk. The skill is FORBIDDEN to create that file (`commands/map-project.md` Step 0; `bin/map_project.py` exits 2, 'refusing: no profile at ...'), so the case was unpassable by construction. This is a DIFFERENT failure from `eval-run-without-scaffold-reads-as-skill-defect` and survives fixing it: this trap's worked example is the run AFTER `--scaffold` was passed.",
-      "correctAction": "Read the delta, not just the score: a low score with a ~0.00 delta points at the case, a low score with a positive delta points at the skill. Then check the fixture against the graders directly — build it (`python3 plugins/design-suite/evals/_fixtures/build_fixture.py <name> --dir /tmp/x --force`) and grep it for every file-target grader's pattern before blaming the model. Fix on the case side: re-point the case at an existing fixture that can satisfy it, and give the unsuitable fixture a case it IS right for. Never make the skill scaffold the missing file so a grader can pass, and never put a fixture inside a case directory — `eval_fixture_selftest.py` does not cover those, so they drift silently.",
+      "trap": "A grader its fixture makes UNPASSABLE fails identically in both arms, so the delta is 0.00 and nothing in a results summary distinguishes it from a skill that simply did badly. Measured: `map-project-inferred-only` scored 0.17/0.175 in the complete clean run (`--scaffold` passed, fixtures materialised, zero skipped graders) because it used the `zero-state` fixture — 'source files and nothing else, no `.backend-suite/` at all' — while nine of its graders target `.backend-suite/profile.json` and its prompt asks for the mappings on disk. The skill is FORBIDDEN to create that file (`commands/map-project.md` Step 0; `bin/map_project.py` exits 2, 'refusing: no profile at ...'), so the case was unpassable by construction. This is a DIFFERENT failure from `eval-run-without-scaffold-reads-as-skill-defect` and survives fixing it: this trap's worked example is the run AFTER `--scaffold` was passed.",
+      "correctAction": "Read the delta, not just the score: a low score with a ~0.00 delta points at the case, a low score with a positive delta points at the skill. Then check the fixture against the graders directly — build it (`python3 plugins/backend-suite/evals/_fixtures/build_fixture.py <name> --dir /tmp/x --force`) and grep it for every file-target grader's pattern before blaming the model. Fix on the case side: re-point the case at an existing fixture that can satisfy it, and give the unsuitable fixture a case it IS right for. Never make the skill scaffold the missing file so a grader can pass, and never put a fixture inside a case directory — `eval_fixture_selftest.py` does not cover those, so they drift silently.",
       "severity": "high",
       "scope": "repo",
       "tags": [
@@ -228,7 +228,7 @@
         "verification",
         "false-diagnosis"
       ],
-      "enforcedBy": "plugins/design-suite/evals/README-bootstrap-and-map-project.md (documented only — nothing mechanically checks a fixture against its case's graders)",
+      "enforcedBy": "plugins/backend-suite/evals/README-bootstrap-and-map-project.md (documented only — nothing mechanically checks a fixture against its case's graders)",
       "source": "Measured on the map-project-* batch ($7.04, zero errors, zero skipped graders): inferred-only 0.17 with / 0.175 without, against siblings at 0.85/0.65 and 0.83/0.63",
       "addedOn": "2026-09-24",
       "status": "active"
@@ -238,7 +238,7 @@
       "title": "An eval suite run spends the same rate limit the session is using, and dies mid-suite",
       "trigger": "About to run `claude plugin eval` over the whole suite, or wondering why a run reported dozens of `You've hit your session limit` errors and a suspiciously low cost.",
       "trap": "`claude plugin eval` authenticates as you and draws on YOUR plan's rate limit — the same pool the interactive session is spending. A 20-case suite at the default 3 runs per case, with the with/without ablation on, is 120 model runs. It will exhaust the limit and take the session with it. Measured on 2026-09-18: a full run reported `partial=false` and $15.68, which reads like a cheap clean suite — but 45 of its runs had died with `exit 1: You've hit your session limit`, leaving 7 of 20 cases usable. The aggregate's `partial` flag is false because the HARNESS completed; it says nothing about whether the runs inside it did. Three suite runs across two days cost roughly $70 and produced one partially-usable result.",
-      "correctAction": "Run `python3 plugins/design-suite/bin/eval_results_read.py <run-dir>` BEFORE quoting any score, rather than reading per-run `error` and `turns` out of `aggregate-result.json` by hand — that hand-reading discipline was written down right here and was still got wrong twice (issue #143) — a case whose runs all carry an error is VOID, not a result, and a turn count of 1 across every run means the arm died before acting. Budget the run: `--runs 1` removes the 3x multiplier, `--case '<glob>'` scopes it, and `--max-cost-usd` aborts at a ceiling rather than silently degrading. Do not start a suite run while the session is needed for anything else, and tell the user the quota cost before starting rather than after.",
+      "correctAction": "Run `python3 plugins/backend-suite/bin/eval_results_read.py <run-dir>` BEFORE quoting any score, rather than reading per-run `error` and `turns` out of `aggregate-result.json` by hand — that hand-reading discipline was written down right here and was still got wrong twice (issue #143) — a case whose runs all carry an error is VOID, not a result, and a turn count of 1 across every run means the arm died before acting. Budget the run: `--runs 1` removes the 3x multiplier, `--case '<glob>'` scopes it, and `--max-cost-usd` aborts at a ceiling rather than silently degrading. Do not start a suite run while the session is needed for anything else, and tell the user the quota cost before starting rather than after.",
       "severity": "high",
       "scope": "repo",
       "tags": [
@@ -247,7 +247,7 @@
         "measurement"
       ],
       "enforcedBy": [
-        "plugins/design-suite/bin/eval_results_read.py (a command, not a gate: results/ is gitignored, so there is no committed artifact to gate against. Run it on a results directory before quoting any score; it exits 1 on a VOID, ONE-ARMED or grader-skipped case and 2 when it cannot read the file at all)"
+        "plugins/backend-suite/bin/eval_results_read.py (a command, not a gate: results/ is gitignored, so there is no committed artifact to gate against. Run it on a results directory before quoting any score; it exits 1 on a VOID, ONE-ARMED or grader-skipped case and 2 when it cannot read the file at all)"
       ],
       "source": "measured 2026-09-18: three suite runs, ~$70, 7 of 20 cases usable",
       "addedOn": "2026-09-18",
@@ -259,7 +259,7 @@
       "title": "A negative control that matches its own skill's vocabulary scores the plugin arm down",
       "trigger": "About to write, or to trust, an eval grader that asserts an ABSENCE — `match: not_contains`, a `tool_used` bounded at `max: 0`, or an `llm` criteria file phrased only as a prohibition — where the thing being forbidden is something the model would naturally TALK about while refusing it.",
       "trap": "Keyword patterns detect the TOPIC of the forbidden act, not the ACT. A correct refusal explains itself in the skill's own vocabulary, so the grader fires on it — and only the plugin arm has read that vocabulary, so the penalty lands on the arm that behaved correctly. Measured on `bootstrap-design-docs-undeclared-kind-stops-to-ask`: the pattern `(assum|default|treat)\\w*[^.\\n]{0,40}\\bapp\\b` fired on 13 of 17 correct-refusal phrasings, including \"I did not assume the `app` archetype\", and matched the skill file's own instruction ``Do not assume `app```. The entire delta of -0.22 in favour of the NO-plugin arm came from that one grader. Audited across the suite on 2026-09-23 (issue #136): 6 of the 12 prose negative controls had the same flaw, firing on 2 to 8 of their correct refusals each, and 3 of them matched their own skill's markdown. The failure is invisible in `aggregate-result.json` — it just shows the plugin looking worse.",
-      "correctAction": "Write the ACT, not the topic: anchor the claim to a sentence start, then allow only a run of characters containing no negator or hedge (`not`, `n't`, `never`, `cannot`, `no`, `nothing`, `rather`, `instead`, `unless`, `whether`, `if`, `would`, `could`, `refuse*`, `declin*`) before the claim itself — `plugins/design-suite/evals/review-docs-zero-state-refusal/graders/no-clean-verdict.md` carries the worked form and the measurement. Then do both checks before shipping it: (1) build a corpus of correct-refusal phrasings and confirm the pattern fires on zero of them, reporting the hit rate on both polarities as numbers; (2) grep the pattern against the `commands/<skill>.md` or `agents/<agent>.md` it exercises — a hit means the grader can fire on a model quoting its own instructions. A pattern anchored to a literal structured report field (`Overall Recommendation:\\s*PASS`) is the exception: it may legitimately match the skill's report template, because emitting that template line verbatim IS the violation. Where a regex genuinely cannot separate the act from the topic, use an `llm` grader with an explicit `PASS only if` clause instead — `design-auditor-undeclared-kind/graders/criteria.md` is the model. Never weaken the assertion to make it green.",
+      "correctAction": "Write the ACT, not the topic: anchor the claim to a sentence start, then allow only a run of characters containing no negator or hedge (`not`, `n't`, `never`, `cannot`, `no`, `nothing`, `rather`, `instead`, `unless`, `whether`, `if`, `would`, `could`, `refuse*`, `declin*`) before the claim itself — `plugins/backend-suite/evals/review-docs-zero-state-refusal/graders/no-clean-verdict.md` carries the worked form and the measurement. Then do both checks before shipping it: (1) build a corpus of correct-refusal phrasings and confirm the pattern fires on zero of them, reporting the hit rate on both polarities as numbers; (2) grep the pattern against the `commands/<skill>.md` or `agents/<agent>.md` it exercises — a hit means the grader can fire on a model quoting its own instructions. A pattern anchored to a literal structured report field (`Overall Recommendation:\\s*PASS`) is the exception: it may legitimately match the skill's report template, because emitting that template line verbatim IS the violation. Where a regex genuinely cannot separate the act from the topic, use an `llm` grader with an explicit `PASS only if` clause instead — `design-auditor-undeclared-kind/graders/criteria.md` is the model. Never weaken the assertion to make it green.",
       "severity": "high",
       "scope": "repo",
       "tags": [
@@ -277,12 +277,12 @@
     {
       "id": "project-literal-that-is-not-directory-shaped",
       "title": "The no-project-literals gate only sees literals shaped like a directory",
-      "trigger": "About to read a clean run of `audit_skill_paths.py` as evidence that a file in plugins/design-suite/ carries no consumer coupling — or writing a new literal into engine/bin code that identifies one engagement but is not a path: a service URL, a product or brand name in generated output, a package, an export symbol, a repository slug.",
+      "trigger": "About to read a clean run of `audit_skill_paths.py` as evidence that a file in plugins/backend-suite/ carries no consumer coupling — or writing a new literal into engine/bin code that identifies one engagement but is not a path: a service URL, a product or brand name in generated output, a package, an export symbol, a repository slug.",
       "trap": "`PROJECT_PATH` is an alternation of DIRECTORY AND FILENAME shapes (`lib/`, `pubspec.yaml`, `mock_api/`). Anything that identifies one consumer without looking like a path is invisible to it, and the gate passes — which is the governing failure inside the gate that exists to prevent it. Measured three times, each a different costume of the same cause: `ds_flutter` (a package) and seven class names sat clean in /promote-component; a package name compiled into a `re.compile` literal sat clean in two sibling audits; and a consumer's mock server (`https://<uuid>.mock.pstmn.io`) plus that client's product name in a generated OpenAPI title sat clean in `generate_openapi.py` and shipped into every consumer's API reference. The UUID host is the sharpest case: it contains no project NAME, so the name rule could never have reached it either.",
       "correctAction": "Read the rule list in `audit_skill_paths.py`'s module docstring before trusting a pass, and treat a new NON-path literal as ungated until you have checked which rule covers it. Rules 4–6 now cover the project name in a code literal, a repository slug, a configured export prefix and its package spelling, and an external URL host — each with a STRUCTURAL control (a configured prefix, a host allow-list) rather than a denylist of framework types. Deliberately still ungated, and named in the file so a pass is never read as portability: domain entity names (`MeasurementEntry` is indistinguishable in shape from `ThemeData` — listing them would put a copy of a consumer's domain model in the universal plugin), framework tool commands, and the owner segment of a URL in code. Before widening, MEASURE: run the candidate over the whole plugin and report a true/false-positive judgement per hit. A gate that flags many legitimate cases is switched off within a week, and a switched-off gate still reads as a pass — if the rate fails, write the trap down here instead of shipping it.",
       "severity": "high",
       "scope": "repo",
-      "enforcedBy": "plugins/design-suite/bin/audit_skill_paths.py (rules 3–6); controls asserted in plugins/design-suite/bin/audit_skill_paths_test.py",
+      "enforcedBy": "plugins/backend-suite/bin/audit_skill_paths.py (rules 3–6); controls asserted in plugins/backend-suite/bin/audit_skill_paths_test.py",
       "tags": [
         "architecture",
         "plugin-authoring",

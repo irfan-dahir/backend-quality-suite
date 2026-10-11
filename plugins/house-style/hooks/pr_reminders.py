@@ -5,7 +5,7 @@ source for these checks. Never auto-invokes or auto-writes anything: the checkli
 covers doc review, decision logging, and asset registration, each of which needs
 human judgment, not a generated placeholder.
 
-The document is resolved through .design-suite/docs.manifest.json rather than
+The document is resolved through .backend-suite/docs.manifest.json rather than
 named directly, so this hook says the right thing in a project whose PR document
 lives somewhere else or is called something else. If the role is unmapped the hook
 degrades to a generic reminder instead of citing a path that does not exist —
@@ -23,7 +23,7 @@ TRIGGER_RE = re.compile(r"\bgit\s+commit\b|\bgh\s+pr\s+create\b")
 # Resolved inline rather than by importing a shared helper: this file is destined
 # for ${CLAUDE_PLUGIN_ROOT}, where a relative import from the consuming repo would
 # not resolve. Reading the manifest works from either home.
-MANIFEST = ".design-suite/docs.manifest.json"
+MANIFEST = ".backend-suite/docs.manifest.json"
 
 
 def role_path(role: str) -> str | None:

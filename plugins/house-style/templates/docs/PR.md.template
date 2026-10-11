@@ -89,7 +89,7 @@ Verified-By: <name, role, or tool>
 The `Verification-Tier` trailer mirrors the `Co-Authored-By:` commit trailer convention —
 machine-parseable, diffable, and part of PR history rather than a GitHub label. Vocabulary and the
 "lowest tier wins across a PR's commits" rule come from
-`plugins/design-suite/templates/verification-tier.schema.json` (issue #55). **An agent drafting this
+`plugins/backend-suite/templates/verification-tier.schema.json` (issue #55). **An agent drafting this
 PR may self-report `unverified` or `self-tested`; it must never self-assign `cross-verified` or
 `human-reviewed`** — those require an actual independent party, not the author's own say-so.
 `/draft-pr-description` should leave this line for the human/agent opening the PR to fill in, not

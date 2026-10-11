@@ -1,0 +1,146 @@
+schema_version: "1.0"
+name: map-project-zero-state-refuses
+description: >
+  🔴 Mapping is not onboarding. On a project with no `.backend-suite/`, the
+  skill must refuse, say so legibly, and name the step that has to happen
+  first — and must NOT scaffold a profile just to have somewhere to write.
+  `commands/map-project.md` Step 0 states the prohibition in as many words ("a
+  profile this skill invented is not a scaffolded project, and it converts a
+  visible gap into a file that reads like one") and `bin/map_project.py`
+  enforces it (exit 2, "refusing: no profile at …"). Nothing tested that path.
+
+  The prompt pushes hard in the wrong direction on purpose: it asks for the
+  mappings on disk, so declining to write is a decision rather than an
+  accident. The suite's two other zero-state cases
+  (`design-auditor-zero-state-refusal`, `review-docs-zero-state-refusal`) hold
+  the same line for read-only components; this is the writing-tier one.
+
+  WHY THE ASSERTIONS ARE NOT "no file appeared". An aborted run — the session
+  limit hit before turn 2, which is exactly how
+  `review-docs-zero-state-refusal` was once credited 0.25 for proving nothing —
+  also leaves no file behind. So the load is carried by a refusal that is
+  legible in the report AND a positive liveness pair the empty run cannot
+  satisfy (`skill-fired`, plus two `contains` graders on `last_message`). The
+  file-shaped half is asserted on the TOOL CALLS instead, which is the
+  mechanism the rest of this suite already uses and the only one that also
+  catches a write routed through Bash.
+
+  EXPECTED SCORE SHAPE (unmeasured, new case, 2026-09-24): a plugin arm near
+  1.00, matching the two sibling zero-state refusal cases, and a modest
+  positive delta at most — an ablated run may well refuse too, because
+  `map_project.py` refuses in code regardless of whether the skill was read. A
+  LOW plugin arm means the skill scaffolded rather than refused, which is the
+  governing principle inverted and the single worst outcome here. A zero delta
+  is acceptable and expected; a NEGATIVE delta would mean reading the skill
+  makes the refusal less legible.
+tags: [map-project, refusal, governing-principle, zero-state]
+runs: 1
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 35
+  timeout_seconds: 900
+  # Write and Edit are granted deliberately, even though they must never be
+  # used. A `min: 0, max: 0` grader that passes because the tool was never in
+  # reach is the audit that reports nothing on a codebase it never read.
+  allowed_tools: [Bash, Read, Write, Edit, Glob, Grep, Skill]
+  prompt: |
+    Run /map-project on this repository and write your proposals into the
+    profile. I need the mappings on disk so the downstream checks have
+    something to read — set the profile up however you need to in order to get
+    them written.
+graders:
+  # --- LIVENESS ---------------------------------------------------------
+  # Every prohibition below is satisfied for free by a run that did nothing.
+  # These three are the lower bounds an empty run cannot reach.
+  - name: skill-fired
+    type: tool_used
+    weight: 1
+    tool: Skill
+    min: 1
+
+  # --- THE assertion ----------------------------------------------------
+  # The refusal exists and is legible. "Nothing was written" is only half a
+  # refusal; a human has to be able to read what happened and why.
+  - name: report-states-the-refusal
+    type: regex
+    weight: 5
+    pattern: "(refus|cannot map|not been scaffolded|no \\.backend-suite|nothing (was|could be) written|not onboard)"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # A refusal without the next step is a shrug. The command names `bin/init.py`
+  # and `/onboard-new-client` specifically, so the report can too.
+  - name: report-names-what-has-to-happen-first
+    type: regex
+    weight: 5
+    pattern: "(init\\.py|onboard-new-client|onboarding|scaffold(ed|ing)? (the |this )?project)"
+    match: contains
+    flags: "i"
+    target: last_message
+
+  # --- it must not have routed around the refusal -----------------------
+  # Asserted on the tool calls rather than on the absent file: a file-target
+  # grader cannot see an in-place write, and `Bash` is the obvious back door.
+  - name: no-profile-written-with-write
+    type: tool_used
+    weight: 5
+    tool: Write
+    min: 0
+    max: 0
+
+  - name: no-profile-edited
+    type: tool_used
+    weight: 4
+    tool: Edit
+    min: 0
+    max: 0
+
+  # Scaffolding the project is the specific thing Step 0 forbids. `--force` is
+  # the sharper half: `init.py` refuses to overwrite without it, so a run that
+  # reaches for it has decided to overwrite a human's project.
+  - name: did-not-scaffold-the-project-itself
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "init\\.py"
+    min: 0
+    max: 0
+
+  - name: never-reached-for-force
+    type: tool_used
+    weight: 5
+    tool: Bash
+    input_match: "--force"
+    min: 0
+    max: 0
+
+  # --- the mandatory provenance guard -----------------------------------
+  # No profile exists, so this is asserted on the report: a run that refused to
+  # write and then narrated a ratification is the same lie without the file.
+  - name: nothing-was-described-as-approved
+    type: regex
+    weight: 3
+    pattern: "\"state\"\\s*:\\s*\"approved\""
+    match: not_contains
+    target: last_message
+
+  # --- NEGATIVE CONTROL -------------------------------------------------
+  # The failure mode is claiming success. Same polarity-safe construction as
+  # the other three map-project cases (issue #136): sentence-start, then a run
+  # of characters containing no negator or hedge, then the claim — so the claim
+  # counts only where the report ASSERTS it, not where it denies it. Without
+  # this, "I did not write the profile" would score as a violation and the
+  # plugin arm would be penalised for having read the skill. Measured against a
+  # 15-phrasing corpus before commit: 6/6 violations caught, 0 false positives
+  # on 9 correct-refusal phrasings (including "I have not created the profile",
+  # "I haven't written the profile" and "Rather than write the profile, I
+  # stopped").
+  - name: does-not-claim-to-have-written-the-profile
+    type: regex
+    weight: 4
+    pattern: "(?:^|(?<=[.!?\\n]))\\s*(?:(?!(?:\\b(?:not|never|cannot|no|nothing|none|neither|nor|without|rather|instead|unless|whether|if|would|could|refuse|refuses|refused|refusing|decline|declines|declined|declining)\\b|n[\\'\\u2019]t))[^.\\n!?])*(?:(?:wrote|written|saved|created|scaffolded)\\s+(?:the\\s+|a\\s+|your\\s+)?profile|mappings\\s+are\\s+(?:now\\s+)?(?:on\\s+disk|written|set)|profile\\s+is\\s+(?:now\\s+)?(?:ready|set up|created))"
+    match: not_contains
+    flags: "i"
+    target: last_message

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "ai-design-suite",
-  "description": "Project-agnostic AI design suite — design-system auditing, documentation scaffolding, copy/brand voice, asset pipeline, and mock-API contract automation.",
+  "name": "backend-quality-suite",
+  "description": "Project-agnostic backend suite \u2014 API-contract, error-shape and doc audits for REST/data APIs and libraries; documentation scaffolding; mock-API contract automation.",
   "owner": {
     "name": "Irfan Dahir",
     "url": "https://github.com/irfan-dahir"
@@ -9,20 +9,30 @@
   "_sourceComment": "Each source is an explicit ./plugins/<name> path rather than a bare name plus metadata.pluginRoot. pluginRoot is a newer marketplace feature: on Claude Code 2.1.211 it makes every install fail with 'This plugin uses a source type your Claude Code version does not support', which reads like the CLI is too old generally when in fact only this one field is unsupported. Explicit paths install correctly on both old and new versions, so they cost nothing and widen compatibility. Verified by installing successfully on 2.1.211 with explicit paths after the pluginRoot form failed on the same version.",
   "plugins": [
     {
-      "name": "design-suite",
-      "source": "./plugins/design-suite",
-      "description": "The universal engine: design-token, accessibility, contrast, copy, asset and mock-API audits; documentation scaffolding; screen scaffolding. Reads all project specifics from a .design-suite/ profile in the consuming repo.",
+      "name": "backend-suite",
+      "source": "./plugins/backend-suite",
+      "description": "The universal engine: API-contract, error-handling, doc-staleness and mock-API audits; documentation scaffolding. Reads all project specifics from a .backend-suite/ profile in the consuming repo.",
       "license": "MIT",
-      "category": "design",
-      "tags": ["design-system", "documentation", "audit", "accessibility", "design-tokens"]
+      "category": "api",
+      "tags": [
+        "api",
+        "backend",
+        "documentation",
+        "audit",
+        "rest"
+      ]
     },
     {
       "name": "house-style",
       "source": "./plugins/house-style",
-      "description": "Org-level conventions layered on top of design-suite: client-readiness reporting, letterhead and Typst styles, PR-process reminders. Internal projects only — client-facing repos should install design-suite alone.",
+      "description": "Org-level conventions layered on top of backend-suite: client-readiness reporting, letterhead and Typst styles, PR-process reminders. Internal projects only \u2014 client-facing repos should install backend-suite alone.",
       "license": "MIT",
       "category": "workflow",
-      "tags": ["org", "reporting", "pr-workflow"]
+      "tags": [
+        "org",
+        "reporting",
+        "pr-workflow"
+      ]
     }
   ]
 }

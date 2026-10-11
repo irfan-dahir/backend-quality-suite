@@ -73,7 +73,7 @@ The highest-value stream, because it unblocks the other three.
 
 | # | Item | Reasoning |
 |---|---|---|
-| **A1** | ✅ **`bin/verify.py <component>`** — run a component's mechanical parts against the current project, write evidence to `.design-suite/evidence/<name>.json`. Built 2026-09-14 | Hand-rolled five times in one session, differently each time. Until this exists, verifying one component is an hour of bespoke work, which is why 26 remain unverified |
+| **A1** | ✅ **`bin/verify.py <component>`** — run a component's mechanical parts against the current project, write evidence to `.backend-suite/evidence/<name>.json`. Built 2026-09-14 | Hand-rolled five times in one session, differently each time. Until this exists, verifying one component is an hour of bespoke work, which is why 26 remain unverified |
 | **A2** | **Maturity backed by evidence, not assertion.** `proven` requires a matching evidence file naming what ran, when, and against which project. `catalog.py` gates it | `proven` is currently a word someone typed. Twice it was set with real caveats that only the commit message carries — invisible to anyone reading the catalogue |
 | **A3** | **Generalise the zero-result guard.** A check that scans 0 files, matches 0 patterns, or reads a missing target fails loudly rather than passing | `audit_tokens` already has this and it works. The four defects above are all the same shape, and all in checks that lack it |
 | **A4** | **The oracle should record what changed, not only how much.** | A `145 → 144` drift was unresolvable: `findings.json` is gitignored and the baseline stores a summary line and a sha256. The oracle can say *that* something changed and never *what* |
@@ -206,7 +206,7 @@ B1 moves to "revisit when a non-Flutter consumer is actually committed".
 The split has cost ~40 duplicated lines (`resolve_role.py`) and one gate exemption.
 Both are documented, and both were one-time costs.
 
-What it buys is not convenience: **a client-facing repository installs `design-suite`
+What it buys is not convenience: **a client-facing repository installs `backend-suite`
 alone and inherits no org PR process, no letterhead, no client-readiness
 reporting.** That is a real boundary, and merging the plugins to recover 40 lines
 would trade it for very little. Keep them separate; keep `resolve_role.py`'s docstring

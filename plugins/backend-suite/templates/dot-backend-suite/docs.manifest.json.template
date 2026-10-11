@@ -1,0 +1,28 @@
+{
+  "_readme": "Maps doc ROLES (the vocabulary skills speak in) to the actual paths in THIS project. Full role vocabulary and the exit-code contract: plugins/backend-suite/docs/DOC-ROLES.md. Map only the roles you actually have \u2014 an unmapped role makes a skill stop and ask rather than guess, which is correct. Do NOT map a role to a file that doesn't really play that part just to silence a warning. IMPORTANT: doctor.py checks every key under 'roles' and 'directories' as a real path \u2014 do not add '_comment'-style keys inside those two objects (only 'externalRoles' entries starting with '_' are ignored). Delete any role/directory line you have not written yet rather than leaving a placeholder path. After editing, run: python3 \"${CLAUDE_PLUGIN_ROOT}/bin/resolve.py\" --all   and   python3 \"${CLAUDE_PLUGIN_ROOT}/bin/doctor.py\"",
+  "roles": {
+    "api": "docs/API.md",
+    "api-standard": "docs/API-STANDARD.md",
+    "decisions": "docs/DECISIONS.md",
+    "backlog": "docs/BACKLOG.md"
+  },
+  "externalRoles": {
+    "_comment": "Roles owned by ANOTHER repository (e.g. this repo's PR process, which ships with the house-style plugin, or a shared package's docs). Each entry needs 'repo' (a URL) and 'path' (relative inside that repo); resolve.py prints repo+'/blob/main/'+path and exits 3 -- readable, never writable. Delete this whole object if nothing here applies.",
+    "pr": {
+      "repo": "TODO: https://github.com/TODO_ORG/TODO_ORG_POLICY_REPO",
+      "path": "TODO: docs/PR.md"
+    }
+  },
+  "declinedRoles": {
+    "_comment": "Roles this project DELIBERATELY has no document for. Each entry needs 'declined' (the reason, in a sentence), and should carry 'by' and 'on' so an old decision can be re-examined rather than inherited. resolve.py prints the reason and exits 4, and a skill that hits it must skip the check AND say so, with the reason, in its report \u2014 declined is not passed. Use this only for a real decision; leaving a role out entirely is the right move when nobody has looked yet. Delete this whole object if nothing here applies. The example below is under an underscore key so it is NOT a live decline: a scaffolded decline would make every project silently answer exit 4 with a placeholder reason nobody wrote, and a skill would report that placeholder as the project's decision. Use bin/decline_doc.py to add a real one.",
+    "_example": {
+      "declined": "TODO: why this project has no separate production-readiness document",
+      "by": "TODO: who decided",
+      "on": "TODO: YYYY-MM-DD"
+    }
+  },
+  "directories": {
+    "specs": "docs/specs",
+    "derived": "docs/derived"
+  }
+}

@@ -27,7 +27,7 @@ past step 2 on any of them**:
 
 | # | Where | What happened | Fix |
 |---|---|---|---|
-| 1 | `bin/chain.py status/next` | Exit 2 "Refusing to guess" on a project with no `.design-suite/` — the exact state this chain starts in, so `/run-chain` could not show step 1 | Read-only actions resolve like `survey.py`; writing actions still require the marker (`chain_test.py` `UnconfiguredProject`) |
+| 1 | `bin/chain.py status/next` | Exit 2 "Refusing to guess" on a project with no `.backend-suite/` — the exact state this chain starts in, so `/run-chain` could not show step 1 | Read-only actions resolve like `survey.py`; writing actions still require the marker (`chain_test.py` `UnconfiguredProject`) |
 | 2 | `bin/init.py --from-survey` → `bin/map_project.py` | init stamped `value` + `verifiedAgainst` on every `inferred` entry; map_project's serialised-bytes audit refuses any inferred entry carrying them, so **every** proposal on a freshly seeded profile exited 2 as "a defect in map_project.py" | init writes `{state, evidence}` only (survey commit folded into evidence); map_project audits only the entries it wrote this run (`init_from_survey_test.py`, `map_project_test.py` legacy case) |
 | 3 | `bin/resolve.py --all` (bootstrap Step 0) | Roles init registers by default (`backlog`, `decisions`, `flows`, `design`) listed unmarked and exit 0 although their files do not exist — reads as "already documented"; `--check` silently ignored with `--all` | `--all` marks `(missing)`; `--all --check` exits 1 (`resolve_test.py`) |
 | 4 | `commands/bootstrap-design-docs.md` | Step 0 used `--all` (see 3); its worked example proposes `tokens`, which `scaffold_doc.py` refuses for an `app` | Step 0 uses `--all --check`; example labelled design-system-only |
@@ -36,7 +36,7 @@ past step 2 on any of them**:
 After the fixes, all four steps completed on all three subjects; `chain.py status`
 ends with every step ✅.
 
-## 2. Real session — `claude -p --plugin-dir <worktree>/plugins/design-suite`
+## 2. Real session — `claude -p --plugin-dir <worktree>/plugins/backend-suite`
 
 On a fresh copy of the React/Vite subject. `--allowedTools` is ignored under this
 machine's managed settings (`allowManagedPermissionRulesOnly`), so the first
@@ -46,13 +46,13 @@ chained with `--continue`.
 
 | Session | Prompt | Observed |
 |---|---|---|
-| 2 | `/design-suite:run-chain understand-existing-project` | Showed status, put step 1's decision point, **wrote nothing** (`.design-suite/` absent afterwards) |
+| 2 | `/backend-suite:run-chain understand-existing-project` | Showed status, put step 1's decision point, **wrote nothing** (`.backend-suite/` absent afterwards) |
 | 3 | "yes" | Survey ran; step left `⏸ awaiting sign-off`, not acked by the model |
 | 4 | "confirmed, ack; yes to init + map" | init scaffold + 5 argued `inferred` proposals + 6 refusals with what would settle each; every provenance entry `{state, evidence}`; step 2 left `⏸` |
 | 5 | "ack; propose one doc, I accept" | `docs/DESIGN.md` scaffolded as a stub (exit 5); the model left step 3 pending because the user said "stop and ask" |
 | 6 | "close step 3, ack; run health" | repo-health ran; final status all ✅ |
 
-Result: a usable `.design-suite/` (10 config files, 0 of 25 fields ratified — as
+Result: a usable `.backend-suite/` (10 config files, 0 of 25 fields ratified — as
 designed), one stub context document, and a health dashboard. Checkpoints held:
 no step advanced without a separate user turn. Session 6 ran before the `purpose`
 fix in row 5 and did not mention `token_pipeline/findings.json`.

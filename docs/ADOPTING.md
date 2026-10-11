@@ -15,36 +15,36 @@ immediately and the scanning half after writing an adapter.
 
 In Claude Code the suite arrives as a plugin and nothing below is needed. In any
 other agent tool — Codex, Cursor, Copilot, Gemini CLI, Zed, Aider, or a plain
-terminal — install the `design-suite` command instead. It needs Python 3.9 or
+terminal — install the `backend-suite` command instead. It needs Python 3.9 or
 newer and nothing else.
 
 ```bash
-pipx install /path/to/ai-design-suite      # or: uv tool install /path/to/ai-design-suite
-design-suite list                          # every command, and the script it runs
-design-suite doctor                        # run from inside your project
-design-suite audit tokens                  # any audit: design-suite audit <name>
+pipx install /path/to/ai-backend-suite      # or: uv tool install /path/to/ai-backend-suite
+backend-suite list                          # every command, and the script it runs
+backend-suite doctor                        # run from inside your project
+backend-suite audit tokens                  # any audit: backend-suite audit <name>
 ```
 
-Without installing, from a checkout: `PYTHONPATH=plugins/design-suite python3 -m design_suite list`.
+Without installing, from a checkout: `PYTHONPATH=plugins/backend-suite python3 -m backend_suite list`.
 
 Every command runs the same script the Claude Code skill runs, with the same
 arguments and the **same exit code** — 0 clean, 1 findings, 2 refused (and the
-3/4/5 some scripts document). `design-suite <command> --help` works anywhere,
+3/4/5 some scripts document). `backend-suite <command> --help` works anywhere,
 even outside a project.
 
 **How it finds itself.** Files written for other tools cannot use
 `${CLAUDE_PLUGIN_ROOT}` — only Claude Code fills that in. The suite is located
-in exactly this order, and `design-suite where` tells you which one answered:
+in exactly this order, and `backend-suite where` tells you which one answered:
 
-1. the installed `design-suite` (or the checkout you ran `python3 -m design_suite` from);
-2. the `DESIGN_SUITE_HOME` environment variable, pointing at `plugins/design-suite`;
+1. the installed `backend-suite` (or the checkout you ran `python3 -m backend_suite` from);
+2. the `BACKEND_SUITE_HOME` environment variable, pointing at `plugins/backend-suite`;
 3. `CLAUDE_PLUGIN_ROOT`, when running under Claude Code;
 4. otherwise it stops with exit 2 and lists what it tried. It never guesses.
 
 A variable that is set but points at the wrong place is also a stop, not a
 reason to try the next step. In a hook or instruction file for another tool,
-prefer calling `design-suite <command>`; if it may not be installed, set
-`DESIGN_SUITE_HOME` and call `python3 "$DESIGN_SUITE_HOME/bin/<script>.py"`.
+prefer calling `backend-suite <command>`; if it may not be installed, set
+`BACKEND_SUITE_HOME` and call `python3 "$BACKEND_SUITE_HOME/bin/<script>.py"`.
 
 Which tools read which instruction, skill, hook and MCP files is in
 [research/harness-support-matrix-2026-10-08.md](./research/harness-support-matrix-2026-10-08.md).
@@ -68,7 +68,7 @@ need first."
 
 ## Step 1 — Pick your adapter
 
-`adapters.lang` in `.design-suite/profile.json`:
+`adapters.lang` in `.backend-suite/profile.json`:
 
 | Value | Implements | Doesn't |
 |---|---|---|
@@ -98,7 +98,7 @@ steps below are what it does underneath, and what to check afterwards.
 
 ## Step 2 — Write the profile
 
-`.design-suite/profile.json`. Every project-specific fact the tooling needs,
+`.backend-suite/profile.json`. Every project-specific fact the tooling needs,
 and the only place any of them may live.
 
 ```
@@ -139,9 +139,9 @@ happened here.
 
 ## Step 3 — Map your documents
 
-`.design-suite/docs.manifest.json`. Roles → your paths. Full vocabulary and the
+`.backend-suite/docs.manifest.json`. Roles → your paths. Full vocabulary and the
 exit-code contract in
-[`plugins/design-suite/docs/DOC-ROLES.md`](../plugins/design-suite/docs/DOC-ROLES.md).
+[`plugins/backend-suite/docs/DOC-ROLES.md`](../plugins/backend-suite/docs/DOC-ROLES.md).
 
 Map only the roles you have. An unmapped role makes `resolve.py` exit 2 and the
 skill stop and ask — which is correct. **Do not map a role to a file that doesn't
@@ -226,10 +226,10 @@ consumer checkout pins a tag.**
 ```yaml
 - uses: actions/checkout@v4
   with:
-    repository: irfan-dahir/ai-design-suite
-    ref: design-suite--v0.2.0   # <sha the tag resolves to> — pin, never track main
+    repository: irfan-dahir/ai-backend-suite
+    ref: backend-suite--v0.2.0   # <sha the tag resolves to> — pin, never track main
     token: ${{ steps.suite-token.outputs.token }}
-    path: _design_suite
+    path: _backend_suite
 ```
 
 The SHA goes in the comment so a reader can resolve the tag exactly without
@@ -292,21 +292,21 @@ steps:
     id: audits
     run: |
       set +e
-      python3 _design_suite/plugins/design-suite/bin/repo_health.py --json > health.json
+      python3 _backend_suite/plugins/backend-suite/bin/repo_health.py --json > health.json
       echo "status=$?" >> "$GITHUB_OUTPUT"
   - name: Export SARIF (refusals included as failed invocations)
     run: |
-      python3 _design_suite/plugins/design-suite/bin/export_sarif.py \
-        --health health.json --validate --out design-suite.sarif
+      python3 _backend_suite/plugins/backend-suite/bin/export_sarif.py \
+        --health health.json --validate --out backend-suite.sarif
   - uses: github/codeql-action/upload-sarif@v3
     with:
-      sarif_file: design-suite.sarif
+      sarif_file: backend-suite.sarif
   - name: A crashed audit fails the job — after the upload, not instead of it
     if: steps.audits.outputs.status != '0'
     run: exit 1
 ```
 
-Each run carries its own `automationDetails.id` (`design-suite/<audit>/`) and
+Each run carries its own `automationDetails.id` (`backend-suite/<audit>/`) and
 tool name, so you do not need a `category:` input. Severity maps critical →
 `error`, should-fix → `warning`, fyi → `note`; rule ids are
 `<audit>/<category>`; file paths are relative to `%SRCROOT%`. A finding with no
@@ -315,7 +315,7 @@ say how many. Verify the action version and permissions against GitHub's
 current code-scanning docs before relying on this snippet.
 
 For a PR comment rather than code-scanning alerts, see
-[`/design-review-pr`](../plugins/design-suite/commands/design-review-pr.md).
+[`/design-review-pr`](../plugins/backend-suite/commands/design-review-pr.md).
 
 ---
 
@@ -392,7 +392,7 @@ scripts** — run by hand, in order, at release time — not a single command:
    python3 "${CLAUDE_PLUGIN_ROOT}/bin/check_version_consistency.py"
    ```
 
-   Reads `release.versionSources` from `.design-suite/profile.json` — the
+   Reads `release.versionSources` from `.backend-suite/profile.json` — the
    files this project considers authoritative for its own version number
    (`package.json`, `pubspec.yaml`, the top `CHANGELOG.md` heading, ...) and
    how to read a version out of each. Exits `1` the moment two disagree,
@@ -404,7 +404,7 @@ scripts** — run by hand, in order, at release time — not a single command:
 2. **Run this project's own audits.**
 
    ```bash
-   python3 plugins/design-suite/bin/gates.py
+   python3 plugins/backend-suite/bin/gates.py
    ```
 
    Not reimplemented here — `gates.py` (or whatever a project has declared
@@ -438,7 +438,7 @@ scripts** — run by hand, in order, at release time — not a single command:
    ```
 
    Reads a "site-assembly recipe" from `release.docsSite` in
-   `.design-suite/profile.json`: a `buildCommand`, a `deployCommand` — both
+   `.backend-suite/profile.json`: a `buildCommand`, a `deployCommand` — both
    argv lists your project owns (`rsync`, the `gh-pages` CLI, `netlify
    deploy`, `aws s3 sync`, a local publish script, whatever you already
    use — this suite hardcodes no hosting provider), and `smokeCheckRoutes`.
@@ -492,14 +492,14 @@ not something to build around.
 > projects (issue #104) and switched off in PR #107: it exits 2, and every
 > reporting surface names it as "NOT RUN — not a clean result" rather than
 > letting the silence read as a pass. The other two audits below are live.
-> The re-enabling bar is in `design_suite/engine/audit_discovery.DISABLED`;
+> The re-enabling bar is in `backend_suite/engine/audit_discovery.DISABLED`;
 > until it is met, adding the first entry buys a gate that checks nothing and
 > says so on every commit.
 
 So turning on an accessibility gate is a config change, not a new
 component. Add these entries to your project's
-`.design-suite/hooks.map.json` (see
-[`hooks.map.schema.json`](../plugins/design-suite/templates/hooks.map.schema.json)
+`.backend-suite/hooks.map.json` (see
+[`hooks.map.schema.json`](../plugins/backend-suite/templates/hooks.map.schema.json)
 for the full field contract):
 
 ```json
@@ -509,11 +509,11 @@ for the full field contract):
       "name": "Accessibility audit",
       "glob": ["lib/**/*.dart"],
       "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_accessibility.py",
-                  "--out", ".design-suite/scratch/hook-a11y.json"],
+                  "--out", ".backend-suite/scratch/hook-a11y.json"],
       "scopeMode": "dir",
       "scopeArg": "--dir",
       "reportWhen": "findings",
-      "findingsPath": ".design-suite/scratch/hook-a11y.json",
+      "findingsPath": ".backend-suite/scratch/hook-a11y.json",
       "fixHint": "/audit-accessibility",
       "_disabled": "audit_accessibility exits 2 (issue #104). Leave preCommit false until the DISABLED registry's re-enabling bar is met.",
       "preCommit": false
@@ -522,11 +522,11 @@ for the full field contract):
       "name": "Focus order audit",
       "glob": ["lib/**/*.dart"],
       "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_focus_order.py",
-                  "--out", ".design-suite/scratch/hook-focus-order.json"],
+                  "--out", ".backend-suite/scratch/hook-focus-order.json"],
       "scopeMode": "dir",
       "scopeArg": "--dir",
       "reportWhen": "findings",
-      "findingsPath": ".design-suite/scratch/hook-focus-order.json",
+      "findingsPath": ".backend-suite/scratch/hook-focus-order.json",
       "fixHint": "/audit-focus-order",
       "preCommit": true
     },
@@ -534,11 +534,11 @@ for the full field contract):
       "name": "Reduced-motion audit",
       "glob": ["lib/**/*.dart"],
       "command": ["python3", "${CLAUDE_PLUGIN_ROOT}/bin/audit_reduced_motion.py",
-                  "--out", ".design-suite/scratch/hook-reduced-motion.json"],
+                  "--out", ".backend-suite/scratch/hook-reduced-motion.json"],
       "scopeMode": "dir",
       "scopeArg": "--dir",
       "reportWhen": "findings",
-      "findingsPath": ".design-suite/scratch/hook-reduced-motion.json",
+      "findingsPath": ".backend-suite/scratch/hook-reduced-motion.json",
       "fixHint": "/audit-reduced-motion",
       "preCommit": true
     }
@@ -549,7 +549,7 @@ for the full field contract):
 Adjust the `glob` to your own `source.root` (these three audits all default
 `--dir` to the profile's `source.root` when it is omitted, but a hook needs
 a glob to know which staged files to scope the run to at all). Each entry
-writes its findings to a scratch path under `.design-suite/scratch/`, never
+writes its findings to a scratch path under `.backend-suite/scratch/`, never
 to the whole-repo findings file an unscoped `/audit-*` run owns — a
 narrowed pre-commit run replacing a full sweep's artefact would make
 `/design-debt` grade the project on a fraction of it, the same failure mode
@@ -560,7 +560,7 @@ documented exclusion — `/audit-contrast` is a `maturity: pointer` entry
 redirecting to the org's design-system repo's (`<design-system-repo>`) own
 `tooling/scripts/audit_contrast.py --matrix`, because contrast needs real
 rendered-colour maths against a shared palette, not a text scan. See
-[`/audit-contrast`](../plugins/design-suite/commands/audit-contrast.md) for
+[`/audit-contrast`](../plugins/backend-suite/commands/audit-contrast.md) for
 where to run it. A pre-commit a11y gate built from this recipe is
 intentionally silent on contrast; that is this suite staying out of a check
 it does not own, not a hole in the recipe.
@@ -619,7 +619,7 @@ means "few inline styles," not "few hardcoded values."
 
 ## Writing an adapter
 
-`design_suite/adapters/base.py` defines the contracts: `AdapterContext`,
+`backend_suite/adapters/base.py` defines the contracts: `AdapterContext`,
 `Check`, `CheckSet`, `CapabilityError`, plus `AssetAdapterProtocol` and
 `ScaffoldAdapterProtocol` — all three seams now have implementations to read
 alongside the contract.
@@ -640,7 +640,7 @@ Two rules:
 Then prove the seam still holds:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/design_suite/adapters/verify_seam.py"
+python3 "${CLAUDE_PLUGIN_ROOT}/backend_suite/adapters/verify_seam.py"
 ```
 
 This runs in CI on every change. Without it the seam would silently rot back
@@ -650,7 +650,7 @@ into Dart-shaped assumptions within a few commits.
 
 ## Client-facing projects
 
-**Install `design-suite` alone.** Skip `house-style`.
+**Install `backend-suite` alone.** Skip `house-style`.
 
 House-style carries the org's letterhead, our internal PR process, and
 client-readiness reporting. None of that belongs baked into tooling that lives in
@@ -669,7 +669,7 @@ A project that installs `house-style` inherits a `Verification-Tier:` /
 [`PR.md.template`](../plugins/house-style/templates/docs/PR.md.template)),
 mirroring the `Co-Authored-By:` commit trailer convention. Vocabulary —
 `unverified` / `self-tested` / `cross-verified` / `human-reviewed` — comes from
-[`verification-tier.schema.json`](../plugins/design-suite/templates/verification-tier.schema.json)
+[`verification-tier.schema.json`](../plugins/backend-suite/templates/verification-tier.schema.json)
 (issue #55); a PR takes the **lowest** tier among its bundled commits.
 
 The rule that matters most: **an agent may self-report `unverified` or
@@ -678,7 +678,7 @@ an actual independent party, not the drafting agent's own say-so. `/draft-pr-des
 leaves the trailer's value blank rather than guessing it. This is a body trailer, not
 a label or a CI check — checking a PR body's shape doesn't fit `gates.py`'s
 tree-on-disk model, and a truthfulness check needs a human in the loop regardless.
-`plugins/design-suite/bin/check_pr_verification_trailer.py` spot-checks presence
+`plugins/backend-suite/bin/check_pr_verification_trailer.py` spot-checks presence
 (not truthfulness) against merged PRs on request; it is a manual script, not
 wired into CI or `gates.py`.
 
@@ -691,7 +691,7 @@ mechanism that keeps the rest of that template from drifting from what
 
 ## Using the suite from a harness other than Claude Code (MCP tools)
 
-The plugin ships one MCP server, `plugins/design-suite/mcp/audit_server.py`
+The plugin ships one MCP server, `plugins/backend-suite/mcp/audit_server.py`
 (stdlib Python, stdio transport). Research on 2026-10-08
 (`docs/research/harness-support-matrix-2026-10-08.md`, on branch
 `docs/issue-0-harness-support-matrix`) found that MCP **tools** are the only MCP
@@ -704,11 +704,11 @@ not decide anything those scripts do not.
 | Tool | Writes? | What it does |
 |---|---|---|
 | `project_status` | nothing | Says whether this project is configured, new, existing, partially set up, declined, or could not be told — the same answer the Claude Code start-of-session hook gives — and, if configured, which audits work, which refuse and why, and which are switched off. The agent is told to *offer* onboarding, never to start it. |
-| `survey` | only `.design-suite/survey.json` (`check: true` writes nothing) | Looks at the project and records what it found. |
+| `survey` | only `.backend-suite/survey.json` (`check: true` writes nothing) | Looks at the project and records what it found. |
 | `resolve_role` | nothing | Says which file plays a document role (e.g. the design doc). |
 | `doctor` | nothing | Checks the configuration and lists what is unresolved or still a machine guess. |
 | `repo_health` | audit report files only | Runs every audit and reports clean / findings / refused / disabled. |
-| `init_from_survey`, `map_project` | yes — previewed first | Create or fill in `.design-suite/` from the survey. |
+| `init_from_survey`, `map_project` | yes — previewed first | Create or fill in `.backend-suite/` from the survey. |
 | `chain_status`, `chain_next` | nothing | Where a guided chain (e.g. `onboard-new-client`) has got to and what comes next. |
 | `chain_checkpoint` | yes — previewed first | Records a chain step as done or skipped. A checkpoint step needs two confirmed calls: one records the run, the second records the user's sign-off. |
 | `audit_*` | audit report files only | One tool per audit. Disabled audits stay listed and say they are disabled. |
@@ -720,12 +720,12 @@ writes — and it writes precisely the previewed bytes. If the arguments differ,
 the id is unknown or already used, or any file in the project changed since the
 preview, the call is refused with the reason. Every refusal comes back as an
 error result naming why, never as a quiet success. `propose_config` has no MCP
-tool yet; run it from a terminal with `design-suite propose-config` (it
+tool yet; run it from a terminal with `backend-suite propose-config` (it
 previews by default).
 
-**Registering the server.** The easiest way is `design-suite harness` (preview)
-then `design-suite harness --apply`: it writes these entries for you. Every
-entry starts the server with `design-suite mcp`, so no machine-specific path
+**Registering the server.** The easiest way is `backend-suite harness` (preview)
+then `backend-suite harness --apply`: it writes these entries for you. Every
+entry starts the server with `backend-suite mcp`, so no machine-specific path
 ends up in a committed file; install the CLI first (see "Install outside Claude
 Code"). Claude Code needs nothing: the plugin registers the server itself.
 Formats below are from each vendor's docs as read on
@@ -736,24 +736,24 @@ confirmed in the vendor docs.
 
 | Harness | Where | Shape |
 |---|---|---|
-| Claude Code | plugin install registers it automatically; or project `.mcp.json` | `{"mcpServers": {"design-suite": {"command": "design-suite", "args": ["mcp"]}}}` |
+| Claude Code | plugin install registers it automatically; or project `.mcp.json` | `{"mcpServers": {"backend-suite": {"command": "backend-suite", "args": ["mcp"]}}}` |
 | VS Code Copilot (agent mode) | `.vscode/mcp.json` (`"servers"`) or root `.mcp.json` (`"mcpServers"`) | same command/args |
 | Copilot cloud coding agent | repository Settings UI (JSON); a `tools` allowlist is required | same command/args; tools only |
 | Cursor | `.cursor/mcp.json` | `mcpServers` as above |
-| Codex | `.codex/config.toml` (trusted projects) or `~/.codex/config.toml` | `[mcp_servers.design-suite]` with `command = "design-suite"`, `args = ["mcp"]`. Codex reads the server's `instructions`, which restates the offer-don't-start and INERT rules |
+| Codex | `.codex/config.toml` (trusted projects) or `~/.codex/config.toml` | `[mcp_servers.backend-suite]` with `command = "backend-suite"`, `args = ["mcp"]`. Codex reads the server's `instructions`, which restates the offer-don't-start and INERT rules |
 | Gemini CLI | `.gemini/settings.json` | `mcpServers` with stdio `command`/`args` |
 | Zed | `.zed/settings.json` | `context_servers` entry with the command (exact keys UNVERIFIED) |
 | Amp | `.amp/settings.json` (workspace, needs approval) | `amp.mcpServers` |
-| opencode | `opencode.json` | `mcp` entry, `type: "local"`, `command: ["design-suite", "mcp"]` |
+| opencode | `opencode.json` | `mcp` entry, `type: "local"`, `command: ["backend-suite", "mcp"]` |
 | Roo Code | `.roo/mcp.json` | format UNVERIFIED |
 | Devin Desktop (formerly Windsurf) | user-level only: `~/.config/devin/mcp_config.json` | add it yourself; the suite never writes to your home directory |
 | Cline | user-level only: `cline_mcp_settings.json` | add it yourself |
-| Aider | no MCP support | use the `design-suite` CLI directly |
+| Aider | no MCP support | use the `backend-suite` CLI directly |
 
 In harnesses without a session-start hook, nothing calls `project_status` for
-you. `design-suite harness` writes this rule into your `AGENTS.md`; if you
+you. `backend-suite harness` writes this rule into your `AGENTS.md`; if you
 write it yourself, use: "At the start of a session, call the
-design-suite `project_status` tool; if it reports new, existing or partial,
+backend-suite `project_status` tool; if it reports new, existing or partial,
 offer onboarding — do not start it."
 
 ## Exchanging tokens with Figma, Tokens Studio and Style Dictionary (DTCG)
@@ -767,7 +767,7 @@ than a W3C Recommendation). Style Dictionary v4+ reads it natively. Both are
 | Script | Invocation | What it writes |
 |---|---|---|
 | `bin/export_tokens_dtcg.py` (`/export-tokens-dtcg`) | explicit | Nothing by default (stdout preview). `--out PATH` writes that one `.tokens.json`; `--report PATH` a JSON summary. Never source. |
-| `bin/import_tokens_dtcg.py` (`/import-tokens-dtcg`) | auto | Nothing by default. `--write-report [PATH]` writes one drift report (default `.design-suite/dtcg-drift.json`). Never source, never the DTCG file. |
+| `bin/import_tokens_dtcg.py` (`/import-tokens-dtcg`) | auto | Nothing by default. `--write-report [PATH]` writes one drift report (default `.backend-suite/dtcg-drift.json`). Never source, never the DTCG file. |
 
 To point the drift check at a file without passing `--file` every time, add
 to the profile:
@@ -800,15 +800,15 @@ file as its token source — see `commands/import-tokens-dtcg.md`.
 | Tailwind-class styling largely invisible to `tsx` | Named, tracked gap — see the case study |
 | Tailwind token *enumeration* | `tsx.token_names()` returns None — arbitrary values are audited, but nothing parses `tailwind.config.*` to enumerate the scale |
 | styled-components / Emotion | Hex and duration literals inside template literals are caught; property-level checks tuned for JS object syntax under-report there |
-| house-style duplicates ~40 lines of role resolution | Deliberate. It cannot reach design-suite's resolver across the plugin cache's per-plugin version hashes. `bin/resolve_role.py` is parity-tested against the real one; extend `resolve.py`, never this |
+| house-style duplicates ~40 lines of role resolution | Deliberate. It cannot reach backend-suite's resolver across the plugin cache's per-plugin version hashes. `bin/resolve_role.py` is parity-tested against the real one; extend `resolve.py`, never this |
 | Much of the suite is ⚪ `unverified` | Read the maturity column in [CATALOG.md](./CATALOG.md) before relying on a skill |
 
 ### Generated per-harness files
 
-`design-suite harness` previews the files other harnesses need (an `AGENTS.md`
+`backend-suite harness` previews the files other harnesses need (an `AGENTS.md`
 block, project-level MCP configs, a `.agents/skills/` mirror with
-`${CLAUDE_PLUGIN_ROOT}` rewritten to `${DESIGN_SUITE_HOME}`). Every MCP config
-runs `design-suite mcp`, so the CLI must be on PATH (preview warns if it is not)
+`${CLAUDE_PLUGIN_ROOT}` rewritten to `${BACKEND_SUITE_HOME}`). Every MCP config
+runs `backend-suite mcp`, so the CLI must be on PATH (preview warns if it is not)
 and the configs stay current when the suite moves. `.mcp.json` and
 `.claude/skills/` are skipped unless you pass `--include-claude` — the Claude
 plugin already provides both. `--apply` writes

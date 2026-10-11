@@ -8,7 +8,7 @@ maturity: proven
 # /draft-pr-description
 
 > Documents are referenced by role, e.g. `{{doc:pr}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve_role.py" pr`. See the design-suite plugin's `docs/DOC-ROLES.md` for the role vocabulary and exit-code contract.
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve_role.py" pr`. See the backend-suite plugin's `docs/DOC-ROLES.md` for the role vocabulary and exit-code contract.
 
 You draft a PR title and description from the actual diff and commit history — not the full PR-mechanics workflow (fetch/rebase/push stay manual, per `{{doc:pr}}`). This is narrower and purely a convenience: turning "write the PR description" from a from-scratch writing task into a review-and-confirm task.
 

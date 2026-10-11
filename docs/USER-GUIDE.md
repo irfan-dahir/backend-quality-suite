@@ -68,12 +68,12 @@ produces a confident clean report on the wrong files — see
 one install, one scaffold, three fields, one audit.
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-design-suite
-claude plugin install design-suite@ai-design-suite
+claude plugin marketplace add irfan-dahir/ai-backend-suite
+claude plugin install backend-suite@ai-backend-suite
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
 ```
 
-Open `.design-suite/profile.json` and fill in exactly three things. Leave every
+Open `.backend-suite/profile.json` and fill in exactly three things. Leave every
 other `TODO` alone for now:
 
 | Field | Example value |
@@ -91,7 +91,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_tokens.py"
 Real output, on a project with one component and one token file:
 
 ```
-Found 3 hardcoded-value findings across 2 files → .design-suite/tokens-findings.json
+Found 3 hardcoded-value findings across 2 files → .backend-suite/tokens-findings.json
 ```
 
 **What success looks like.** Three specific things, in order:
@@ -111,7 +111,7 @@ re-run. Findings should go up by one. Then take it out again and watch them go
 back down:
 
 ```
-Found 0 hardcoded-value findings across 0 files → .design-suite/tokens-findings.json
+Found 0 hardcoded-value findings across 0 files → .backend-suite/tokens-findings.json
 ```
 
 That round trip is the whole argument for trusting anything else in this guide.
@@ -129,10 +129,10 @@ this point.**
 
 | What it finds | What you will see |
 |---|---|
-| **Configured** — `.design-suite/profile.json` exists | Nothing. You are set up. |
+| **Configured** — `.backend-suite/profile.json` exists | Nothing. You are set up. |
 | **New** — no source code anywhere yet | Claude offers `/onboard-new-client`, the setup for a brand-new project. |
-| **Existing** — source code, but no `.design-suite/` folder | Claude offers `/run-chain understand-existing-project`, a guided setup (below). |
-| **Half set up** — `.design-suite/` exists, but no `profile.json` | Claude says most skills will refuse, and suggests `doctor.py` or resuming the guided setup. |
+| **Existing** — source code, but no `.backend-suite/` folder | Claude offers `/run-chain understand-existing-project`, a guided setup (below). |
+| **Half set up** — `.backend-suite/` exists, but no `profile.json` | Claude says most skills will refuse, and suggests `doctor.py` or resuming the guided setup. |
 | **Can't tell** — a home folder, an unreadable folder, or one too big to check quickly | Claude says it could not tell and suggests nothing. If you ask about setup, it asks you which case applies. |
 
 It is only an offer. Nothing starts until you say yes. If you say no, Claude
@@ -141,7 +141,7 @@ won't bring it up again in that session.
 **To switch the offer off for good:**
 
 - **For one project:** create an empty file called
-  `.design-suite-onboarding-declined` in the project root. You can also ask
+  `.backend-suite-onboarding-declined` in the project root. You can also ask
   Claude to stop reminding you, and it will create the file. It never creates it
   unless you ask.
 - **For everything on your machine:** set the environment variable
@@ -153,14 +153,14 @@ The suite's other hooks run after Claude edits a file. In a project that isn't
 set up, they now tell you that **once per session**:
 
 ```
-design-suite: no .design-suite/ in this project — the suite is installed but no
+backend-suite: no .backend-suite/ in this project — the suite is installed but no
 on-save audits are configured, so nothing is checked on edit (this is not a
 clean result).
 ```
 
 This is not an error. It is there so you don't mistake "nothing was checked"
 for "nothing was wrong". It goes away once the project is set up and its
-`.design-suite/hooks.map.json` lists the audits you want run on save.
+`.backend-suite/hooks.map.json` lists the audits you want run on save.
 
 ---
 
@@ -172,11 +172,11 @@ can stop and pick up in a later session by running the same command again.
 
 | # | Step | What it does | Writes | Asks first? |
 |---|---|---|---|---|
-| 1 | `/survey` | Works out your stack, where the source lives, which files might hold your design tokens, and which documents you have. It also lists what it *couldn't* work out — read that list. | `.design-suite/survey.json` | Yes |
-| 2 | `init.py --from-survey`, then `/map-project` | Creates the `.design-suite/` config, pre-filled from the survey. Then suggests which document is your design doc, what kind of project this is, and which file is the real token source. | `.design-suite/` config files | Yes, for each half |
+| 1 | `/survey` | Works out your stack, where the source lives, which files might hold your design tokens, and which documents you have. It also lists what it *couldn't* work out — read that list. | `.backend-suite/survey.json` | Yes |
+| 2 | `init.py --from-survey`, then `/map-project` | Creates the `.backend-suite/` config, pre-filled from the survey. Then suggests which document is your design doc, what kind of project this is, and which file is the real token source. | `.backend-suite/` config files | Yes, for each half |
 | 3 | `/bootstrap-design-docs` | Drafts missing context documents from what is already built, one at a time. You accept or decline each one. Skipped if you already have the documents. | The documents you accept | Yes, per document |
 | 4 | `/propose-config` | Reads your code and proposes real values for config sections setup left as `TODO` (layer rules, adapter pattern, animated widgets, colour names), each with the evidence behind it. Proposes nothing where the evidence is weak. | Only the sections you approve, marked `inferred` | Yes, per section |
-| 5 | `/repo-health` | Runs every audit once and records where the project starts: which audits work, which find things, which refuse. | Reports inside `.design-suite/` only (git-ignored) | No — it only reports |
+| 5 | `/repo-health` | Runs every audit once and records where the project starts: which audits work, which find things, which refuse. | Reports inside `.backend-suite/` only (git-ignored) | No — it only reports |
 
 Everything step 2 fills in is marked **`inferred`**: it is the machine's guess.
 No check treats a guess as trusted until a person approves it with `/ratify`.
@@ -195,7 +195,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/chain.py" status understand-existing-project
 The documentation skills (`/review-docs`, `/sync-docs`, `/bootstrap-design-docs`,
 `/survey`, the resolver) work on any project. Audits that read **source code**
 need an adapter for your language, set as `adapters.lang` in
-`.design-suite/profile.json`. `/survey` suggests one for you.
+`.backend-suite/profile.json`. `/survey` suggests one for you.
 
 | Adapter | For | Audits that work | Trust level |
 |---|---|---|---|
@@ -240,19 +240,19 @@ need to look at, never as a pass.
 
 ## Where reports go
 
-Audits save their raw reports inside `.design-suite/`, for example:
+Audits save their raw reports inside `.backend-suite/`, for example:
 
-- `.design-suite/tokens-findings.json`
-- `.design-suite/adapter-pattern-findings.json`
-- `.design-suite/layer-boundaries-findings.json`
-- `.design-suite/reduced-motion-findings.json`
-- `.design-suite/findings/` (the common format every audit writes)
+- `.backend-suite/tokens-findings.json`
+- `.backend-suite/adapter-pattern-findings.json`
+- `.backend-suite/layer-boundaries-findings.json`
+- `.backend-suite/reduced-motion-findings.json`
+- `.backend-suite/findings/` (the common format every audit writes)
 
-These are **ignored by git** through `.design-suite/.gitignore`, which
+These are **ignored by git** through `.backend-suite/.gitignore`, which
 `init.py` creates. They are kept out of git because reports quote lines of your
 source code. You can delete them at any time; the next run makes them again.
 
-What you *do* commit in `.design-suite/` is the config you wrote:
+What you *do* commit in `.backend-suite/` is the config you wrote:
 `profile.json`, `docs.manifest.json`, `exceptions.json`, `baselines/`, and the
 rest.
 
@@ -271,9 +271,9 @@ practice:
       `scripts/layer_boundaries_findings.json`. The audits no longer update
       them, so they would just go stale.
 - [ ] **Update anything that read those paths** (scripts, CI steps, hook
-      entries) to the new `.design-suite/…-findings.json` names. Or pass `--out`
+      entries) to the new `.backend-suite/…-findings.json` names. Or pass `--out`
       with the old path to keep it.
-- [ ] **Add the new names to `.design-suite/.gitignore`** if yours was created
+- [ ] **Add the new names to `.backend-suite/.gitignore`** if yours was created
       before this release: `tokens-findings.json`,
       `adapter-pattern-findings.json`, `layer-boundaries-findings.json`. New
       projects already get them.
@@ -310,7 +310,7 @@ still work under it.
 
 **Findings quote your source.** A token finding's `snippet` is a literal line of
 your code, and the literals a token audit greps for are the same shape a
-hardcoded credential has. That is why the scaffolded `.design-suite/.gitignore`
+hardcoded credential has. That is why the scaffolded `.backend-suite/.gitignore`
 ignores the findings and evidence directories by default: committing them would
 publish code excerpts into the repository's history, which is not a decision a
 scaffolder should make on a team's behalf. If you deliberately want a finding to
@@ -325,12 +325,12 @@ comments in that `.gitignore`; they say which files are which.
 ### 1. Install the plugin
 
 ```bash
-claude plugin marketplace add irfan-dahir/ai-design-suite
-claude plugin install design-suite@ai-design-suite
+claude plugin marketplace add irfan-dahir/ai-backend-suite
+claude plugin install backend-suite@ai-backend-suite
 ```
 
-On an internal org project, also install `house-style@ai-design-suite`.
-On a client-facing repo, install `design-suite` only — the house-style plugin
+On an internal org project, also install `house-style@ai-backend-suite`.
+On a client-facing repo, install `backend-suite` only — the house-style plugin
 carries our letterhead and PR process, which a client repo should not inherit.
 
 ### Which version you are running
@@ -340,7 +340,7 @@ so every merge into the suite lands in your build unreviewed. Pin it, and put
 the resolved SHA in a comment beside the tag:
 
 ```yaml
-ref: design-suite--v0.1.0   # <sha the tag resolves to> — pin, never track main
+ref: backend-suite--v0.1.0   # <sha the tag resolves to> — pin, never track main
 ```
 
 Within a minor version two things are guaranteed not to move: an audit's
@@ -364,15 +364,15 @@ run and CI disagree, CI is the answer, and the way to reproduce CI by hand is
 to clone the suite at the pinned tag and run the engine out of that clone:
 
 ```bash
-git clone --branch design-suite--v0.1.0 \
-  git@github.com:irfan-dahir/ai-design-suite.git /tmp/suite
-CLAUDE_PROJECT_DIR="$PWD" python3 /tmp/suite/plugins/design-suite/bin/doctor.py
+git clone --branch backend-suite--v0.1.0 \
+  git@github.com:irfan-dahir/ai-backend-suite.git /tmp/suite
+CLAUDE_PROJECT_DIR="$PWD" python3 /tmp/suite/plugins/backend-suite/bin/doctor.py
 ```
 
 ### 2. Create the config
 
 Everything the suite knows about your project lives in one directory in *your*
-repo, called `.design-suite/`. Create it:
+repo, called `.backend-suite/`. Create it:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
@@ -381,16 +381,16 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/init.py" --name "My Project"
 Real output:
 
 ```
-wrote .design-suite/profile.json
-wrote .design-suite/docs.manifest.json
-wrote .design-suite/design-audit-config.json
-wrote .design-suite/exceptions.json
-wrote .design-suite/arch-rules.json
-wrote .design-suite/hooks.map.json
-wrote .design-suite/known-traps.json
-wrote .design-suite/component-capabilities.json
-wrote .design-suite/.gitignore
-wrote .design-suite/profile.schema.json
+wrote .backend-suite/profile.json
+wrote .backend-suite/docs.manifest.json
+wrote .backend-suite/design-audit-config.json
+wrote .backend-suite/exceptions.json
+wrote .backend-suite/arch-rules.json
+wrote .backend-suite/hooks.map.json
+wrote .backend-suite/known-traps.json
+wrote .backend-suite/component-capabilities.json
+wrote .backend-suite/.gitignore
+wrote .backend-suite/profile.schema.json
 ```
 
 Nothing in those files is guessed for you. Every value that matters is the
@@ -409,7 +409,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/survey.py"
 ```
 
 ```
-survey: wrote .design-suite/survey.json — 3 file(s) seen, stack='javascript/typescript', 0 token candidate(s), 2 thing(s) it could NOT determine.
+survey: wrote .backend-suite/survey.json — 3 file(s) seen, stack='javascript/typescript', 0 token candidate(s), 2 thing(s) it could NOT determine.
   ? adapters.lang: stack 'javascript/typescript' has no adapter in this plugin
   ? tokens.source: token-source detection is the worst-measured signal in the suite
 ```
@@ -424,7 +424,7 @@ disk and tells you what your config has stopped describing.
 
 ### 4. Fill in the profile
 
-Open `.design-suite/profile.json` and replace the TODOs. The fields that matter
+Open `.backend-suite/profile.json` and replace the TODOs. The fields that matter
 most:
 
 | Field | What to put |
@@ -433,7 +433,7 @@ most:
 | `source.root` / `source.fileGlob` | Where your UI code is, and which files to scan |
 | `tokens.source` / `tokens.accessor` | Where your design tokens are defined, and how code refers to them |
 
-Then open `.design-suite/docs.manifest.json` and map your documents. The suite
+Then open `.backend-suite/docs.manifest.json` and map your documents. The suite
 never refers to a file by name — it asks for a **role**, like `design` or
 `flows`, and your manifest says which of your files plays it. Map only the roles
 you actually have. Delete the rest.
@@ -463,9 +463,9 @@ The doctor opens every path your config claims exists. A config can be perfectly
 well-formed and point at three files that were deleted last month.
 
 ```
-design-suite doctor — 8 problem(s):
+backend-suite doctor — 8 problem(s):
 
-  ✗ audits.baselineDir: '.design-suite/baselines' does not exist
+  ✗ audits.baselineDir: '.backend-suite/baselines' does not exist
   ✗ docs.roles.design: 'docs/DESIGN.md' does not exist (delete the role, or move it to externalRoles)
   ...
 ```
@@ -603,7 +603,7 @@ findings count is still zero and keeping it there is free.
 
 **Who should own it.** One person, named, and not "the team". Specifically:
 
-- **A `.design-suite/` owner** — whoever owns the design system, or the most
+- **A `.backend-suite/` owner** — whoever owns the design system, or the most
   senior UI engineer. They own the profile and the exceptions file, and they are
   the reviewer for every new entry in it. An exceptions list that grows without a
   reviewer is an audit that has quietly stopped auditing; the file's own header
@@ -652,7 +652,7 @@ it cannot go stale. Read it before relying on anything.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/audit_tokens.py"
-Found 3 hardcoded-value findings across 2 files → .design-suite/tokens-findings.json
+Found 3 hardcoded-value findings across 2 files → .backend-suite/tokens-findings.json
 ```
 
 The findings file:
@@ -679,7 +679,7 @@ a hardcoded colour is a fact, and whether it matters is your call.
 
 Note the third finding in that run was inside the token definition file itself.
 That is expected: the audit scans what your profile tells it to scan. If a path
-should be exempt, say so in `.design-suite/exceptions.json` with a reason,
+should be exempt, say so in `.backend-suite/exceptions.json` with a reason,
 rather than narrowing the scan and forgetting why.
 
 **Fixing them.** For some findings there is a mechanical fix: the literal `16`
@@ -849,7 +849,7 @@ Two different cases, and they take two different mechanisms.
 
 **Wrong about this file, right in general** — a vendored file, the token
 definition file being flagged for defining tokens, a generated directory. That is
-an accepted exception, and it goes in `.design-suite/exceptions.json`, keyed by
+an accepted exception, and it goes in `.backend-suite/exceptions.json`, keyed by
 the audit category:
 
 ```json
@@ -870,7 +870,7 @@ and in six months it is the difference between an accepted exception and an
 unexplained hole. Re-run, and the suppression is stated rather than silent:
 
 ```
-Found 2 hardcoded-value findings across 1 files → .design-suite/tokens-findings.json
+Found 2 hardcoded-value findings across 1 files → .backend-suite/tokens-findings.json
 Suppressed 1 further finding(s) under 1 documented exception(s):
     1  color.allowlistFiles  src/tokens.ts
 ```
@@ -919,7 +919,7 @@ is an interruption, not information.
 
 **Before a commit — one or two fast, invariant audits, if you want them.** This
 is opt-in in two steps, deliberately. Mark the audits you want in
-`.design-suite/hooks.map.json` with `"preCommit": true`, then install the hook:
+`.backend-suite/hooks.map.json` with `"preCommit": true`, then install the hook:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/bin/install_precommit_hook.py"
@@ -966,7 +966,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/survey.py" --check
 survey --check — completeness diff (disk → declared) for /path/to/project
 
   ✗ scripts/  [undeclared-top-level-directory]
-      on disk, and no config file under .design-suite/ declares it as a path
+      on disk, and no config file under .backend-suite/ declares it as a path
       1 file(s) underneath
 
 3 finding(s). This is the disk → declared direction; every doctor.py check runs
@@ -1020,7 +1020,7 @@ Why it is built this way rather than defaulting to a pass is
 The suite would rather stop than print a clean report it cannot back up. Most
 confusing messages are one of these five.
 
-**"no `.design-suite/` found … Refusing to guess."**
+**"no `.backend-suite/` found … Refusing to guess."**
 You are not in a project that has been set up, or not in its root. Run
 `init.py`, or `cd` to the repository root.
 
@@ -1049,7 +1049,7 @@ If you are scripting around the suite, the exit codes are a stated contract:
 **0** ran and found nothing, **1** ran and found something, **2** could not run.
 Anything else crashed. The full table, including the resolver's extra codes for
 external and declined documents, is in
-[DOC-ROLES.md](../plugins/design-suite/docs/DOC-ROLES.md).
+[DOC-ROLES.md](../plugins/backend-suite/docs/DOC-ROLES.md).
 
 ---
 
@@ -1126,7 +1126,7 @@ Stated plainly, so nothing here is a surprise later.
   to run, and "this skill does the right thing" remains a judgement a human makes
   by reading its output.
 - **It will not gate your commits unless you ask.** You can map fast audits into
-  `.design-suite/hooks.map.json` and install a pre-commit hook, but nothing is
+  `.backend-suite/hooks.map.json` and install a pre-commit hook, but nothing is
   wired that way by default.
 - **A green run is not a guarantee.** It means the checks that could run found
   nothing. Always read how many refused.
@@ -1153,12 +1153,12 @@ byte-diffing your file. Anything else in there is untouched.
 Then delete the configuration and the generated output, and uninstall the plugin:
 
 ```bash
-rm -rf .design-suite
-claude plugin uninstall design-suite@ai-design-suite
-claude plugin marketplace remove ai-design-suite
+rm -rf .backend-suite
+claude plugin uninstall backend-suite@ai-backend-suite
+claude plugin marketplace remove ai-backend-suite
 ```
 
-Two things do not live under `.design-suite/` and are worth a `git status` to
+Two things do not live under `.backend-suite/` and are worth a `git status` to
 catch: the findings directory an audit writes to, and any design documents
 `/bootstrap-design-docs` created. The documents are yours — they are ordinary
 markdown describing your project, with no dependency on the suite, and they keep

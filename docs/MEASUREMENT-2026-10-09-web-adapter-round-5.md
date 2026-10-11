@@ -10,7 +10,7 @@ tuning, not validation.
 
 ## 1. Protocol (committed before any of these projects was cloned)
 
-**Adapter under test:** `design_suite/adapters/web.py` and the engine's
+**Adapter under test:** `backend_suite/adapters/web.py` and the engine's
 `scan_tree` file filter at `7b28930`. Neither is changed during the run. If a
 defect is found, it is reported here and fixed on a later branch.
 
@@ -157,7 +157,7 @@ precedent). If the koel brand colours were FALSE instead, koel would be at
 
 ## 6. Decision
 
-**The bar, quoted** from `design_suite/engine/audit_discovery.py`:
+**The bar, quoted** from `backend_suite/engine/audit_discovery.py`:
 "<=5% wrong AND demonstrated non-zero true-positive capacity, re-measured on two
 real consumer projects".
 

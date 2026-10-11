@@ -15,7 +15,7 @@ Required. Fill in the line below — do not leave it blank and do not delete it.
   Verification-Tier: <unverified | self-tested | cross-verified | human-reviewed>
   Verified-By: <name, role, or tool — required for anything above unverified>
 
-Four tiers, weakest to strongest (see plugins/design-suite/templates/verification-tier.schema.json,
+Four tiers, weakest to strongest (see plugins/backend-suite/templates/verification-tier.schema.json,
 issue #55):
 
   unverified      Asserted. Nothing was run or read to confirm it.
@@ -47,6 +47,6 @@ Verified-By:
 
 ## Pre-PR checklist
 
-- [ ] `python3 plugins/design-suite/bin/gates.py` passes locally (CI is not authoritative — see CLAUDE.md rule 3)
+- [ ] `python3 plugins/backend-suite/bin/gates.py` passes locally (CI is not authoritative — see CLAUDE.md rule 3)
 - [ ] `docs/CATALOG.md` regenerated if any component's frontmatter changed (`bin/catalog.py`, never hand-edited)
 - [ ] Verification-Tier line above is filled in and, if this PR was agent-authored, is `unverified` or `self-tested` unless independent verification actually happened

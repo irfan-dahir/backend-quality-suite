@@ -230,9 +230,9 @@ AGENTS.md or skills, and every extra copy is drift.
 
 | Feature | Portable carrier | Harnesses | Degrades to |
 |---|---|---|---|
-| Session-start onboarding offer | `SessionStart` hook emitting additionalContext ("profile missing — offer /onboard") | Claude Code, Codex, VS Code local, Gemini, Cursor (not cloud), Copilot agent (contract UNVERIFIED) | AGENTS.md line: "if `.design-suite/profile.json` is absent, offer onboarding before other work". Devin Desktop, Zed, Cline, Amp, opencode, Aider |
+| Session-start onboarding offer | `SessionStart` hook emitting additionalContext ("profile missing — offer /onboard") | Claude Code, Codex, VS Code local, Gemini, Cursor (not cloud), Copilot agent (contract UNVERIFIED) | AGENTS.md line: "if `.backend-suite/profile.json` is absent, offer onboarding before other work". Devin Desktop, Zed, Cline, Amp, opencode, Aider |
 | After-edit audits | `PostToolUse`/`AfterTool`/`postToolUse` matched to edit tools, running the audit and returning findings as additionalContext | Claude Code, Codex, VS Code, Gemini, Cursor (`postToolUse`, not `afterFileEdit` which has no output) | Devin `post_write_code` can run the audit but cannot feed the model — write a report file and print to stderr. Elsewhere: AGENTS.md instruction to call the MCP audit tools after edits, and a git pre-commit hook (harness-independent) as the backstop |
-| Guided chains with checkpoints | State in `.design-suite/` (already how `run-chain` works) + MCP tools `chain_status` / `chain_advance` that refuse to advance without an explicit confirmation argument | All MCP-capable harnesses | Skill text alone (no MCP): the model must be told to stop; checkpoint enforcement is advisory. MCP prompts are not a reliable entry point (see above) |
+| Guided chains with checkpoints | State in `.backend-suite/` (already how `run-chain` works) + MCP tools `chain_status` / `chain_advance` that refuse to advance without an explicit confirmation argument | All MCP-capable harnesses | Skill text alone (no MCP): the model must be told to stop; checkpoint enforcement is advisory. MCP prompts are not a reliable entry point (see above) |
 
 ### What must degrade gracefully (and visibly)
 
@@ -254,7 +254,7 @@ Under the governing principle, every degraded path must say so:
   content-generating skill; those skills' own bodies must restate "require an
   explicit user request" as the floor.
 - **`${CLAUDE_PLUGIN_ROOT}`** → only Claude Code expands it; generated
-  artifacts need an install-time absolute path or a `.design-suite/` shim.
+  artifacts need an install-time absolute path or a `.backend-suite/` shim.
 
 ## Open items (UNVERIFIED, worth a direct read before implementation)
 

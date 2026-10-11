@@ -193,7 +193,7 @@ Skills refer to documents by role, in double-brace notation:
 Read {{doc:design}} and check the screen inventory against the codebase.
 ```
 
-Each project maps roles to its own paths in `.design-suite/docs.manifest.json`.
+Each project maps roles to its own paths in `.backend-suite/docs.manifest.json`.
 One project calls it `docs/DESIGN.md`; another calls it
 `design/design-system.md`; a third splits it in two. The skill does not know or
 care. `bin/resolve.py` turns a role into a path at run time:
@@ -215,7 +215,7 @@ path on a codebase nobody here had seen before, which is exactly the job.
 
 ## The project profile
 
-**`.design-suite/profile.json` — every project-specific fact, in one file.**
+**`.backend-suite/profile.json` — every project-specific fact, in one file.**
 
 Where the source lives. Which adapter to use. Where design tokens are defined.
 Which paths are exempt from which audit, and why. The architecture rules this
@@ -244,7 +244,7 @@ confidently. That happened here — see **INERT**, below.
 **A seam is a place where language- or stack-specific knowledge is allowed to
 live. An adapter is an implementation of one.**
 
-The engine (`design_suite/engine/`) knows how to *audit*. It does not know how to
+The engine (`backend_suite/engine/`) knows how to *audit*. It does not know how to
 read your language. When it needs to find every colour literal, it asks the
 adapter.
 
@@ -257,7 +257,7 @@ Three seams are defined:
 | **Scaffold** | Generating new screens in the project's idiom | `flutter.py` ✅ |
 
 All three are implemented. The contracts still live in
-`design_suite/adapters/base.py`, because a written contract is what an
+`backend_suite/adapters/base.py`, because a written contract is what an
 implementation gets checked against.
 
 `bundler.py` is worth singling out: it is an adapter whose job is to **refuse
@@ -266,7 +266,7 @@ because something imports it — so "is this asset registered?" has no answer, a
 it raises rather than inventing a boolean. Returning False would be a permanent
 false finding on every asset; returning True would hide every real one.
 
-`design_suite/adapters/verify_seam.py` runs in CI and proves the engine still
+`backend_suite/adapters/verify_seam.py` runs in CI and proves the engine still
 works through a non-Dart adapter with no engine changes. Without it, the seam
 would rot back into Dart-shaped assumptions within a few commits and nobody
 would notice until the next project tried to adopt it.
@@ -298,7 +298,7 @@ returned 20 genuine findings across 7 files, while `audit_accessibility.py` and
 **Recorded audit baselines that let you prove a refactor changed nothing.**
 
 Before the suite was pulled apart, every audit was run against the original
-project and its exact output recorded to `.design-suite/baselines/` — 8 audits,
+project and its exact output recorded to `.backend-suite/baselines/` — 8 audits,
 one baseline each. The token audit's baseline is 145 findings across 40 files, and
 running it from the plugin against that project still reproduces exactly that.
 
@@ -407,11 +407,11 @@ These are different axes and get confused, so:
 
 **Plugins** — how scopes ship. Two, not three:
 
-- `design-suite` — universal
+- `backend-suite` — universal
 - `house-style` — org
 
-Project scope is not a plugin. It is the `.design-suite/` profile in the
-consuming repo. **A client-facing project installs `design-suite` alone**, and
+Project scope is not a plugin. It is the `.backend-suite/` profile in the
+consuming repo. **A client-facing project installs `backend-suite` alone**, and
 gets no org branding or internal process baked into its tooling.
 
 **Layers** — how the code is stacked inside the universal plugin:

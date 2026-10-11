@@ -1,0 +1,14 @@
+{
+  "$schema": "./safe-repairers.schema.json",
+  "schemaVersion": 1,
+  "_readme": "Every script/skill named as a repair recommendation anywhere under bin/, backend_suite/engine/, hooks/, commands/, or agents/ must have an entry here, keyed on the exact invocation text (see the schema's description of `invocation` for why a bare script name and a flagged one are different entries). audit_safe_repairers.py fails the gate on anything named that way and not listed. sync_mock_api.py is deliberately NOT here: it is a live repair path (issue #116) still being made loss-safe in a concurrent change, and an allowlist entry for it today would attest to a refusal that does not exist yet.",
+  "entries": [
+    {
+      "invocation": "generate_openapi.py",
+      "kind": "script",
+      "r1": "Keyed on the SCRIPT, not one flag, after checking both forms: `main()` (generate_openapi.py:547) writes to exactly one path, OPENAPI_FILE (mock_api/openapi.json), and only from data it reads elsewhere (contracts.json, each contract's fixture, openapi_meta.json) \u2014 it has no second code path that could touch a fixture, a mock example, or the API doc. `--check` additionally short-circuits before that write and only exits 1 on drift. So unlike sync_mock_api.py (issue #116), where the DANGER is flag-independent \u2014 it merges two independently-authored sources and can drop a field from either \u2014 generate_openapi.py's write is a whole-file overwrite of a single artifact that is ENTIRELY derived from the other three, every time, regardless of flags. There is no invocation of this script that can lose data that lives anywhere else, which is why this entry does not need to be split by flag the way the schema's `invocation` field allows for a script where the flag actually changes the danger.",
+      "r2": "No data-loss case exists to construct against it, for the same reason as repair_tokens.py's r1/r2 gap: a script whose only write is a total, purely-derived regeneration of one file has nothing to refuse \u2014 there is no input shape where 'apply the derivation' means 'discard something correct'. audit_mock_api.py's own finding text (openapi_vs_fixtures, around generate_openapi.py:281) and hooks/mock_api_reminders.py both point at this script by name as the fix, on exactly this reasoning ('generate_openapi.py alone is the fix here' / 'purely-derivational'); this entry is that existing engineering judgment made checkable instead of asserted in a comment nothing enforces.",
+      "reason": "Referenced as the fix for openapi_vs_fixtures drift in backend_suite/engine/mockapi/audit_mock_api.py and in hooks/mock_api_reminders.py, both already reasoning (in comments) that this is safe because the spec is purely derivational, unlike sync_mock_api.py's cross-source merge. This entry is that reasoning, checked."
+    }
+  ]
+}

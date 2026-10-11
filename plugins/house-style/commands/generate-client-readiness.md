@@ -8,7 +8,7 @@ maturity: proven
 # /generate-client-readiness
 
 > Documents are referenced by role, e.g. `{{doc:production-readiness}}` — resolve with
-> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve_role.py" production-readiness`. See the design-suite plugin's `docs/DOC-ROLES.md` for the role vocabulary and exit-code contract.
+> `python3 "${CLAUDE_PLUGIN_ROOT}/bin/resolve_role.py" production-readiness`. See the backend-suite plugin's `docs/DOC-ROLES.md` for the role vocabulary and exit-code contract.
 
 You derive a **client-facing** production-readiness summary from **`{{doc:production-readiness}}`** (the internal checklist), then export it to PDF. This is a **derived collateral** per `{{doc:documentation-rules}}` §4: one direction of truth, source-stamped, disposable, regenerate-don't-hand-edit.
 

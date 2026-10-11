@@ -12,10 +12,10 @@
 A proposal, not a decision.
 
 **Evidence base:** three research tracks run 2026-09-15 —
-[#98](https://github.com/irfan-dahir/ai-design-suite/issues/98) (report vs.
+[#98](https://github.com/irfan-dahir/ai-backend-suite/issues/98) (report vs.
 fix),
-[#99](https://github.com/irfan-dahir/ai-design-suite/issues/99) (lifecycle),
-[#100](https://github.com/irfan-dahir/ai-design-suite/issues/100) (fleet) —
+[#99](https://github.com/irfan-dahir/ai-backend-suite/issues/99) (lifecycle),
+[#100](https://github.com/irfan-dahir/ai-backend-suite/issues/100) (fleet) —
 measured against the same four repositories as RFC-0002.
 
 ---
@@ -70,7 +70,7 @@ set by delivery, not by analysis.
 
 ### 2a. The suite reports, and stops
 
-Counted across `docs/CATALOG.md` and `plugins/design-suite/bin/`:
+Counted across `docs/CATALOG.md` and `plugins/backend-suite/bin/`:
 
 | | Count |
 |---|---|
@@ -247,7 +247,7 @@ that fix deliberately closed.
 ## 7. Open questions
 
 - ~~What false-positive ceiling do we hold ourselves to?~~ **Resolved 2026-09-15,
-  from measurement rather than precedent** ([#104](https://github.com/irfan-dahir/ai-design-suite/issues/104)).
+  from measurement rather than precedent** ([#104](https://github.com/irfan-dahir/ai-backend-suite/issues/104)).
   The bar is **≤5% wrong, ≤20% total noise, and 0% for band-1 repair** — stricter
   than Tricorder's 10%, and deliberately so: per §0, the reader is an agent that
   *acts* on a finding rather than a human who glances at one, so a ceiling
