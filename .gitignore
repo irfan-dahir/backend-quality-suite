@@ -1,17 +1,21 @@
 __pycache__/
 *.py[cod]
 .DS_Store
+.pytest_cache/
 
 # Regenerable audit output — never committed (baselines live in the consuming repo).
 # The .backend-suite/ entries matter beyond tidiness: findings quote the source
-# they matched, so committing them publishes code excerpts. Consumer projects get
-# the same rules scaffolded into .backend-suite/.gitignore by bin/init.py — this
-# block is this repo's own copy, since the suite is also run against itself.
+# they matched, so committing them publishes code excerpts by default, which is
+# not a decision a scaffolder should make silently on a team's behalf.
 findings.json
 *_findings.json
 .backend-suite/findings/
 .backend-suite/evidence/
 .backend-suite/.golden_local_ab/
+# The suite's own .backend-suite/ is a development artifact; only
+# claude_md_enforcement.json is tracked (see git ls-files).
+.backend-suite/
+!.backend-suite/claude_md_enforcement.json
 
 # `claude plugin eval` writes scored runs, transcripts and HTML reports here.
 # Same reasoning as the block above: a run's trace quotes whatever the agent
@@ -19,3 +23,7 @@ findings.json
 # anything a case was pointed at. The eval dir itself IS committed; only its
 # output is not.
 plugins/*/evals/results/
+
+# IDE/editor directories
+.idea/
+.vscode/
