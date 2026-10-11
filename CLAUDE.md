@@ -128,14 +128,32 @@ because it was learned the expensive way, twice.
    **Known-red in this fork, by design.** Two test files pin regression fixture
    revisions (`e14048a`, `ba7029e`) from the upstream lineage that this
    repository's squashed history does not carry: `suite_upgrade_test.py` and
-   `gate_consumer_compat_test.py`. Their cases that run against that fixture —
-   in the former the `CompatAgainstTheRealRegression`, `CompatRefusals` and
-   `Measure` classes, in the latter `GateBites` and the `CliExitCodes` cases
-   that pass `--from`/`--to` fixture revisions — fail here rather than skip,
-   because "an unavailable fixture is not a passing check" is the suite's own
-   rule. That failure is the documented state, not a regression to fix or a
-   fixture to fake. Every other gate and test must pass; a run whose only
-   failures are these named cases is this fork's clean.
+   `gate_consumer_compat_test.py`. Measured, not assumed, nothing in this
+   history can replace them — `audit_discovery.DISABLED` only ever *lost*
+   entries here (empty since the Phase A purge), so `audit-newly-disabled` is
+   unreachable; the pre-Phase-B commits live under `plugins/design-suite`,
+   which the engine's hardcoded `PLUGIN_PREFIX` refuses; and the one comparable
+   range (`ec99953..99359f6`) carries zero consumer breaks. So every case whose
+   meaning survives a clean range has been re-pointed to this repository's own
+   revisions and passes, and the cases that need a *breaking* range fail here
+   rather than skip, because "an unavailable fixture is not a passing check" is
+   the suite's own rule. That failure is the documented state, not a regression
+   to fix or a fixture to fake. As of this commit the fixture-pinned red set is
+   exactly: `suite_upgrade_test.py`'s `CompatAgainstTheRealRegression` class
+   and `test_cli_findings_needs_a_breaking_range`; and
+   `gate_consumer_compat_test.py`'s `GateBites` class and the `unacked`
+   `CliExitCodes` case. Three further cases in the latter
+   (`test_release_tag_is_discoverable_here`, the `clean` and `stale`
+   `CliExitCodes` cases) fail only because no `backend-suite--v*` release tag
+   exists yet — cutting the first one is gated on Phase D by
+   `docs/SWAP-PLAN.md`'s deletion rule, and all three go green the moment it
+   is cut (verified against a temporary tag). Two of the sixteen CI gates are
+   red for these same reasons and are part of this list, not exceptions to it:
+   the test-runner gate fails precisely because the fixture-pinned cases above
+   fail, and the consumer-compat gate exits 2 "cannot determine" because it
+   has no baseline tag — which is that gate's designed refusal, never a pass.
+   Every other gate and test must pass; a run whose only failures are these
+   named cases and gates is this fork's clean.
 
 4. **The main clone is often dirty with another session's work.** Check
    `git status` before doing anything. If it is not clean on the branch you

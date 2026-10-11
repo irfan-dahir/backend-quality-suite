@@ -48,16 +48,27 @@ Status legend: `[ ]` open · `[x]` done (with commit).
 
 ## Known-red until re-pointed (documented in CLAUDE.md)
 
-- [ ] `bin/gate_consumer_compat_test.py` fixture half + `bin/suite_upgrade_test.py`
-  `CompatAgainstTheRealRegression` — pin upstream revisions `e14048a` /
-  `ba7029e`, which never existed in this repo's history (fresh `git init`).
-  Options: (a) keep documented known-red (what ai-backend-suite did), or
-  (b) re-point at this repo's own revisions after `backend-suite--v0.1.0`
-  exists. Prefer (b): the tests are *about* comparing two real revisions, and
-  this repo can supply them for real.
-- [ ] `gate_consumer_compat_test.test_release_tag_is_discoverable_here` and
-  friends — auto-heal once Phase B renames the tag prefix to
-  `backend-suite--v*` and the first tag is cut.
+- [x] `bin/gate_consumer_compat_test.py` + `bin/suite_upgrade_test.py`
+  re-point — RESOLVED as a measured partial re-point (not the (b) this entry
+  once preferred, because (b) turned out half-impossible). Measured in-repo:
+  `audit_discovery.DISABLED` only ever *lost* entries here, so
+  `audit-newly-disabled` is unreachable; pre-Phase-B commits live under the
+  `plugins/design-suite` prefix the engine refuses; the one comparable range
+  (`ec99953..99359f6`) carries zero breaks. So every case whose meaning
+  survives a clean range now runs on real revisions (`REAL_OLD_REV,
+  REAL_NEW_REV`, or `HEAD..HEAD`) and passes, and only the cases that need a
+  *breaking* range stay fixture-pinned (`FIXTURE_OLD_REV,
+  FIXTURE_NEW_REV` = upstream `e14048a`/`ba7029e`) per CLAUDE.md rule 3:
+  `suite_upgrade_test.py`'s `CompatAgainstTheRealRegression` and
+  `test_cli_findings_needs_a_breaking_range`; `gate_consumer_compat_test.py`'s
+  `GateBites` and the `unacked` CLI case. Two false-passes closed by the
+  re-point: `malformed` (asserted exit 2 while the revision itself was
+  unresolvable) and `test_a_filter_matching_nothing_refuses` (matched the
+  filter refusal against an unreadable revision).
+- [ ] `gate_consumer_compat_test.test_release_tag_is_discoverable_here`,
+  the `clean`/`stale` CLI cases, and the consumer-compat CI gate — auto-heal
+  once the first `backend-suite--v*` tag is cut, which the SWAP-PLAN deletion
+  rule still gates on Phase D. All verified green against a temporary tag.
 
 ## Regenerated after the command/agent purge (A3)
 

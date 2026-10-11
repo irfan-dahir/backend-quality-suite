@@ -15,6 +15,21 @@ written to make it pass: `e14048a..ba7029e` is where `audit_tokens` flipped to
 producing blocking findings, this gate has regressed — and the test fails rather
 than skipping, because "the fixture was unavailable" is the silence this repo
 forbids.
+
+**The fork's split, measured.** That range is upstream history this fork's
+squashed 7-commit lineage does not carry, and no range here substitutes for it:
+`audit_discovery.DISABLED` only ever *lost* entries in this history (two at the
+scaffold, empty from the Phase A purge on), so `audit-newly-disabled` is
+provably unreachable; the commits before Phase B live under
+`plugins/design-suite`, which the engine's hardcoded `PLUGIN_PREFIX` refuses to
+read; and the one comparable range (`ec99953..99359f6`) carries zero consumer
+breaks. So the cases that need a *breaking* range (`GateBites`, the `unacked`
+CLI case) stay fixture-pinned and fail per CLAUDE.md rule 3, while every case
+whose meaning survives a clean range runs against this repository's own
+revisions (`REAL_*` below). A false-pass is the thing to watch here: two cases
+that used to pass only because an unresolvable revision raises `CannotDetermine`
+anyway — `malformed` asserting exit 2, and nothing else in this file — now run
+on real revisions so their refusal means what the test claims it means.
 """
 from __future__ import annotations
 
@@ -38,8 +53,21 @@ from backend_suite.engine.upgrade import CannotDetermine  # noqa: E402
 
 REPO = PLUGIN_ROOT.parents[1]
 
-# The real range in which the breaking shapes landed.
-OLD_REV, NEW_REV = "e14048a", "ba7029e"
+# The fixture revisions: the upstream regression range in which `audit_tokens`
+# flipped to `1`-on-findings, two audits entered `DISABLED`, and
+# `audit_reinvented_components` lost `--require-resolution`. This fork's
+# squashed history does not carry them, so the cases pinned here fail per
+# CLAUDE.md rule 3 rather than skipping. Nothing in this repository's own
+# history can replace them (see the module docstring) — measured, not assumed.
+FIXTURE_OLD_REV, FIXTURE_NEW_REV = "e14048a", "ba7029e"
+
+# This repository's own comparable range — the only one its history carries,
+# because earlier commits predate the `plugins/design-suite` ->
+# `plugins/backend-suite` rename the engine's PLUGIN_PREFIX requires. It
+# carries zero consumer breaks, which is the honest state of a fork that was
+# scaffolded *after* its upstream's regressions: every case whose meaning
+# survives a range with no breaks runs against these two revisions.
+REAL_OLD_REV, REAL_NEW_REV = "ec99953", "99359f6"
 
 # A complete, valid acknowledgement. Individual tests remove one field from a
 # copy of this, so "what makes an entry invalid" is always a one-field delta from
@@ -75,12 +103,17 @@ def _run(*argv: str) -> subprocess.CompletedProcess:
 
 
 class GateBites(unittest.TestCase):
-    """The pair that matters: a real break fails, and acknowledging it passes."""
+    """The pair that matters: a real break fails, and acknowledging it passes.
+
+    Fixture-pinned by necessity (module docstring): proving the gate *bites*
+    needs a range carrying breaks, and this fork's history carries none. The
+    cases fail here rather than skip — CLAUDE.md rule 3's documented clean.
+    """
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.findings = compat_gate.evaluate(
-            REPO, [], old_rev=OLD_REV, new_rev=NEW_REV)
+            REPO, [], old_rev=FIXTURE_OLD_REV, new_rev=FIXTURE_NEW_REV)
 
     def test_unacknowledged_critical_blocks(self) -> None:
         self.assertTrue(
@@ -102,7 +135,7 @@ class GateBites(unittest.TestCase):
         still appear under `acknowledged`.
         """
         acknowledged = compat_gate.evaluate(
-            REPO, [GOOD_ACK], old_rev=OLD_REV, new_rev=NEW_REV)
+            REPO, [GOOD_ACK], old_rev=FIXTURE_OLD_REV, new_rev=FIXTURE_NEW_REV)
         key = compat_gate.ack_key(GOOD_ACK)
         self.assertNotIn(
             key, {compat_gate.ack_key(f) for f in acknowledged["blocking"]})
@@ -127,7 +160,8 @@ class GateBites(unittest.TestCase):
             entry.update(**{k: "stated" for k in
                             ("break", "consumerInvocation", "migration")})
             acks.append(entry)
-        cleared = compat_gate.evaluate(REPO, acks, old_rev=OLD_REV, new_rev=NEW_REV)
+        cleared = compat_gate.evaluate(REPO, acks, old_rev=FIXTURE_OLD_REV,
+                                       new_rev=FIXTURE_NEW_REV)
         self.assertEqual(cleared["blocking"], [])
         self.assertEqual(cleared["counts"]["acknowledged"], len(acks))
 
@@ -305,12 +339,20 @@ class CliExitCodes(unittest.TestCase):
         real = compat_gate.load_acks(REPO / gate_cli.DEFAULT_ACKS)
         stale_acks = _write_acks(tmp / "stale", [*real, stale])
 
+        # `unacked` stays on the fixture range: it asserts exit 1 + a BLOCKING
+        # skeleton, which needs a range that actually carries breaks. The other
+        # two run on this repo's own revisions — their meanings (a refusal is
+        # exit 2; a report is machine-readable) survive a clean range, and
+        # running them on an unresolvable revision made `malformed` pass for
+        # the wrong reason.
         argvs = {
             "clean": (),
-            "unacked": ("--from", OLD_REV, "--to", NEW_REV, "--acks", str(unacked)),
-            "malformed": ("--from", OLD_REV, "--to", NEW_REV, "--acks", str(malformed)),
-            "json": ("--from", OLD_REV, "--to", NEW_REV, "--acks", str(json_acks),
-                     "--json"),
+            "unacked": ("--from", FIXTURE_OLD_REV, "--to", FIXTURE_NEW_REV,
+                        "--acks", str(unacked)),
+            "malformed": ("--from", REAL_OLD_REV, "--to", REAL_NEW_REV,
+                          "--acks", str(malformed)),
+            "json": ("--from", REAL_OLD_REV, "--to", REAL_NEW_REV,
+                     "--acks", str(json_acks), "--json"),
             "stale": ("--acks", str(stale_acks)),
         }
         with ThreadPoolExecutor(max_workers=len(argvs)) as pool:

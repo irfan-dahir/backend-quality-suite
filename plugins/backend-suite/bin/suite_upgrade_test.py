@@ -17,6 +17,21 @@ widened from critical-only to any finding, two audits entered `DISABLED`, and
 stops reporting all four, this check has regressed — and the test fails rather
 than skipping, because "the fixture was unavailable" is precisely the silence
 this repo forbids.
+
+**The fork's split, measured.** That range is upstream history this fork's
+squashed lineage does not carry, and nothing in this repository's history
+substitutes for it: `audit_discovery.DISABLED` only ever *lost* entries here
+(two at the scaffold, empty from the Phase A purge on), so an
+`audit-newly-disabled` finding is provably unreachable; the commits before
+Phase B live under `plugins/design-suite`, which the engine's hardcoded
+`PLUGIN_PREFIX` refuses to read; and the one comparable range
+(`ec99953..99359f6`) carries zero consumer breaks. So `CompatAgainstTheRealRegression`
+and the CLI's `FINDINGS` case stay fixture-pinned and fail per CLAUDE.md
+rule 3, while every case whose meaning survives a clean range runs against this
+repository's own revisions (`REAL_*` below). One old case used to pass for the
+wrong reason — `test_a_filter_matching_nothing_refuses` matched the filter
+refusal against an unresolvable revision, which raises `CannotDetermine`
+anyway — and now runs on real revisions so its refusal means what it claims.
 """
 from __future__ import annotations
 
@@ -38,8 +53,21 @@ from backend_suite.engine.upgrade import CannotDetermine  # noqa: E402
 
 REPO = PLUGIN_ROOT.parents[1]
 
-# The real range in which all four regression shapes landed.
-OLD_REV, NEW_REV = "e14048a", "ba7029e"
+# The fixture revisions: the real range in which all four regression shapes
+# landed, upstream. This fork's squashed history does not carry them, so the
+# cases pinned here fail per CLAUDE.md rule 3 rather than skipping — and
+# measured, not assumed, nothing in this history can replace them (module
+# docstring): an `audit-newly-disabled` finding is unreachable here, and the
+# pre-Phase-B commits live under the `plugins/design-suite` prefix the engine
+# refuses to read.
+FIXTURE_OLD_REV, FIXTURE_NEW_REV = "e14048a", "ba7029e"
+
+# This repository's own comparable range — the only one its history carries
+# (earlier commits predate the `plugins/design-suite` ->
+# `plugins/backend-suite` rename the engine's PLUGIN_PREFIX requires). Zero
+# consumer breaks in it, which is the honest state of a fork scaffolded after
+# its upstream's regressions.
+REAL_OLD_REV, REAL_NEW_REV = "ec99953", "99359f6"
 
 
 def _make_consumer(root: Path, *, profile: dict | None = None,
@@ -142,17 +170,23 @@ class RequiredConfigKeys(unittest.TestCase):
 
 
 class CompatAgainstTheRealRegression(unittest.TestCase):
-    """`e14048a..ba7029e` must report all four shapes. Nothing found means broken."""
+    """`FIXTURE_OLD..FIXTURE_NEW` must report all four shapes. Nothing found means broken.
+
+    Fixture-pinned by necessity (module docstring): all four shapes are
+    upstream history this fork's lineage does not carry, and no range in this
+    history can carry them. The class fails here rather than skipping —
+    CLAUDE.md rule 3's documented clean.
+    """
 
     @classmethod
     def setUpClass(cls):
         try:
-            cls.report = upgrade.compare(REPO, OLD_REV, NEW_REV)
+            cls.report = upgrade.compare(REPO, FIXTURE_OLD_REV, FIXTURE_NEW_REV)
         except CannotDetermine as exc:
             raise AssertionError(
-                f"the regression fixture {OLD_REV}..{NEW_REV} could not be read "
-                f"({exc}). This test fails rather than skipping: an unavailable "
-                f"fixture is not a passing check."
+                f"the regression fixture {FIXTURE_OLD_REV}..{FIXTURE_NEW_REV} "
+                f"could not be read ({exc}). This test fails rather than "
+                f"skipping: an unavailable fixture is not a passing check."
             ) from exc
 
     def _subjects(self, category: str) -> set[str]:
@@ -201,7 +235,7 @@ class CompatAgainstTheRealRegression(unittest.TestCase):
 class CompatRefusals(unittest.TestCase):
     def test_unknown_revision_refuses(self):
         with self.assertRaises(CannotDetermine):
-            upgrade.compare(REPO, "not-a-real-revision", NEW_REV)
+            upgrade.compare(REPO, "not-a-real-revision", REAL_NEW_REV)
 
     def test_a_revision_with_no_plugin_tree_refuses(self):
         """Paired with the positive below: an empty answer is never 'compatible'."""
@@ -216,19 +250,33 @@ class CompatRefusals(unittest.TestCase):
                 upgrade.compare(repo, "HEAD", "HEAD")
 
     def test_identical_revisions_still_answer_clean(self):
-        report = upgrade.compare(REPO, NEW_REV, NEW_REV)
+        """Re-pointed to this repo's own revisions — the claim needs no break."""
+        report = upgrade.compare(REPO, REAL_NEW_REV, REAL_NEW_REV)
         self.assertEqual(report["findings"], [])
 
     def test_cli_refusal_is_exit_2_not_0(self):
-        code = suite_upgrade.main(["compat", "--from", "nope-nope", "--to", NEW_REV])
+        code = suite_upgrade.main(["compat", "--from", "nope-nope",
+                                   "--to", REAL_NEW_REV])
         self.assertEqual(code, suite_upgrade.REFUSED)
 
-    def test_cli_clean_is_exit_0_and_findings_is_exit_1(self):
+    def test_cli_clean_is_exit_0(self):
+        """Re-pointed to this repo's own revisions: a same-same range is clean."""
         self.assertEqual(
-            suite_upgrade.main(["compat", "--from", NEW_REV, "--to", NEW_REV]),
+            suite_upgrade.main(["compat", "--from", REAL_NEW_REV,
+                                "--to", REAL_NEW_REV]),
             suite_upgrade.CLEAN)
+
+    def test_cli_findings_needs_a_breaking_range(self):
+        """Fixture-pinned per CLAUDE.md rule 3: a breaking range exits 1.
+
+        This fork's history carries no consumer-break range (module docstring),
+        so the FINDINGS half stays on the upstream fixture and fails here
+        rather than skipping. Its negative twin is `test_cli_clean_is_exit_0`
+        above, which runs on this repository's own revisions.
+        """
         self.assertEqual(
-            suite_upgrade.main(["compat", "--from", OLD_REV, "--to", NEW_REV]),
+            suite_upgrade.main(["compat", "--from", FIXTURE_OLD_REV,
+                                "--to", FIXTURE_NEW_REV]),
             suite_upgrade.FINDINGS)
 
 
@@ -403,16 +451,18 @@ class Measure(unittest.TestCase):
     def test_measure_never_writes_to_the_consumer_tree(self):
         """The property the whole read-only half rests on, measured not asserted.
 
-        Runs one real audit from each of the two real revisions against a
-        throwaway consumer, then compares the consumer's file inventory
-        byte-count-for-byte-count. The audits write findings envelopes by
-        default; if any of that landed in the consumer, this fails.
+        Runs one real audit from each of this repository's two real revisions
+        against a throwaway consumer, then compares the consumer's file
+        inventory byte-count-for-byte-count. `only="doc_staleness"` names an
+        audit that genuinely exists at both `ec99953` and `99359f6`; the
+        audits write findings envelopes by default, and if any of that landed
+        in the consumer, this fails.
         """
         with tempfile.TemporaryDirectory() as tmp:
             consumer = _make_consumer(Path(tmp) / "proj")
             before = _tree_state(consumer)
-            report = migrate.measure(consumer, REPO, OLD_REV, NEW_REV,
-                                     only="tokens", timeout=120.0,
+            report = migrate.measure(consumer, REPO, REAL_OLD_REV, REAL_NEW_REV,
+                                     only="doc_staleness", timeout=120.0,
                                      workdir=Path(tmp) / "scratch")
             self.assertEqual(_tree_state(consumer), before,
                              "measure wrote into the consumer's own tree")
@@ -422,11 +472,17 @@ class Measure(unittest.TestCase):
             self.assertTrue(report["audits"])
 
     def test_a_filter_matching_nothing_refuses(self):
-        """Nothing running is not the same as nothing having changed."""
+        """Nothing running is not the same as nothing having changed.
+
+        Re-pointed to this repo's own revisions deliberately: against the old
+        unresolvable fixture pins this refusal passed for the wrong reason —
+        an unreadable revision raises `CannotDetermine` before the filter is
+        even consulted.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             consumer = _make_consumer(Path(tmp) / "proj")
             with self.assertRaises(CannotDetermine):
-                migrate.measure(consumer, REPO, OLD_REV, NEW_REV,
+                migrate.measure(consumer, REPO, REAL_OLD_REV, REAL_NEW_REV,
                                 only="no-such-audit-anywhere",
                                 workdir=Path(tmp) / "scratch")
 

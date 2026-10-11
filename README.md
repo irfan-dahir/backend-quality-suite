@@ -214,11 +214,16 @@ claim that was wrong three times, and a release where every skill in the plugin
 cited a script path that had moved. Read the comments in the workflow before
 removing either.
 
-**One known-red, documented:** two test files pin regression fixture revisions
-from this suite's upstream lineage that this repository's history does not
-carry, so they fail here rather than silently skipping — the cases and the
-reason are named in [CLAUDE.md](./CLAUDE.md) rule 3. Every other gate must
-pass; those named failures are this fork's clean.
+**Known-red, documented:** the cases in two test files that need a
+consumer-breaking git range stay pinned to fixture revisions from this suite's
+upstream lineage, which this repository's history does not carry — they fail
+here rather than silently skipping. Three more cases, and two CI gates (the
+test runner's, and the consumer-compat gate, which refuses without a baseline
+tag), fail only until the first release tag is cut (Phase D, per
+`docs/SWAP-PLAN.md`'s deletion rule). Everything else — the other cases in
+those files, re-pointed to this repository's own revisions, and every other
+gate — must pass; the named failures are this fork's clean, enumerated in
+[CLAUDE.md](./CLAUDE.md) rule 3.
 
 Regenerate the catalogue after adding or changing a component:
 
