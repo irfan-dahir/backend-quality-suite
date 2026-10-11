@@ -212,13 +212,48 @@ def main() -> int:
         }))
         result = run("--check", "--project-root", str(routed), "--json")
         findings = json.loads(result.stdout)["findings"]
-        # Convergence: the ROUTING capability findings should disappear
+        # Convergence: the ROUTING capability findings should disappear.
         routing_kinds = {f["kind"] for f in findings if f.get("capability") in ("routing", "laravel_routing")}
         expect("declared-capability-unused" not in routing_kinds and "undeclared-capability" not in routing_kinds,
                f"convergence: routing attribute silences the routing finding (routing kinds: {routing_kinds})")
-        # The project still has other capabilities declared but unused (eloquent_models, etc.)
-        # which is expected for a minimal fixture — the overall run is non-clean but routing is clean
-        expect(result.returncode == 1, "overall run is non-clean due to other unused capabilities")
+        # The fixture is NOT Laravel (no composer daravel/framework, no artisan,
+        # no Illuminate usage), so the Laravel-only capabilities
+        # (eloquent_models, form_requests, api_resources, policies) are not even
+        # offered — a non-Laravel PHP tree is neither measured nor excused for
+        # them. The minimal fixture therefore converges to a fully clean run.
+        expect(result.returncode == 0,
+               f"a minimal non-Laravel PHP fixture with routing converges fully "
+               f"(got {result.returncode}: {[f.get('capability', f['kind']) for f in findings]})")
+
+        print("check: a Laravel project still gets its Laravel capabilities examined")
+        laravel = tmpdir / "laravel"
+        (laravel / ".backend-suite").mkdir(parents=True)
+        (laravel / "src" / "Http" / "Controllers").mkdir(parents=True)
+        (laravel / "src" / "Http" / "Controllers" / "OrdersController.php").write_text(
+            "<?php\nnamespace App\\Http\\Controllers;\n"
+            "use Illuminate\\Http\\Request;\n"
+            "class OrdersController { public function index(Request $r) {} }\n")
+        (laravel / "routes").mkdir()
+        (laravel / "routes" / "web.php").write_text(
+            "<?php\nRoute::get('/orders', [OrdersController::class, 'index']);\n")
+        (laravel / "composer.json").write_text(json.dumps({
+            "require": {"laravel/framework": "^11.0"},
+        }))
+        (laravel / ".backend-suite" / "profile.json").write_text(json.dumps({
+            "adapters": {"lang": "php"},
+            "source": {"root": "src", "routesFile": "routes/web.php"},
+        }))
+        result = run("--check", "--project-root", str(laravel), "--json")
+        findings = json.loads(result.stdout)["findings"]
+        cap_kinds = {f.get("capability"): f["kind"] for f in findings}
+        expect(cap_kinds.get("eloquent_models") == "declared-capability-unused"
+               and cap_kinds.get("form_requests") == "declared-capability-unused",
+               "a Laravel project's source.root capabilities are still examined "
+               "(Eloquent models, FormRequest, ... are declared but absent) "
+               f"(cap kinds: {cap_kinds})")
+        expect(cap_kinds.get("laravel_routing") != "declared-capability-unused",
+               "Laravel routing with a declared routes file holding a Route::get "
+               "is present, not unused")
 
         # The capability-undetermined case: adapter loaded, source.root set,
         # but NO source files to read → the adapter must refuse (raise

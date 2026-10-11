@@ -53,6 +53,7 @@ the engine to learn what a namespace is.
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -816,9 +817,94 @@ CAPABILITIES = (
 )
 
 
+# The capabilities the engine pairs with `source.root`. Every one of these is
+# Laravel-shaped (Eloquent models, FormRequest, API resources, Policies and
+# Laravel's routing vocabulary). Offered against EVERY PHP project, each would
+# pair with a field every php profile has (`source.root`) and report
+# `declared-capability-unused` on any library or plain-PHP tree — four
+# permanent findings on a project that never claimed to be Laravel. Measured on
+# jikan (a non-Laravel PHP library, probed 2026-10-11): survey --check reported
+# eloquent_models / form_requests / api_resources / policies as unused, which
+# is the noise direction an honest absence verdict must be allowed to avoid.
+# They are therefore offered only when the project reads as Laravel.
+LARAVEL_ONLY_CAPABILITIES = frozenset({
+    "laravel_routing", "eloquent_models", "form_requests", "api_resources",
+    "policies",
+})
+
+
+def _expand_file_glob(repo: Path, pattern: str) -> list:
+    """The concrete files a `source.routesFile` value names.
+
+    The value may be a single file (`routes/web.php`) or a glob
+    (`routes/*.php`); both are resolved repo-relative, and a pattern that names
+    nothing yields an empty list (the caller's own empty-sweep refusal then
+    stands — no evidence is not evidence of absence).
+    """
+    path = Path(pattern)
+    if path.is_absolute():
+        return [path] if path.is_file() else []
+    return sorted(repo.glob(pattern))
+
+
+def _looks_laravel(ctx: AdapterContext) -> bool:
+    """Whether this tree reads as a Laravel application, not just "PHP".
+
+    The probe is deliberately cheap and deliberately conservative: a false
+    "yes" costs extra capability findings (the old noise), while a false "no"
+    makes a real Laravel app's four source.root capabilities go unexamined —
+    so the default must be to answer "yes" whenever there is *any* Laravel
+    signal. Three signals, any of which suffices:
+
+      * composer.json requires `laravel/framework` or an `illuminate/*` package;
+      * an `artisan` script exists at the repo root (Laravel's CLI entry);
+      * any hand-written `.php` under the source root references the
+        `Illuminate\` namespace.
+    """
+    root = Path(str(ctx.repo))
+
+    composer = root / "composer.json"
+    if composer.is_file():
+        try:
+            manifest = json.loads(composer.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            manifest = {}
+        for section in ("require", "require-dev"):
+            for package in (manifest.get(section) or {}):
+                if package == "laravel/framework" or package.startswith("illuminate/"):
+                    return True
+
+    if (root / "artisan").is_file():
+        return True
+
+    root_rel = (ctx.profile.get("source", {}) or {}).get("root")
+    base = root / root_rel if root_rel else root
+    if not base.is_dir():
+        return False
+    for path in base.rglob("*.php"):
+        if "vendor" in path.relative_to(base).parts:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="strict")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if re.search(r"\bIlluminate\\", text):
+            return True
+    return False
+
+
 def capabilities(ctx: AdapterContext) -> list:
-    """What this adapter can be asked about. See base.LanguageCapabilityProtocol."""
-    return list(CAPABILITIES)
+    """What this adapter can be asked about. See base.LanguageCapabilityProtocol.
+
+    Laravel-specific capabilities are offered only to projects that read as
+    Laravel (see `_looks_laravel`). On any other PHP tree they are simply not
+    asked — a library is neither measured nor excused for Eloquent models it
+    never claimed to have.
+    """
+    caps = list(CAPABILITIES)
+    if not _looks_laravel(ctx):
+        caps = [c for c in caps if c.name not in LARAVEL_ONLY_CAPABILITIES]
+    return caps
 
 
 def detect_capability(ctx: AdapterContext, name: str) -> CapabilityEvidence:
@@ -849,6 +935,17 @@ def detect_capability(ctx: AdapterContext, name: str) -> CapabilityEvidence:
 
     sources = [p for p in root.rglob("*.php")
                if "vendor" not in p.relative_to(root).parts]
+    # Routing evidence conventionally lives OUTSIDE source.root — Laravel puts
+    # Route::get(...) in routes/*.php at the repo root — while this capability's
+    # own profile_field is `source.routesFile`. Scan the declared routes file(s)
+    # as well as the source tree (which still holds attribute- and
+    # closure-routed controllers), so a real Laravel layout is measured, not
+    # reported as "unused" by a scan that never saw its route declarations.
+    routes_rel = (ctx.profile.get("source", {}) or {}).get("routesFile")
+    if routes_rel:
+        for candidate in _expand_file_glob(repo, routes_rel):
+            if candidate not in sources:
+                sources.append(candidate)
     if not sources:
         raise CapabilityError(
             name, NAME,

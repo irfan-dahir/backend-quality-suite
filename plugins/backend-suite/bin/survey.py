@@ -109,6 +109,7 @@ ALWAYS_SKIP = {
     ".dart_tool", ".gradle", ".idea", ".vscode", "__pycache__", ".venv", "venv",
     ".next", ".nuxt", ".parcel-cache", "target", "vendor", "coverage",
     ".mypy_cache", ".pytest_cache", ".tox", ".DS_Store", ".claude",
+    ".github",
 }
 
 # Root manifest → (stack, adapter candidate, conventional source roots, why).
