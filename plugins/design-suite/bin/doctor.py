@@ -3,7 +3,7 @@
 
 Checks three things the JSON Schema alone cannot:
   1. every declared path actually resolves (a schema-valid dead path is the
-     failure mode that made design-audit-config.json point at three files that
+     failure mode that made a config file point at three paths that
      no longer exist);
   2. no absolute or home-relative path is committed (machine-specific, silently
      inert on every other checkout — .claude/settings.json has a live instance);
@@ -87,7 +87,7 @@ def walk(node, repo: Path, problems: list[str], trail: str = "",
 # path buried in a `$namesComment` or a `_readme` was never checked. Three had gone
 # stale that way when the scripts moved into this plugin:
 #
-#   design-audit-config.json  $namesComment  token_pipeline/scripts/audit_tokens.py
+#   profile.json              $namesComment  lib/theme/app_theme.dart
 #   design-audit-config.json  _readme        .design-suite/doctor.py
 #   exceptions.json                          token_pipeline/scripts/audit_tokens.py
 #

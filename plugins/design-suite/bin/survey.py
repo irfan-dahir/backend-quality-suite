@@ -93,6 +93,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from _bootstrap import PLUGIN_ROOT  # noqa: F401  (puts design_suite on sys.path)
+from design_suite.engine import role_stems  # noqa: E402
 
 MARKER = ".design-suite"
 SURVEY_REL = f"{MARKER}/survey.json"
@@ -174,33 +175,12 @@ CENSUS_LANG = {
     ".vue": "javascript/typescript", ".svelte": "javascript/typescript",
 }
 
-# Filename stem → (role, confidence, why). Deliberately conservative: a regex
-# over filenames scored 4 confident of 20 on a real zero-state repository, so
-# anything not in this table is proposed at low confidence or not at all.
-ROLE_BY_STEM = {
-    "readme": ("entry-point", 0.5, "README.md is the conventional entry point, but many projects keep their agent instructions elsewhere"),
-    "claude": ("instructions", 0.8, "CLAUDE.md is the agent instruction file by convention"),
-    "agents": ("instructions", 0.6, "AGENTS.md is an emerging agent-instruction convention"),
-    "design": ("design", 0.7, "filename matches the role name"),
-    "flows": ("flows", 0.7, "filename matches the role name"),
-    "decisions": ("decisions", 0.8, "filename matches the role name"),
-    "adr": ("decisions", 0.5, "ADR is the conventional name for a decision record"),
-    "backlog": ("backlog", 0.8, "filename matches the role name"),
-    "contributing": ("contributing", 0.9, "CONTRIBUTING.md is a near-universal convention"),
-    "documentation": ("documentation-rules", 0.6, "filename matches the role name"),
-    "brand-voice": ("brand-voice", 0.8, "filename matches the role name"),
-    "brand_voice": ("brand-voice", 0.8, "filename matches the role name"),
-    "copy": ("copy", 0.6, "filename matches the role name"),
-    "brief": ("brief", 0.7, "filename matches the role name"),
-    "motion": ("motion", 0.7, "filename matches the role name"),
-    "components": ("components", 0.6, "filename matches the role name — but this role is external more often than not"),
-    "tokens": ("tokens", 0.5, "filename matches the role name — external more often than not"),
-    "accessibility": ("accessibility", 0.7, "filename matches the role name"),
-    "api": ("api", 0.6, "filename matches the role name"),
-    "changelog": ("changelog", 0.7, "CHANGELOG.md is a near-universal convention"),
-    "instructions": ("instructions", 0.7, "filename matches the role name"),
-    "responsive": ("responsive", 0.6, "filename matches the role name"),
-}
+# The stem -> role map is derived from templates/docs/roles.json by
+# design_suite.engine.role_stems, not carried here. The hand table this
+# file used to keep was the drift the role_stems docstring documents: it
+# proposed the retired name 'instructions' long after the rename and
+# missed eight roles whose filenames were literally their role names.
+# A derived map cannot have that failure mode.
 
 PATHISH = re.compile(r"^[A-Za-z0-9._\-/*{}\[\]]+$")
 
@@ -1270,7 +1250,7 @@ def document_inventory(root: Path, files: list[str], unknown: list[dict]) -> dic
         if rel.count("/") > 2:
             continue
         stem = Path(rel).stem.lower()
-        proposal = ROLE_BY_STEM.get(stem)
+        proposal = role_stems.role_for_stem(stem)
         if proposal:
             role, confidence, why = proposal
             docs.append({"path": rel, "proposedRole": role,

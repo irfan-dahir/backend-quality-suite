@@ -77,7 +77,7 @@ separately from these cases.
 harness rejects `..` and absolute paths outright:
 
 ```
-path "../_fixtures/app/scaffold.sh" escapes the case directory
+path "../_fixtures/service/scaffold.sh" escapes the case directory
 (`..` or an absolute path) — it must name something inside it
 ```
 

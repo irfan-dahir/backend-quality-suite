@@ -4,9 +4,9 @@
 
 A catalogue is a list of file-existence facts, and hand-written prose about those has already gone wrong three times in this project's history. So it is generated from the plugins' own frontmatter instead.
 
-**58 skills · 4 agents · 4 hooks** across 2 plugins.
+**30 skills · 2 agents · 4 hooks** across 2 plugins.
 
-**34 documentation templates** across **36 roles** — 33 in `design-suite`, 1 in `house-style`. 2 role(s) have no template and cannot be scaffolded: `adaptive-patterns`, `figma`. Vocabulary by group: any 4, app 13, core 6, design-system 13. Roles applicable per archetype: app 27, design-system 30, docs-site 19.
+**19 documentation templates** across **19 roles** — 18 in `design-suite`, 1 in `house-style`. 0 role(s) have no template and cannot be scaffolded: . Vocabulary by group: any 4, core 6, library 3, service 6. Roles applicable per archetype: library 18, service 19.
 
 ## How to read this
 
@@ -28,27 +28,8 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/audit-tokens` | auto | ✅ proven | Mechanically audit source for hardcoded design values that should route through design tokens — colours, spacing, radii, durations, curves. Never changes your code; saves its report to .design-suite/tokens-findings.json on every run. Use when asked to check design-token compliance or find hardcoded styling. |
-| `/audit-accessibility` | explicit | ⛔ disabled | DISABLED pending correct scoping — measured 100% false positives on two real projects (issue #104), and zero true-positive capacity on one of them. It refuses with exit 2 rather than running. Do not invoke it expecting a result; read this file for the measured reason and the bar for re-enabling it. |
-| `/audit-semantics` | auto | ⚪ unverified | Four precisely-scoped Flutter semantics rules, each from a defect that shipped (issue #128) — error text never announced, selection shown by colour alone, excludeSemantics dropping more than one node, and (advisory only) a tappable inside a labelling Semantics. Never changes your code; saves its report to .design-suite/semantics-findings.json on every run. Use when asked whether screen-reader semantics are wired, or after building an input, chip, or legend component. Not a re-enabled audit-accessibility. |
-| `/audit-focus-order` | auto | ⚪ unverified | Best-effort, source-only check of focus/tab traversal order against visual layout order — Stack/Positioned mismatches and explicit traversal overrides (autofocus, FocusTraversalOrder). Never changes your code; saves its report to .design-suite/focus-order-findings.json on every run. Use when asked to check focus order, tab order, or whether traversal matches visual layout. Cannot walk a rendered widget tree — see the report's caveat before treating a clean result as proof. |
-| `/audit-copy` | explicit | ⛔ disabled | DISABLED pending re-scoping — 73% of its commit-gating findings were wrong, measured on two real projects (issues #104, #109). The backing script refuses with exit 2 rather than running. Do not invoke it expecting a result; read this file for the measured reason and the bar for re-enabling it. |
 | `/audit-mock-api` | auto | ✅ proven | Report-only drift audit for registered mock-API contracts — never edits a contract artifact, but writes its findings to .design-suite/mock-api-findings.json (pass --out to redirect), and finds disagreement between the model, the fixture, the API docs and the mock server. Use when asked whether the mock API is in sync. |
-| `/audit-contrast` | auto | ⚪ unverified | Use when asked whether colour contrast is compliant, or before shipping a palette change. Scores declared foreground/background pairs against WCAG ratios from the project's token source; refuses (exit 2) rather than passing when it cannot resolve them. Read-only: reports findings, never edits. |
 | `/audit-claude-md-drift` | auto | ⚪ unverified | Use when asked whether CLAUDE.md is still accurate, or before trusting a rule it states. Checks its prose against what enforces it: stale gate counts, rules whose script left CI, rules with no enforcement. Never edits, but runs the shell commands .design-suite/claude_md_enforcement.json declares, so review that config like a hook. |
-
-### Repair — generates a diff, never applies it
-
-| Skill | Invocation | Maturity | What it does |
-|---|---|---|---|
-| `/repair-tokens` | explicit | ⚪ unverified | Use when asked to fix, repair, or auto-tokenise the findings /audit-tokens reported. Emits a reviewable unified diff swapping hardcoded values for exactly-equal tokens. Never modifies source, stages, or commits; writes only the report paths you name (--out, --bands-json, --suggestions-json). |
-
-### Interchange — DTCG token files
-
-| Skill | Invocation | Maturity | What it does |
-|---|---|---|---|
-| `/export-tokens-dtcg` | explicit | ⚪ unverified | Export this project's declared design tokens as a W3C Design Tokens Community Group (DTCG 2025.10) .tokens.json that Figma, Tokens Studio and Style Dictionary can read. Previews to stdout by default; writes exactly one file only when --out is given, and never edits source. Anything without a faithful DTCG form is listed, never dropped. Use when asked to export tokens to DTCG, Figma, Tokens Studio or Style Dictionary. |
-| `/import-tokens-dtcg` | auto | ⚪ unverified | Report drift between a W3C DTCG (2025.10) token file — a Figma variables, Tokens Studio or Style Dictionary export — and the tokens this project's code declares: missing in code, missing in the file, value mismatches, and tokens that cannot be compared. Read-only by default; writes one JSON report only with --write-report. Use when asked whether the code's tokens still match Figma or a DTCG/tokens.json file. |
 
 ### Documentation lifecycle
 
@@ -64,37 +45,12 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 |---|---|---|---|
 | `/survey` | auto | ⚪ unverified | Survey an unknown project — detected stack, candidate source roots, ranked candidate token sources, a document inventory with proposed roles, and an explicit list of what could not be determined. With --check, diff what is on disk against what the config declares, the one direction no existing check runs. Read-only: writes only .design-suite/survey.json, and --check, --stdout and --json write nothing, and a default run writes only .design-suite/survey.json, creating that directory if it is absent. |
 
-### Establishing conventions — brand-sensitive
-
-| Skill | Invocation | Maturity | What it does |
-|---|---|---|---|
-| `/establish-brand-voice` | explicit | ⚪ unverified | Establish or update the project's brand voice and terminology glossary — the source of truth copy audits check against. Never rewrites existing copy. Brand-sensitive: surface it as an option, but let the user decide rather than invoking autonomously. |
-| `/establish-interaction-spec` | explicit | ⚪ unverified | Establish or update motion and haptic/sound conventions — the source of truth the token audit measures durations and curves against. High blast radius: sets new project-wide conventions, so let the user decide rather than invoking autonomously. |
-
 ### Building
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/scaffold-screen` | auto | ⚪ unverified | Generate a new screen pre-wired with the three standard states — loading, error, content — using the components the project has already standardized on. Use when asked to build or scaffold a screen. |
 | `/wire-endpoint` | explicit | ⚪ unverified | Wire a hardcoded or stub data source to a mocked GET endpoint in the shape the project already uses — model, datasource, bloc, fixture, contract registration, docs, test. Use when asked to wire up or connect a data source. |
 | `/sync-mock-api` | explicit | ✅ proven | Regenerate the generated parts of a mock-API contract from its hand-edited fixture — API docs, mock entry, and derived artifacts. Use after editing a fixture. |
-| `/promote-component` | explicit | ⚪ unverified | Move a component from an application into the shared design system, or demote one back. Use when asked to promote, extract, or push a component into the design system. |
-| `/suggest-component` | auto | ⚪ unverified | Use when asked which component to use, whether one already covers a need, or to compare candidates. Matches the described need against the component-capabilities manifest and ranks 1-3 candidates with rationale. Read-only: never edits code. |
-
-### Assets — the 3D pipeline
-
-| Skill | Invocation | Maturity | What it does |
-|---|---|---|---|
-| `/audit-assets` | auto | ⚪ unverified | Audit the asset library for drift: manifest entries with no rendered file, orphan files with no manifest entry, unregistered assets, stale palette, and missing provenance or licence. Read-only, reports only. Use when asked to check the asset library or find asset drift. |
-| `/add-asset` | explicit | ⚪ unverified | Add a purchased 3D asset to the library: register it in the manifest with provenance and licence, recolour and render it, optimise, and bundle it. Produces real files and edits the manifest, so it must be invoked explicitly. |
-| `/generate-asset` | explicit | ⚪ unverified | Generate a new asset from a script we author rather than a purchased source — SVG, Blender, or the shapes icon-as-data kind — then render, optimise and bundle it. Produces real files, so it must be invoked explicitly. |
-| `/animate-asset` | explicit | ⚪ unverified | Add baked motion to an existing asset: pick a preset, render the frame sequence, encode an animated file plus a static reduce-motion poster, and bundle both. Produces real files, so it must be invoked explicitly. |
-
-### Copy
-
-| Skill | Invocation | Maturity | What it does |
-|---|---|---|---|
-| `/rewrite-copy` | explicit | ⚪ unverified | Draft or rewrite user-facing copy so it is on-brand and on-terminology, and does not read as machine-written. Never applies a change without showing it first. Brand-sensitive: let the user decide rather than invoking autonomously. |
 
 ### Playbooks
 
@@ -115,7 +71,6 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
 | `/design-debt` | auto | ⚪ unverified | Use when asked for an overall picture of design health or design debt across audits. Grades findings already collected in .design-suite/findings/ per category; it runs no audit, so a category with no findings is missing data, and it names what to re-run. Read-only: reports, never fixes. |
-| `/generate-walkthrough` | auto | ⚠️ experimental | Produce a narrated screenshot or video walkthrough of one named user flow, for stakeholder demos. EXPERIMENTAL — slow, and needs manual pixel-coordinate calibration per flow; not ready for routine use. |
 
 ### PR workflow
 
@@ -129,22 +84,14 @@ Not assigned to a group in `catalog.py`. Visible rather than dropped.
 
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `/audit-adapter-pattern` | auto | ⚪ unverified | Mechanically check that screens never import the layers they are supposed to reach only through an adapter — state-management, repositories, data sources, HTTP clients. Rule and directory layout both come from this project's arch-rules.json, never from a hardcoded convention. Never changes your code; saves its report to .design-suite/adapter-pattern-findings.json on every run. Use when asked whether the adapter/presentation boundary still holds, or after adding a screen. |
 | `/audit-api-consistency` | auto | ✅ proven | Use when asked whether a component API is coherent, or before a release that changes one. Flags string sentinels, tap handlers without semantics, and two names for one idea. Read-only: reports findings, never edits. |
 | `/audit-contract-headers` | auto | ✅ proven | Use when asked whether screen contracts or adapter interfaces are still accurate, or after adding or removing an adapter field. Checks each screen's contract header against its adapter: omitted fields, dangling entries, unread fields. Read-only: reports findings, never edits. |
 | `/audit-doc-staleness` | auto | ⚪ unverified | Use when asked how stale a doc is by its own stated date, or before relying on an old doc. Flags docs whose last-updated footer/Date: field is past a threshold. Days since last edit, not proof the doc is still true. Read-only: reports findings, never edits. |
 | `/audit-error-handling` | auto | ✅ proven | Use when asked about error-handling coverage, or before wiring a new endpoint. Checks every failure reaches the user: no call bypassing the shared guard, no raw exception text on screen, no unmatched failure state, no per-screen error widget. Read-only: reports findings, never edits. |
 | `/audit-layer-boundaries` | auto | ⚪ unverified | Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package. Rules and directories come from this project's arch-rules.json. Ratcheted against a committed baseline: new violations fail, known ones are listed. Never changes your code; saves its report to .design-suite/layer-boundaries-findings.json on every run. Use when asked whether the layering still holds, or before an extraction. |
-| `/audit-pattern-adoption` | auto | ⚪ unverified | Count which design-system patterns this project actually calls, and fail on ones it claims but never reaches for. Read-only: reports findings, never edits. Use when asked whether the design system is really being used, or which patterns a product has never adopted. |
-| `/audit-promotion-candidates` | auto | ⚪ unverified | Use when asked what should be promoted into the design system, or what was reinvented under a different noun. Finds private widgets built more than once, by constructor shape rather than name; a heuristic tuned to under-report. Read-only: reports findings, never edits. |
 | `/audit-proposal-status` | auto | ⚪ unverified | Use when asked whether a proposal's status is current, or before relying on a roadmap/proposal doc's header. Checks the header's open-question count and framing against its own Decisions section markers; a cheaper, one-document /review-docs. Read-only: reports findings, never edits. |
 | `/audit-prose-flags` | auto | ⚪ unverified | Use when maintaining this plugin's own skills, or after renaming or removing a script flag. Checks every flag a skill's markdown names beside a bin/*.py script exists in that script. Suite-maintenance, not consumer-project. Read-only: reports findings, never edits. |
-| `/audit-reduced-motion` | auto | ⚪ unverified | Use when asked to check reduced-motion support or accessibility of animations. Finds animated nodes (per the design-audit config) that never check a reduced-motion signal. Never changes your code; saves its report to .design-suite/reduced-motion-findings.json on every run. |
-| `/audit-reinvented-components` | auto | ⚪ unverified | Use when asked what has been rebuilt instead of reused. Finds private widgets forking a design-system export by exact name, and bespoke widgets that never touch the design system; ratcheted against a committed baseline. Read-only: reports findings, never edits. |
-| `/audit-unused-tokens` | auto | ⚪ unverified | Use when asked which design tokens are unused, or before pruning a palette. Finds tokens the token file declares that no scanned source reads (spacing, radii, durations, curves, sizing, colour); counterpart to /audit-unwired-roles. Read-only: reports findings, never edits. |
-| `/audit-unwired-roles` | auto | ✅ proven | Use when asked whether the theming contract is real, or which design-system colour roles a project never uses. Finds semantic colour roles defined but read by nothing. Read-only: reports findings, never edits. |
 | `/cleanup-worktrees` | explicit | ⚪ unverified | Use after a session that fanned out worktree agents, or to find a worktree holding uncommitted work. Reports every git worktree (.claude/worktrees/ and ../suite-<topic>) and removes stale ones; refuses by name on locked, uncommitted, or unmerged ones. Dry-run by default; destructive under --apply. |
-| `/golden-local-ab` | explicit | ✅ proven | Prove a refactor changed no pixels by rendering the golden corpus on this machine before and after and comparing the two byte-for-byte. Use before and after any large mechanical change whose claim is that it changed no rendering — an extraction, an import rewrite, a token migration. |
 | `/map-project` | explicit | ⚪ unverified | Propose the mappings a survey cannot: which document is really the design doc, which project kind this is, which candidate token source is the true one — each with the reasoning it was argued from. Every value it proposes is written with provenance `inferred` and nothing else, so no downstream check trusts it until a human ratifies. Proposes and argues; never decides. |
 | `/propose-config` | explicit | ⚪ unverified | Propose real values for the TODO sections init.py scaffolds (layer rules, the adapter seam, the animated-widget list, colour token names), each measured from this project's code with its evidence, and write a section only after the user confirms it. Writes .design-suite/ config, so it is never invoked without an explicit instruction. Use after /map-project when /repo-health shows audits refusing on TODO placeholders. |
 | `/ratify` | explicit | ⚪ unverified | Use when asked to ratify, approve, or sign off a profile field, or when doctor reports fields as UNTRUSTED. Records one field as 'declared' or 'approved', signed, dated and commit-stamped. Writes to .design-suite/profile.json, so never invoked without an explicit instruction. |
@@ -156,8 +103,6 @@ Not assigned to a group in `catalog.py`. Visible rather than dropped.
 
 | Agent | Invocation | Maturity | What it does |
 |---|---|---|---|
-| `design-auditor` | auto | ⚪ unverified | Use when asked to audit, review, or check a built screen, flow, or component for design-system compliance against the doc-of-record and tokens, or to find undocumented UI. Rules come from the project's audit config (profile audits.configFile), never hardcoded. Read-only: produces a Design Audit Report; never edits code or docs. |
-| `design-critic` | explicit | ⚪ unverified | Use when asked to critique or give feedback on a design, mockup, screenshot, or proposed screen before it is built (not existing code). Judges against this project's own design system and audience from its profile and design docs. Read-only: produces a critique; never edits code or docs. |
 | `mock-api-auditor` | auto | ✅ proven | Use when asked to find hardcoded data sources that should be wired to a mock GET endpoint, fixtures with no contract, or mutations given a fake POST/PATCH. Needs judgment, so it complements the deterministic audit_mock_api.py drift check. Read-only: produces a Mock-API Completeness Report; never edits code, fixtures, or contracts.json. |
 | `session-decisions` | auto | ⚪ unverified | Read-only sweep of the current working session for decisions that belong in the project's decision log and follow-up work that belongs in its backlog. Use near the end of a working session, before a PR, or when asked what was decided or what came up. Reports what it found and where it belongs; never writes to any document. |
 

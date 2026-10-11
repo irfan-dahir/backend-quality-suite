@@ -7,7 +7,7 @@
 # uses a shared fixture without owning a copy of it, which is the whole point
 # of `evals/_fixtures/` existing once rather than per case.
 #
-# Fixture: app
+# Fixture: service
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec bash "$here/../_fixtures/app/scaffold.sh" "$@"
+exec bash "$here/../_fixtures/service/scaffold.sh" "$@"

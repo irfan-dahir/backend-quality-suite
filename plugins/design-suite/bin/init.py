@@ -2,8 +2,8 @@
 """design-suite init — scaffold a fresh project's `.design-suite/` from templates.
 
 Onboarding a new project used to mean opening an already-onboarded one and
-hand-copying/reconstructing six files: `profile.json`, `docs.manifest.json`,
-`design-audit-config.json`, `exceptions.json`, `arch-rules.json`, and
+hand-copying/reconstructing the config files: `profile.json`,
+`docs.manifest.json`, `exceptions.json`, `arch-rules.json`, and
 `hooks.map.json`. That is slow, error-prone, and the reason issue #15 exists.
 
 This script copies the templates in `templates/dot-design-suite/*.template`
@@ -75,12 +75,10 @@ SEEDED_STATE = "inferred"
 FILES = [
     "profile.json",
     "docs.manifest.json",
-    "design-audit-config.json",
     "exceptions.json",
     "arch-rules.json",
     "hooks.map.json",
     "known-traps.json",
-    "component-capabilities.json",
     ".gitignore",
 ]
 
@@ -296,49 +294,6 @@ def seed_profile(profile: dict, report: dict) -> tuple[list[dict], list[str]]:
 TOKEN_GROUP = "discovered"
 
 
-def seed_token_names(repo: Path, profile: dict, config_path: Path) -> dict | None:
-    """Replace the template's `TODO_TOKEN_NAME_*` colour list with the real names.
-
-    The names come from the SAME call `audit_tokens.py`'s drift check makes —
-    the seeded adapter's `token_names()` — so the seeded list cannot disagree
-    with what the audit compares it to. Measured: on two of six held-out
-    projects the placeholders were the only thing standing between a fresh
-    scaffold and a run, and the refusal already printed the very names written
-    here. When the adapter answers None ("cannot tell") the placeholders stay:
-    the drift check is skipped in that case too, so they block nothing, and a
-    visible TODO beats an invented list.
-    """
-    lang = (profile.get("adapters") or {}).get("lang")
-    if not isinstance(lang, str) or lang.startswith("TODO"):
-        return None
-    try:
-        from design_suite.adapters import load
-        from design_suite.adapters.base import AdapterContext
-        adapter = load(lang)
-        if not hasattr(adapter, "token_names"):
-            return None
-        ctx = AdapterContext(repo=repo, profile=profile, exceptions={},
-                             token_accessor=(profile.get("tokens") or {}).get("accessor", ""))
-        names = adapter.token_names(ctx)
-    except (Exception, SystemExit):  # noqa: BLE001 — a seed that cannot be computed is no seed
-        return None
-    if names is None:
-        return None
-    config = json.loads(config_path.read_text())
-    color = config.get("token_categories", {}).get("color")
-    if not isinstance(color, dict):
-        return None
-    color["names"] = {TOKEN_GROUP: sorted(names)}
-    color["_namesProvenance"] = (
-        f"inferred by init.py --from-survey: the {lang!r} adapter's token_names() "
-        f"enumerated {len(names)} token(s) — the same call audit_tokens.py's drift "
-        "check makes. Regroup or rename the group freely; review before trusting.")
-    config_path.write_text(json.dumps(config, indent=2) + "\n")
-    return {"field": "design-audit-config token_categories.color.names",
-            "value": f"{len(names)} token name(s)",
-            "evidence": f"{lang} adapter token_names() — the set audit_tokens checks against"}
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dir", default=".", help="project root to scaffold into (default: current directory)")
@@ -433,11 +388,6 @@ def main() -> int:
         profile = json.loads(profile_written.read_text())
         seeded, left_as_todo = seed_profile(profile, report)
         profile_written.write_text(json.dumps(profile, indent=2) + "\n")
-        config_written = target_dir / "design-audit-config.json"
-        if config_written in written:
-            token_seed = seed_token_names(repo, profile, config_written)
-            if token_seed:
-                seeded.append(token_seed)
 
     for dest in blocked:
         print(f"skipped (already exists, use --force to overwrite): {dest.relative_to(repo)}")

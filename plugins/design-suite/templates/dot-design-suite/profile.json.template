@@ -9,7 +9,7 @@
     "singleLocale": "TODO or delete: set only if this project is deliberately single-locale, e.g. 'en-US'. Prevents a skill from proposing i18n scaffolding."
   },
   "adapters": {
-    "lang": "TODO: which language adapter audits this project's source. Known values today: 'dart' (tokens, accessibility, copy), 'tsx' (tokens only; React/TS/JS), or 'web' (tokens only; .vue/.svelte single-file components, .css/.scss/.sass/.less stylesheets, and scripts), 'swift' (tokens, reduced motion; SwiftUI/UIKit .swift — unverified), or 'kotlin' (tokens, reduced motion; Jetpack Compose .kt — unverified). Leave unset and rely on the documentation skills only if neither fits."
+    "lang": "TODO: which language adapter audits this project's source, once one ships for this stack (see docs/ROADMAP.md). Leave unset — and rely on the documentation skills only — until an adapter for this project's language exists; an adapter name nothing resolves is worse than none."
   },
   "source": {
     "root": "TODO: repo-relative source root, e.g. 'lib' or 'src'",
@@ -32,7 +32,6 @@
     "ownedBy": "TODO or delete: set to a URL only when another repo owns these tokens, so no skill proposes editing them here"
   },
   "audits": {
-    "configFile": ".design-suite/design-audit-config.json",
     "exceptionsFile": ".design-suite/exceptions.json",
     "archRulesFile": ".design-suite/arch-rules.json",
     "baselineDir": ".design-suite/baselines"

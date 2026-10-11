@@ -6,9 +6,10 @@ second copy to drift.
 
 Every function here refuses rather than assumes. `UnknownArchetype` is raised for
 a kind outside the vocabulary and `ArchetypeNotDeclared` for a profile that never
-said: guessing `app` for a package is what makes a scaffolder emit an empty flows
-document and a doc audit report a clean sweep of documents it never looked for.
-A profile with no `projectKind` is still valid (RFC-0002 §6 keeps this additive)
+said: guessing `service` for a package is what makes a scaffolder emit an empty
+deployment document and a doc audit report a clean sweep of documents it never
+looked for.
+A profile with no `projectKind` is still valid (the kind vocabulary is additive)
 — it simply cannot be asked archetype questions.
 """
 from __future__ import annotations

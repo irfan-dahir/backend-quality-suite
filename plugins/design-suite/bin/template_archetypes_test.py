@@ -31,9 +31,8 @@ DOCS = Path(__file__).resolve().parent.parent / "templates" / "docs"
 # The row openers templates use for each archetype. Keep in step with the
 # templates; the control below fails if they drift apart.
 ROW_OPENERS = {
-    "app": "| A product that renders an interface |",
-    "design-system": "| A design-system package or library |",
-    "docs-site": "| A documentation or content site |",
+    "library": "| A published package (library) |",
+    "service": "| A deployed API or data service |",
 }
 
 FAILURES: list[str] = []
@@ -70,7 +69,7 @@ def main() -> int:
     print("\ncontrol — the branching detector still sees the templates that branch:")
     for role in ("entry-point", "documentation-rules"):
         expect(seen.get(role) == set(ROW_OPENERS),
-               f"{role}: all three archetype rows detected (got {sorted(seen.get(role, set()))})")
+               f"{role}: all archetype rows detected (got {sorted(seen.get(role, set()))})")
 
     print()
     if FAILURES:

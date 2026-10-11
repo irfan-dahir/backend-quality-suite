@@ -34,9 +34,8 @@ real repositories, not a menu to adopt wholesale:
 
 | If this project is | Its tree usually also holds |
 |---|---|
-| A product that renders an interface | the design doc-of-record, the flows doc, the decision log; `specs/` one file per feature |
-| A design-system package or library | the token, theming and pattern docs; `components/` one page per component, under a schema; the changelog and the deprecation ledger; `decisions/` as a **directory**, because a long-lived system accumulates more decisions than one file holds |
-| A documentation or content site | whatever governs its information architecture and its authoring rules; the published content itself, if it is authored here |
+| A published package (library) | the API reference for its public surface; the changelog and the deprecation ledger; `decisions/` as a **directory**, because a long-lived library accumulates more decisions than one file holds |
+| A deployed API or data service | the API doc and the cross-cutting API standard; the deployment and production-readiness docs; the error and rate-limit conventions every route must follow |
 
 <!-- DERIVED: draw the actual tree of this project's `docs/` and paste it here, then prune it to
      what should exist rather than what does. A tree that documents the mess is not governance. -->

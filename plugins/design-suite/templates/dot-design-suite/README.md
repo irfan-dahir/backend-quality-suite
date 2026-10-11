@@ -36,7 +36,6 @@ delete that section/role.
 |---|---|---|
 | `profile.json` | Every skill and audit | The only required file. `profileVersion`, `project`, `adapters`, `source`, `tokens`, `docs` are the required sections; delete any optional section you don't have |
 | `docs.manifest.json` | `resolve.py`, every doc-aware skill | Role → path. Map only roles you actually have — see `plugins/design-suite/docs/DOC-ROLES.md` for the full vocabulary and the exit-code contract |
-| `design-audit-config.json` | `design-auditor` agent, `audit_tokens.py` | What counts as a violation (as opposed to `profile.json`, which says where things are) |
 | `exceptions.json` | `audit_tokens.py`, `audit_copy.py`, and others | Deliberate, reviewed exceptions only — never a place to silence an unreviewed finding |
 | `arch-rules.json` | The eight structural `audit_*.py` scripts (layer boundaries, banned imports, reinvented components, …) | An absent section makes its audit refuse rather than pass vacuously — delete sections for audits you don't use |
 | `hooks.map.json` | `hooks/audit_on_edit.py` | Advisory on-save nudges only. Optional — delete or leave `entries` empty if you don't want it yet |

@@ -53,15 +53,15 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 BIN = PLUGIN_ROOT / "bin"
 
-# The role the `app` fixture authors for real, declines, and stubs. Named once
-# here and imported by the self-test so the two cannot drift into asserting a
-# state the builder stopped producing.
-AUTHORED_ROLE = "design"
-STUB_ROLE = "flows"
-DECLINED_ROLE = "motion"
-DECLINE_REASON = ("this fixture's project has no motion of its own; it inherits "
-                  "the design system's, and re-documenting it would create a "
-                  "second copy to drift")
+# The role the `service` fixture authors for real, declines, and stubs. Named
+# once here and imported by the self-test so the two cannot drift into asserting
+# a state the builder stopped producing.
+AUTHORED_ROLE = "api"
+STUB_ROLE = "rfc"
+DECLINED_ROLE = "public-roadmap"
+DECLINE_REASON = ("this project has no public roadmap of its own; committing to "
+                  "one unprompted would be a promise nobody asked for and a "
+                  "second list to drift from the backlog")
 
 # The field the `pre-ratified` fixture marks as a human decision. `source.root`
 # is chosen because it is also one of init.py's --from-survey seed targets, so
@@ -79,35 +79,12 @@ RATIFIED_FIELD = "source.root"
 # layout, which is the thing the universal plugin may never make. Here it is
 # not an assumption at all: it is this builder's own output, three functions up.
 #
-# Widget name -> the screen file it is declared in. The /promote-component
-# cases invoke these by name.
-PROMOTION_SUBJECTS = {
-    "_StatCell": "lib/screens/home_screen.dart",
-    "_MetricTile": "lib/screens/settings_screen.dart",
-    "_OrderSummaryRow": "lib/screens/orders_screen.dart",
-}
-
-# The constructor parameter set `_StatCell` and `_MetricTile` share. The shape
-# match in audit_promotion_candidates.py is over parameter NAMES, so this being
-# identical across the two is what makes the duplication detectable at all.
-SHARED_WIDGET_PARAMS = ("label", "value", "icon", "onTap")
-
-# The product layer `_OrderSummaryRow` is coupled to, and the type names that
-# must NOT appear anywhere near `_StatCell`.
-DOMAIN_SOURCES = ("lib/models/order.dart", "lib/services/pricing_rules.dart")
-DOMAIN_TYPES = ("Order", "Money", "PricingRules", "OrderStatus")
-
-# Package manifests, the design system's component directory, and the package
-# name the app resolves it under.
+# Package manifests, the library's component directory, and the package name
+# the service fixture resolves it under.
 APP_MANIFEST = "pubspec.yaml"
 DS_MANIFEST = "pubspec.yaml"
 DS_COMPONENT_GLOB = "lib/src/components/*.dart"
 DS_PACKAGE = "example_design_system"
-DS_GATE_GLOBS = {
-    "a unit test": "test/**/*_test.dart",
-    "a gallery use case": "gallery/*.dart",
-    "a docs entry": "doc/**/*.md",
-}
 
 
 def _run(args: list[str], cwd: Path | None = None) -> None:
@@ -494,33 +471,23 @@ def _design_system_sources(root: Path) -> None:
            "| `onPressed` | `VoidCallback?` | Null disables the button. |\n")
 
 
-def _docs_site_sources(root: Path) -> None:
-    # A repository whose product is a published documentation site: content and
-    # a site generator config, no application source at all.
-    _write(root, "README.md",
-           "# Example Docs Site\n\nThe published documentation site. Its product is the "
-           "site itself, not an application.\n")
-    _write(root, "mkdocs.yml",
-           "site_name: Example Docs\nnav:\n  - Home: index.md\n  - Guide: guide.md\n")
-    _write(root, "docs/index.md", "# Home\n\nWelcome.\n")
-    _write(root, "docs/guide.md", "# Guide\n\nHow to use the thing.\n")
-
-
-AUTHORED_DESIGN_DOC = """# Design
+AUTHORED_DESIGN_DOC = """# API
 
 This document is deliberately *written*, not scaffolded — it carries no
 `status: stub` frontmatter, so it resolves with exit 0 and counts as real
 coverage. It exists so a case can tell an authored document apart from the
 stub and the decline that sit beside it in this same fixture.
 
-## Layout
+## Endpoints
 
-Two screens, a single column, spacing from the token scale.
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/widgets` | List widgets |
+| GET | `/api/widgets/{id}` | One widget |
 
-## Colour
+## Errors
 
-One primary, one surface, one error. Semantic roles only; no literal hex in
-screen code.
+Every failure answers `{status, type, message}`; no route invents a shape.
 """
 
 
@@ -587,16 +554,16 @@ def build_zero_state(root: Path) -> None:
     _app_sources(root)
 
 
-def build_app(root: Path) -> None:
-    """A scaffolded `app` with one authored doc, one real decline, one stub.
+def build_service(root: Path) -> None:
+    """A scaffolded `service` with one authored doc, one real decline, one stub.
 
     Exercises exit 4 (declined) and exit 5 (stub) side by side with exit 0
     (authored), which is the only arrangement that proves a skill is reading
     the exit code rather than the file's existence.
     """
     _app_sources(root)
-    _init(root, "Example App")
-    _declare_kind(root, "app")
+    _init(root, "Example Service")
+    _declare_kind(root, "service")
 
     # Authored: a real document, no stub frontmatter.
     manifest = json.loads((root / ".design-suite/docs.manifest.json").read_text())
@@ -614,159 +581,43 @@ def build_app(root: Path) -> None:
           "--by", "fixture builder", "--on", "2026-01-01"])
 
 
-def build_app_configured(root: Path) -> None:
-    """The `app` fixture with its profile and arch-rules actually filled in.
+def build_library(root: Path) -> None:
+    """A package-shaped repo with NO `.design-suite/`.
 
-    WHY THIS IS A VARIANT AND NOT A CHANGE TO `app`
-
-    `init.py` writes every profile and arch-rules value as a `TODO:` string, and
-    the plain `app` fixture keeps them that way — correctly, because four
-    `map-project-*` cases exist to watch `/map-project` propose exactly those
-    fields. Filling them in place would neuter those cases: the skill would
-    arrive to find its own job already done.
-
-    But the four `/promote-component` cases need the opposite. Their command's
-    Step 0 is `audit_reinvented_components.py`, which REFUSES (exit 2) when
-    `reinventedComponents.package` is a TODO — and Step 1's decision is recorded
-    by `audit_promotion_candidates.py`, which cannot see a duplicate shape
-    without a source root. Run against the unconfigured fixture, Step 0 returns
-    a refusal, and the command is left arguing about a promotion from no
-    evidence at all.
-
-    So: same sources, same design-system counterpart, one extra step. Not a new
-    fixture pair — `_app_sources` and `build_design_system` are shared verbatim,
-    and every source assertion in the self-test applies to both.
-
-    The values are the true ones for this fixture's own tree, not plausible
-    filler: `lib` really is the source root, `example_design_system` really is
-    what `../design-system/pubspec.yaml` names itself, and `Ds` really is the
-    prefix its exported components carry.
-    """
-    build_app(root)
-
-    def configure_profile(profile: dict) -> None:
-        profile["project"]["framework"] = "Flutter, Material 3"
-        profile["project"]["audience"] = "general consumer, adults 18+"
-        profile["adapters"]["lang"] = "dart"
-        profile["source"].update({
-            "root": "lib",
-            "fileGlob": "**/*.dart",
-            "screensGlob": "screens/**/*.dart",
-            "featureWidgetsGlob": "widgets/**/*.dart",
-            "testRoot": "test",
-        })
-        # No `sharedComponentDir`: the shared components live in the OTHER
-        # repository, which is the whole premise of these cases. Deleted rather
-        # than pointed somewhere, because a wrong path here would make the
-        # audits compare private widgets against an empty directory and print a
-        # clean run.
-        profile["source"].pop("sharedComponentDir", None)
-        profile["tokens"]["source"] = {"kind": "file", "path": "lib/theme/app_theme.dart"}
-        profile["tokens"]["accessor"] = "AppTheme"
-        profile["tokens"].pop("themeAccessor", None)
-        profile["tokens"].pop("ownedBy", None)
-
-    _edit_json(root / ".design-suite/profile.json", configure_profile)
-
-    def configure_rules(rules: dict) -> None:
-        # Only the two sections the promote-component flow reaches. Every other
-        # section stays TODO on purpose: an unfilled section makes its audit
-        # refuse cleanly, which is the documented behaviour, and filling all of
-        # them would make this fixture a more configured project than either
-        # real adopter.
-        rules["reinventedComponents"].update({
-            "exportPrefix": "Ds",
-            "package": "example_design_system",
-        })
-        rules["promotionCandidates"]["baseline"] = \
-            ".design-suite/baselines/promotion-candidates.json"
-
-    _edit_json(root / ".design-suite/arch-rules.json", configure_rules)
-
-    # The package manager's own resolution map. `audit_reinvented_components.py`
-    # reads the design system's exported types out of the RESOLVED package
-    # (component_shape.package_resolver -> .dart_tool/package_config.json) and
-    # refuses with exit 2 when it cannot resolve — so without this file Step 0
-    # refuses even with `reinventedComponents.package` correctly declared, which
-    # is the second half of the same blocker and not an obvious one.
-    #
-    # Written, not generated, for the reason the module docstring gives about
-    # source: there is no `flutter pub get` to run here and no network to run it
-    # over. It is a small, exactly-specified toolchain artifact rather than a
-    # stand-in for a tool's judgement.
-    #
-    # `rootUri` is RELATIVE — resolved against the audit's working directory,
-    # which is the app repo. That is correct when the two fixtures are built as
-    # siblings, which is the only arrangement the promote-component cases use;
-    # each case's scaffold.sh rewrites it to the run base's real absolute path
-    # once both trees exist, because a run's working directory is the base
-    # rather than ./app.
-    _write(root, ".dart_tool/package_config.json", json.dumps({
-        "configVersion": 2,
-        "generated": "2026-01-01T00:00:00.000Z",
-        "generator": "eval fixture builder",
-        "packages": [
-            {
-                "name": "example_design_system",
-                "rootUri": "../design-system",
-                "packageUri": "lib/",
-                "languageVersion": "3.0",
-            },
-        ],
-    }, indent=2) + "\n")
-
-
-def build_design_system(root: Path) -> None:
-    """A design-system-shaped repo with NO `.design-suite/`.
-
-    The archetype whose recipes were written from the role vocabulary and never
-    from a real repo. Undeclared on purpose: the interesting question is whether
-    a skill reads the shape or assumes `app`.
+    Undeclared on purpose: the interesting question is whether a skill reads
+    the shape or assumes `service`.
     """
     _design_system_sources(root)
 
 
-def build_design_system_declared(root: Path) -> None:
-    """The same repo with `projectKind: design-system` actually declared."""
+def build_library_declared(root: Path) -> None:
+    """The same repo with `projectKind: library` actually declared."""
     _design_system_sources(root)
-    _init(root, "Example Design System")
-    _declare_kind(root, "design-system")
-
-
-def build_docs_site(root: Path) -> None:
-    """Minimal docs-site shape, declared.
-
-    `docs-site` owns no role exclusively — see fixture_selftest.py, which
-    measures that from the vocabulary rather than asserting the claim here. A
-    case's job is to check a skill *says so and stops* rather than falling
-    through to `app`'s recipe.
-    """
-    _docs_site_sources(root)
-    _init(root, "Example Docs Site")
-    _declare_kind(root, "docs-site")
+    _init(root, "Example Library Package")
+    _declare_kind(root, "library")
 
 
 def build_undeclared_kind(root: Path) -> None:
-    """The `app` fixture with `projectKind` removed.
+    """The `service` fixture with `projectKind` removed.
 
     Both real consumer projects are in exactly this state today, which makes it
     the most important fixture here: it is not an edge case, it is the default.
     `archetypes.kind_of()` must raise `ArchetypeNotDeclared` — never guess.
     """
-    build_app(root)
+    build_service(root)
     _edit_json(root / ".design-suite/profile.json",
                lambda d: d["project"].pop("projectKind", None))
 
 
 def build_pre_ratified(root: Path) -> None:
-    """The `app` fixture plus one field a human has ratified.
+    """The `service` fixture plus one field a human has ratified.
 
     `state: approved` with `by` / `on` / `verifiedAgainst` is the strongest
     claim the provenance model can carry. Nothing may downgrade it to
     `inferred` or overwrite its value — init.py is already built so it cannot
     (SEEDED_STATE), and a case's job is to prove a *skill* cannot either.
     """
-    build_app(root)
+    build_service(root)
 
     def mutate(profile: dict) -> None:
         fields = profile.setdefault("provenance", {}).setdefault("fields", {})
@@ -788,11 +639,9 @@ def build_pre_ratified(root: Path) -> None:
 
 FIXTURES = {
     "zero-state": build_zero_state,
-    "app": build_app,
-    "app-configured": build_app_configured,
-    "design-system": build_design_system,
-    "design-system-declared": build_design_system_declared,
-    "docs-site": build_docs_site,
+    "service": build_service,
+    "library": build_library,
+    "library-declared": build_library_declared,
     "undeclared-kind": build_undeclared_kind,
     "pre-ratified": build_pre_ratified,
 }

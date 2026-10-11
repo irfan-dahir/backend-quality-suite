@@ -36,9 +36,8 @@ as this project's actual reading order.
 
 | If this project is | Read in this order, after the rules above |
 |---|---|
-| A product that renders an interface | Brief → Design → Flows → Contributing |
-| A design-system package or library | Contributing → Tokens → Components → Theming |
-| A documentation or content site | Documentation-rules → Contributing → whatever governs its content |
+| A published package (library) | Contributing → API → Changelog → Decisions |
+| A deployed API or data service | API → API-standard → Production-readiness → Contributing |
 | Something else | <!-- DECIDE: name the two or three documents someone must read before their first change, in order. If you cannot name them, the gap is the reading order, not this table. --> |
 
 The test for whether this is right: hand it to someone who has never seen the repo,

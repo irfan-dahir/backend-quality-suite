@@ -80,3 +80,50 @@ Status legend: `[ ]` open · `[x]` done (with commit).
 - [ ] `bin/audit_skill_paths.py` — `ALLOWED_OWNERS = ("anthropics",)`; this
   repo's own skill ownership must be admitted or gate 7 fails once skills
   cite this repo's slug.
+
+## Phase A4 (roles/archetypes/scaffolds swap) — done here, deferred parts below
+
+Completed in this phase (see commit): `roles.json` re-vocabulary (18 roles,
+kinds `library`/`service`, groups + externalPlugin `pr` remapped); 18 design
+doc templates + 2 fragments + 2 component schemas + 2 dot-templates deleted;
+`survey.py` hand `ROLE_BY_STEM` table replaced by the derived
+`role_stems.stem_map()` and `role_stem_drift.py` retired (its own docstring
+prescribes this end-state); `onboard-new-client` chain re-authored
+(survey → doc-suite → propose-config → baseline-debt); docs.manifest template
+re-pointed; `init.py` stops scaffolding `design-audit-config.json` /
+`component-capabilities.json` and its `seed_token_names` is gone; template
+archetype rows + test swapped to `library`/`service`; eval fixtures renamed
+`app→service`, `design-system→library`, promo-era `app-configured` and
+`docs-site` fixtures deleted.
+
+### Deferred to Phase D (one coherent unit — the tokens/config swap)
+
+- [ ] `profile.schema.json`: `tokens` is still a REQUIRED section and an
+  `additionalProperties: false` top level means removing it invalidates every
+  fixture that still carries it. Remove as ONE unit: schema `tokens` property
+  + required entry; `profile.json.template` tokens block (and its
+  design-flavored TODO examples); `survey.py` `detect_token_sources()` +
+  token-candidate plumbing; `doctor.py` tokens.source package-resolution check
+  (~line 940), `tokens.outputDir` fallback (~line 652), and the fix-hint table's
+  `repair_tokens.py` entry (script deleted in A2 — the hint is dangling);
+  `design_suite/adapters/__init__.py` + `engine/capabilities.py`
+  `token_accessor` threading; `engine/pipelines.py` `DEFAULTS` entries
+  `tokens`/`copy`/`assets` (their pipeline dirs were deleted in A1; `mockApi`
+  stays); and the `"tokens"` blocks in ~7 test fixtures (doctor_fix_hints_test,
+  doctor_hooks_map_test, map_project_test, audit_findings_envelope_test,
+  ratify_test, doctor_provenance_test).
+- [ ] `bin/propose_config.py` — design-audit-config + flutter/tsx sections:
+  full re-author (its test was already deleted in A2; the script still names
+  the deleted config file).
+- [ ] `configFile` remnants: schema `audits.configFile` property, survey
+  `PROPOSED_PROFILE_KEYS` entry, `provenance.py` ratifiable list entry —
+  harmless while absent from every profile; purge with the tokens swap.
+- [ ] Eval fixture CONTENT: `_app_sources` / `_design_system_sources` still
+  build a Flutter-shaped tree (widgets, pubspec) under the renamed
+  service/library fixtures; the bootstrap/map-project eval cases' prose and
+  graders are still design-domain. Re-author to PHP/API content in Phase D,
+  together with the case prose that mentions deleted cases
+  (promote-component/design-auditor) and stale `build_fixture.py` comments.
+- [ ] dot-templates content: `arch-rules.json.template` (widget layering),
+  `exceptions`/`known-traps`/`hooks.map`/`verification-glossary` examples —
+  names are generic, contents are design-era.

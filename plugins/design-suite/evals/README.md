@@ -104,14 +104,14 @@ evals/
 
 🔴 **`context.scaffold_script` may not escape the case directory** — a path
 containing `..` or an absolute path is rejected outright. A case therefore
-cannot point at `../_fixtures/app/scaffold.sh`.
+cannot point at `../_fixtures/service/scaffold.sh`.
 
 The working pattern is a shim *inside* the case directory that execs outward:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-exec bash "$(dirname "${BASH_SOURCE[0]}")/../_fixtures/app/scaffold.sh"
+exec bash "$(dirname "${BASH_SOURCE[0]}")/../_fixtures/service/scaffold.sh"
 ```
 
 The shim passes validation because it lives in the case dir; the fixture script

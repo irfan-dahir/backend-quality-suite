@@ -2,7 +2,7 @@
 """Prove every eval fixture actually produces the state its cases will branch on.
 
     python3 plugins/design-suite/bin/eval_fixture_selftest.py
-    python3 plugins/design-suite/bin/eval_fixture_selftest.py -k app
+    python3 plugins/design-suite/bin/eval_fixture_selftest.py -k service
 
 Exit 0 when every fixture holds, 1 otherwise. Stdlib only.
 
@@ -106,7 +106,7 @@ def check_zero_state(fixture: Path) -> None:
     expect(any(fixture.rglob("*.dart")),
            "zero-state: has real source files (an empty dir is a different fixture)")
 
-    proc = resolve_rootless(fixture, "design")
+    proc = resolve_rootless(fixture, build_fixture.AUTHORED_ROLE)
     expect(proc.returncode == 2,
            f"zero-state: resolve.py exits 2 via project_root() (got {proc.returncode})")
     expect(".design-suite" in proc.stderr,
@@ -115,143 +115,49 @@ def check_zero_state(fixture: Path) -> None:
            "zero-state: the refusal says it is refusing, not reporting nothing")
 
 
-def check_app(fixture: Path) -> None:
+def check_service(fixture: Path) -> None:
     authored = build_fixture.AUTHORED_ROLE
     stub = build_fixture.STUB_ROLE
     declined = build_fixture.DECLINED_ROLE
 
     proc = resolve(fixture, authored)
     expect(proc.returncode == 0,
-           f"app: authored role {authored!r} resolves clean, exit 0 (got {proc.returncode})")
+           f"service: authored role {authored!r} resolves clean, exit 0 (got {proc.returncode})")
 
     proc = resolve(fixture, stub)
     expect(proc.returncode == 5,
-           f"app: stub role {stub!r} exits 5 (got {proc.returncode})")
+           f"service: stub role {stub!r} exits 5 (got {proc.returncode})")
     expect(bool(proc.stdout.strip()),
-           "app: the stub still PRINTS its path — a caller filling it needs the path")
+           "service: the stub still PRINTS its path — a caller filling it needs the path")
 
     proc = resolve(fixture, declined)
     expect(proc.returncode == 4,
-           f"app: declined role {declined!r} exits 4 (got {proc.returncode})")
+           f"service: declined role {declined!r} exits 4 (got {proc.returncode})")
     # The reason is the entire point of the declined state. A decline with no
     # recorded reason resolves to the literal string below, and a fixture in
     # that shape would let a case pass while asserting nothing about reasons.
     expect("NO REASON RECORDED" not in proc.stdout,
-           "app: the decline carries a real reason, not the no-reason sentinel")
+           "service: the decline carries a real reason, not the no-reason sentinel")
     expect(build_fixture.DECLINE_REASON.split(";")[0].strip() in proc.stdout,
-           "app: the decline prints the reason the builder recorded")
+           "service: the decline prints the reason the builder recorded")
 
     # Negative controls: the three states must be distinguishable from each
     # other, not merely each individually observed.
     expect(resolve(fixture, authored).returncode != 5,
-           "app: the authored role is NOT reported as a stub (control)")
+           "service: the authored role is NOT reported as a stub (control)")
     expect(resolve(fixture, authored).returncode != 4,
-           "app: the authored role is NOT reported as declined (control)")
+           "service: the authored role is NOT reported as declined (control)")
     expect(resolve(fixture, stub).returncode != 4,
-           "app: the stub is NOT reported as declined (control)")
+           "service: the stub is NOT reported as declined (control)")
 
-    expect(archetypes.kind_of(profile_of(fixture)) == "app",
-           "app: declares projectKind app")
-
-    check_app_promotion_subjects(fixture)
+    expect(archetypes.kind_of(profile_of(fixture)) == "service",
+           "service: declares projectKind service")
 
 
-def check_app_promotion_subjects(fixture: Path) -> None:
-    """The widgets the four `/promote-component` cases invoke by name.
 
-    THIS FILE DID NOT CATCH THE ORIGINAL DEFECT, and the reason is worth stating
-    rather than quietly fixing. Every check above asserts a state produced by
-    `.design-suite/` — exit codes, provenance, archetype refusals — because the
-    fixture's *source tree* was only ever backdrop. Then four cases began
-    branching on the source tree: `/promote-component StatCell` and
-    `/promote-component OrderSummaryRow` against a fixture containing neither.
-    Nothing here looked at the source, so the missing components were invisible;
-    the cases would have run, the command would have answered "no such widget",
-    and the negative graders (`no-write`, `nothing-lands-in-design-system`)
-    would have scored 1.0 off that refusal. A perfect score for a case that
-    measured nothing — INERT, baselined clean.
-
-    The general rule this file was already built on, extended to source: every
-    state a case branches on gets asserted here first.
-
-    Every path comes from the builder's own constants rather than a literal
-    here, for the reason those constants document: in `bin/` a `lib/screens/…`
-    literal is an assumption about a consumer's layout, which is exactly what
-    audit_skill_paths.py exists to reject.
-    """
-    src = {}
-    for widget, rel in build_fixture.PROMOTION_SUBJECTS.items():
-        path = fixture / rel
-        expect(path.is_file(), f"app: {rel} exists")
-        if not path.is_file():
-            return
-        src[widget] = path.read_text()
-
-    for widget, text in src.items():
-        expect(f"class {widget} extends StatelessWidget" in text,
-               f"app: {widget} is declared — the cases invoke it by name")
-        # Declared AND built by its own screen. A widget nothing renders is dead
-        # code, and Step 4 (delete the private widget, import the real one) has
-        # no call site to rewrite.
-        expect(text.count(widget) >= 3,
-               f"app: {widget} is also built by its screen, so adoption has a "
-               f"call site to rewrite")
-
-    stat, dup, row = (src[w] for w in ("_StatCell", "_MetricTile", "_OrderSummaryRow"))
-
-    # The duplication is a duplication of SHAPE. audit_promotion_candidates.py
-    # matches on the constructor's parameter NAMES (Jaccard over the set), so
-    # two widgets with the same idea under different parameter names score zero
-    # and the audit reports nothing — which is how the first version of this
-    # fixture silently failed to produce a candidate at all.
-    for name in build_fixture.SHARED_WIDGET_PARAMS:
-        expect(f"this.{name}" in stat and f"this.{name}" in dup,
-               f"app: _StatCell and _MetricTile share the parameter {name!r}, so "
-               f"the shape match can actually fire")
-
-    # The promotable one is promotable STRUCTURALLY: no project type reaches its
-    # signature or body. Whole-word, because the screen legitimately renders the
-    # STRING 'Orders' as a stat label — what must not appear is the TYPE.
-    leaked = sorted(t for t in build_fixture.DOMAIN_TYPES
-                    if re.search(rf"\b{t}\b", stat))
-    expect(not leaked,
-           f"app: _StatCell touches no domain type — it is promotable by shape, "
-           f"not by being called something generic (found {leaked})")
-
-    # The refusable one fails the command's Step 1 bar structurally: a domain
-    # entity in the constructor AND product rules in the body. Either alone
-    # could be argued away; together they cannot be moved without moving the
-    # domain. A fixture where this were merely a widget NAMED after an order
-    # would let the case pass on the noun in the filename.
-    expect("final Order order;" in row,
-           "app: _OrderSummaryRow takes a domain entity in its constructor")
-    expect("PricingRules" in row,
-           "app: _OrderSummaryRow applies product rules in its body — the "
-           "coupling is built in, not just named")
-    for rel in build_fixture.DOMAIN_SOURCES:
-        expect((fixture / rel).is_file(),
-               f"app: the domain layer _OrderSummaryRow depends on really exists "
-               f"({rel})")
-
-    # The app names the design system in its manifest. Step 4 is "bump the
-    # design-system package refs in the project's manifest"; with no ref there is
-    # no bump, and `adopts-back-into-the-app` (Edit on `app/`) loses half its
-    # target.
-    expect(build_fixture.DS_PACKAGE
-           in (fixture / build_fixture.APP_MANIFEST).read_text(),
-           "app: the manifest references the design-system package")
-
-    # Control for the planted-violation case, which grades on the theme file by
-    # name: the screens added here must not introduce a rival colour literal.
-    for widget, text in src.items():
-        expect("0xFF" not in text and "Color(" not in text,
-               f"app: {widget}'s screen plants no second token violation "
-               f"(control for design-auditor-finds-planted-violation)")
-
-
-def check_design_system(fixture: Path) -> None:
+def check_library(fixture: Path) -> None:
     expect(not (fixture / ".design-suite").exists(),
-           "design-system: undeclared variant has no .design-suite/")
+           "library: undeclared variant has no .design-suite/")
     # Package-shaped is asserted on SHAPE, not on language. This used to read
     # `package.json exists AND no lib/**/*.dart`, which made "is a package" and
     # "is TypeScript" the same assertion — so the fixture could not become the
@@ -259,67 +165,53 @@ def check_design_system(fixture: Path) -> None:
     # reason that had nothing to do with the property it names. What actually
     # matters is that it publishes components and has no screens or routes.
     expect((fixture / build_fixture.DS_MANIFEST).is_file(),
-           "design-system: carries a package manifest")
+           "library: carries a package manifest")
     expect(any(fixture.glob(build_fixture.DS_COMPONENT_GLOB)),
-           "design-system: exports components — what a package library is for")
+           "library: exports components — what a package library is for")
     screens = sorted(p.name for p in fixture.rglob("*")
                      if p.is_file() and ("screen" in p.name or "route" in p.name))
     expect(not screens,
-           f"design-system: has no screens or routes to mistake it for an app "
+           f"library: has no screens or routes to mistake it for an app "
            f"(found {screens})")
     # Control: the same probe DOES find screens in the `app` fixture, so the
     # emptiness above is a fact about this fixture and not a broken measurement.
     with tempfile.TemporaryDirectory() as tmp:
-        app = build_fixture.build("app", Path(tmp) / "app", force=True)
-        expect(any("screen" in p.name for p in app.rglob("*") if p.is_file()),
-               "design-system: the same screen probe finds screens in `app` (control)")
-    # The promotion target must SHOW where Step 3's DS-side gates land — a unit
-    # test, a gallery use case, a docs entry — or a command told to satisfy them
-    # has nowhere to put them, and `promote-component-proceeds-on-go-ahead`'s
-    # `design-system/**/*stat_cell*test*` grader is unreachable by construction.
-    for what, pattern in build_fixture.DS_GATE_GLOBS.items():
-        expect(any(fixture.glob(pattern)),
-               f"design-system: shows {what} ({pattern}) for a promotion to copy")
-    proc = resolve_rootless(fixture, "components")
+        svc = build_fixture.build("service", Path(tmp) / "service", force=True)
+        expect(any("screen" in p.name for p in svc.rglob("*") if p.is_file()),
+               "library: the same screen probe finds screens in `service` (control)")
+    proc = resolve_rootless(fixture, "api")
     expect(proc.returncode == 2,
-           f"design-system: every bin/*.py refuses here too (got {proc.returncode})")
+           f"library: every bin/*.py refuses here too (got {proc.returncode})")
 
 
-def check_design_system_declared(fixture: Path) -> None:
+def check_library_declared(fixture: Path) -> None:
     kind = archetypes.kind_of(profile_of(fixture))
-    expect(kind == "design-system", f"design-system-declared: kind_of is design-system (got {kind})")
+    expect(kind == "library", f"library-declared: kind_of is library (got {kind})")
     roles = set(archetypes.roles_for(kind))
-    # The roles that exist BECAUSE it is a design system. If these ever stop
-    # being archetype-specific, the fixture is no longer exercising an archetype.
-    for role in ("components", "tokens", "theming"):
-        expect(role in roles, f"design-system-declared: role {role!r} applies")
-    for role in ("design", "flows"):
-        expect(role not in roles,
-               f"design-system-declared: app-only role {role!r} does NOT apply (control)")
+    # The roles that carry a package's consumer contract. If these ever stop
+    # being library-flavoured, the fixture is no longer exercising an archetype.
+    for role in ("changelog", "deprecations"):
+        expect(role in roles, f"library-declared: role {role!r} applies")
+    # deployment is na for a library — a package is consumed, not deployed.
+    expect("deployment" not in roles,
+           "library-declared: 'deployment' (a service's role) does NOT apply (control)")
 
-
-def check_docs_site(fixture: Path) -> None:
-    kind = archetypes.kind_of(profile_of(fixture))
-    expect(kind == "docs-site", f"docs-site: kind_of is docs-site (got {kind})")
-
-    # MEASURED, not asserted from prose. The brief for this work said docs-site
-    # has "zero archetype-specific roles"; what the vocabulary actually says is
-    # narrower and is computed here so the fixture cannot outlive the claim.
-    exclusive = [role for role in archetypes.roles()
-                 if archetypes.applicability(role, "docs-site") != "na"
-                 and all(archetypes.applicability(role, other) == "na"
-                         for other in archetypes.kinds() if other != "docs-site")]
-    expect(exclusive == [],
-           f"docs-site: owns no role exclusively — nothing to fall through TO "
-           f"(measured exclusive roles: {exclusive})")
-    # The control: the other two archetypes DO own roles exclusively, so the
-    # emptiness above is a fact about docs-site and not about the measurement.
-    ds_exclusive = [role for role in archetypes.roles()
-                    if archetypes.applicability(role, "design-system") != "na"
-                    and all(archetypes.applicability(role, other) == "na"
-                            for other in archetypes.kinds() if other != "design-system")]
-    expect(ds_exclusive != [],
-           "docs-site: the same measurement finds design-system's exclusive roles (control)")
+    # MEASURED, not asserted from prose: which roles one kind owns exclusively
+    # (non-na here, na for every other kind). Computed so the fixture cannot
+    # outlive the claim.
+    service_exclusive = [role for role in archetypes.roles()
+                         if archetypes.applicability(role, "service") != "na"
+                         and all(archetypes.applicability(role, other) == "na"
+                                 for other in archetypes.kinds() if other != "service")]
+    expect("deployment" in service_exclusive,
+           f"library-declared: deployment is service-exclusive (measured: {service_exclusive})")
+    library_exclusive = [role for role in archetypes.roles()
+                         if archetypes.applicability(role, "library") != "na"
+                         and all(archetypes.applicability(role, other) == "na"
+                                 for other in archetypes.kinds() if other != "library")]
+    expect(library_exclusive == [],
+           f"library-declared: no role is library-exclusive — the package kinds share "
+           f"their core with services (measured: {library_exclusive})")
 
 
 def check_undeclared_kind(fixture: Path) -> None:
@@ -428,76 +320,11 @@ def check_no_provenance_prose(fixture: Path) -> None:
                f"{fixture.name}: profile carries a verifiedAgainst")
 
 
-def check_app_configured(fixture: Path) -> None:
-    """The `app` states, plus the configuration the promote-component flow needs.
-
-    The four `/promote-component` cases run against THIS fixture rather than
-    `app`, and the reason is mechanical: `audit_reinvented_components.py` — the
-    command's own Step 0 — exits 2 on an unresolvable
-    `reinventedComponents.package`, and init.py writes that value as the literal
-    string `TODO:`. A Step 0 that refuses still satisfies `did-run-step-0` (that
-    grader wants the call, not its verdict), so the failure is silent in exactly
-    the way this file exists to prevent: the case scores the command's judgement
-    about a promotion it had no evidence for.
-
-    So each field is asserted to be RESOLVED rather than merely present. A
-    surviving `TODO:` is the state that broke it.
-    """
-    check_app(fixture)
-
-    profile = profile_of(fixture)
-    rules = json.loads((fixture / ".design-suite/arch-rules.json").read_text())
-
-    resolved = {
-        "adapters.lang": profile["adapters"]["lang"],
-        "source.root": profile["source"]["root"],
-        "source.fileGlob": profile["source"]["fileGlob"],
-        "tokens.source.path": profile["tokens"]["source"]["path"],
-        "tokens.accessor": profile["tokens"]["accessor"],
-        "reinventedComponents.package": rules["reinventedComponents"]["package"],
-        "reinventedComponents.exportPrefix": rules["reinventedComponents"]["exportPrefix"],
-    }
-    for key, value in resolved.items():
-        expect(isinstance(value, str) and not value.startswith("TODO"),
-               f"app-configured: {key} is resolved, not a TODO (got {value!r})")
-
-    # The values must be TRUE of this fixture, not merely non-TODO. A profile
-    # pointing at a source root that does not exist configures the audits to
-    # scan nothing and report clean — the same silence one level down.
-    expect((fixture / profile["source"]["root"]).is_dir(),
-           "app-configured: source.root names a directory that exists")
-    expect((fixture / profile["tokens"]["source"]["path"]).is_file(),
-           "app-configured: tokens.source.path names a file that exists")
-    ds_manifest = fixture.parent / "design-system" / build_fixture.DS_MANIFEST
-    expect(rules["reinventedComponents"]["package"] in ds_manifest.read_text()
-           if ds_manifest.is_file() else True,
-           "app-configured: the declared DS package is what the design-system "
-           "fixture calls itself")
-
-    # Step 0 must produce a VERDICT here, not a refusal. This is the assertion
-    # that would have caught the original problem at its root.
-    #
-    # The sibling design-system is built explicitly rather than hoped for: the
-    # resolution map's `rootUri` is `../design-system`, the audit resolves the
-    # DS's exported types through it, and with no sibling it would refuse for a
-    # reason that has nothing to do with the fixture under test.
-    build_fixture.build("design-system", fixture.parent / "design-system", force=True)
-    proc = subprocess.run(
-        [sys.executable, str(BIN / "audit_reinvented_components.py")],
-        capture_output=True, text=True, cwd=str(fixture),
-        env={**os.environ, "CLAUDE_PROJECT_DIR": str(fixture)})
-    expect("REFUSING TO RUN" not in (proc.stdout + proc.stderr),
-           f"app-configured: Step 0 (audit_reinvented_components.py) runs rather "
-           f"than refusing — {(proc.stdout + proc.stderr).strip().splitlines()[:2]}")
-
-
 CHECKS = {
     "zero-state": check_zero_state,
-    "app": check_app,
-    "app-configured": check_app_configured,
-    "design-system": check_design_system,
-    "design-system-declared": check_design_system_declared,
-    "docs-site": check_docs_site,
+    "service": check_service,
+    "library": check_library,
+    "library-declared": check_library_declared,
     "undeclared-kind": check_undeclared_kind,
     "pre-ratified": check_pre_ratified,
 }

@@ -33,14 +33,14 @@ sys.path.insert(0, str(BIN.parent))
 
 from design_suite.engine import archetypes, role_stems  # noqa: E402
 
-DRIFT = BIN / "role_stem_drift.py"
 FAILURES: list[str] = []
 
-# The eight stems measured as unmapped on a real design-system repository
-# (2026-09-15) whose filenames are literally role names. These are the
-# regression: each one was surveyed as "no role" while being named after one.
-MEASURED_MISSES = ["ADAPTIVE-PATTERNS", "COMMON-MISTAKES", "DEPRECATIONS",
-                   "FIGMA", "GALLERY", "PATTERNS", "RELEASE", "THEMING"]
+# Of the eight stems measured as unmapped on a real repository (2026-09-15)
+# whose filenames are literally role names, the three that are still in the
+# vocabulary after this repo re-domained. The other five (adaptive-patterns,
+# figma, gallery, patterns, theming) left with the design domain, and a stem
+# for a removed role now correctly maps to nothing.
+MEASURED_MISSES = ["COMMON-MISTAKES", "DEPRECATIONS", "RELEASE"]
 
 # Stems that are ordinary document names and NOT roles. A map that claimed any of
 # these would be guessing, which is the failure the old table's conservatism was
@@ -77,10 +77,10 @@ def main() -> int:
                f"CONTROL: {stem!r} proposes no role")
 
     print("check: spelling variants of one role are one role, not three entries")
-    for stem in ("brand-voice", "brand_voice", "brandvoice"):
+    for stem in ("common-mistakes", "common_mistakes", "commonmistakes"):
         got = role_stems.role_for_stem(stem)
-        expect(got is not None and got[0] == "brand-voice",
-               f"{stem!r} -> 'brand-voice'")
+        expect(got is not None and got[0] == "common-mistakes",
+               f"{stem!r} -> 'common-mistakes'")
 
     print("check: conventions that are not role names still resolve")
     for stem, role in (("readme", "entry-point"), ("claude", "entry-point"),
@@ -103,7 +103,7 @@ def main() -> int:
     expect(invented not in declared, "the planted role is genuinely new")
     planted = json.loads(json.dumps(archetypes.vocabulary()))
     planted["roles"][invented] = {"group": "any", "template": None,
-                                  "archetypes": {"app": "optional"}}
+                                  "archetypes": {"service": "optional"}}
     # Patched in memory, not on disk: roles.json is shipped vocabulary, and a test
     # that edited the file would be mutating the very thing it is testing against.
     real_vocabulary = archetypes.vocabulary
@@ -121,46 +121,9 @@ def main() -> int:
            "CONTROL: with the planted role removed, its stem claims nothing "
            "again — the map really is derived, not accumulated")
 
-    print("check: the drift reporter refuses rather than passing when it cannot look")
-    with tempfile.TemporaryDirectory() as tmp:
-        blank = Path(tmp) / "no_table.py"
-        blank.write_text("X = 1\n")
-        result = subprocess.run([sys.executable, str(DRIFT), str(blank)],
-                                capture_output=True, text=True)
-        expect(result.returncode == 2,
-               "a source file with no ROLE_BY_STEM exits 2 (could not look), "
-               "never 0 — an absent table is not a clean table")
-
-        # PLANTED FAILURE. A table missing one role, and a table naming one the
-        # vocabulary does not declare. Both must be caught; a reporter that only
-        # caught the first would have missed the live 'instructions' defect.
-        planted_src = Path(tmp) / "planted.py"
-        planted_src.write_text(
-            "ROLE_BY_STEM = {\n"
-            "    'design': ('design', 0.7, 'x'),\n"
-            "    'obsolete': ('no-such-role', 0.7, 'x'),\n"
-            "}\n")
-        result = subprocess.run([sys.executable, str(DRIFT), str(planted_src)],
-                                capture_output=True, text=True)
-        expect(result.returncode == 1, "a drifted table exits 1")
-        expect("flows" in result.stderr,
-               "PLANTED: a role present in roles.json but absent from the stem "
-               "map is named")
-        expect("no-such-role" in result.stderr,
-               "PLANTED: a stem naming a role the vocabulary does not declare "
-               "is named")
-        # Matched against the itemised lines, not against the whole stream: the
-        # fix hint at the bottom names `design_suite.engine.role_stems`, and a
-        # substring check over stderr would "pass" on that instead of on the
-        # finding list. A control that can pass for the wrong reason is not one.
-        listed = {line.strip() for line in result.stderr.splitlines()
-                  if line.startswith(" " * 6)}
-        expect("design" not in listed,
-               "CONTROL: the one role the planted table DOES cover is not "
-               "reported as missing")
-        expect("flows" in listed,
-               "CONTROL: and the itemised list is genuinely where findings "
-               "appear, so the check above could have failed")
+    # The drift reporter (bin/role_stem_drift.py) retired with the hand
+    # table it measured: once survey.py derives from role_stems, the drift
+    # it existed to make loud is unrepresentable. Its tests went with it.
 
     print()
     if FAILURES:

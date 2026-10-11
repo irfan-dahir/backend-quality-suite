@@ -3,8 +3,8 @@
 
     python3 bin/chain.py status onboard-new-client
     python3 bin/chain.py next onboard-new-client
-    python3 bin/chain.py done onboard-new-client brand-voice
-    python3 bin/chain.py ack  onboard-new-client brand-voice   # clears a checkpoint
+    python3 bin/chain.py done onboard-new-client survey
+    python3 bin/chain.py ack  onboard-new-client doc-suite     # clears a checkpoint
     python3 bin/chain.py skip onboard-new-client design-docs --note "docs already exist"
     python3 bin/chain.py reset onboard-new-client
 

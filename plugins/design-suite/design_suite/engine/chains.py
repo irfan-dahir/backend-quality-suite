@@ -10,7 +10,7 @@ this a worse version of the Workflow tool. What it does is keep the sequence, th
 state, and — the part that actually matters — the checkpoints.
 
 CHECKPOINTS DEFAULT TO ON, and that is the whole design problem rather than a
-detail. `/establish-brand-voice` requires attribute-by-attribute sign-off and
+detail. `/propose-config` is preview-by-default and requires explicit approval and
 "never accepts a draft wholesale"; `/onboard-new-client` states plainly that it
 "never silently chain[s] them end-to-end without checking in between". A runner
 that advanced past those would break the contract of the skills it is composing,

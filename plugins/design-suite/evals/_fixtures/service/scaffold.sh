@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Materialise the `app-configured` fixture into the CURRENT WORKING DIRECTORY.
+# Materialise the `service` fixture into the CURRENT WORKING DIRECTORY.
 #
 # Why this file exists rather than a case pointing straight at build_fixture.py:
 # `context.scaffold_script` is rejected outright if it escapes the case
@@ -18,5 +18,5 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-python3 "$here/../build_fixture.py" app-configured --dir "$tmp/fixture" --force >/dev/null
+python3 "$here/../build_fixture.py" service --dir "$tmp/fixture" --force >/dev/null
 cp -R "$tmp/fixture/." .

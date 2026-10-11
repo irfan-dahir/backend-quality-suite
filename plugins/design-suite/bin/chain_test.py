@@ -48,9 +48,9 @@ CHAIN = {
     "name": "test-chain",
     "description": "A chain for testing.",
     "steps": [
-        {"id": "one", "skill": "establish-brand-voice", "checkpoint": True,
+        {"id": "one", "skill": "survey", "checkpoint": True,
          "purpose": "First.", "onFail": "halt"},
-        {"id": "two", "skill": "scaffold-screen", "checkpoint": False,
+        {"id": "two", "skill": "map-project", "checkpoint": False,
          "onFail": "halt"},
         {"id": "three", "skill": "design-debt", "checkpoint": True,
          "onFail": "skip"},
@@ -79,8 +79,7 @@ class ChainLoading(unittest.TestCase):
         chain = C.load(SHIPPED)
         self.assertEqual(chain["name"], "onboard-new-client")
         self.assertEqual([s["id"] for s in chain["steps"]],
-                         ["brand-voice", "design-docs", "interaction-spec",
-                          "first-screen", "baseline-debt"])
+                         ["survey", "doc-suite", "propose-config", "baseline-debt"])
 
     def test_a_project_chain_wins_over_the_shipped_one(self):
         with tempfile.TemporaryDirectory() as tmp:

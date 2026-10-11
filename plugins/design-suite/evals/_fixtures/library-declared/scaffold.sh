@@ -18,5 +18,5 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-python3 "$here/../build_fixture.py" design-system-declared --dir "$tmp/fixture" --force >/dev/null
+python3 "$here/../build_fixture.py" library-declared --dir "$tmp/fixture" --force >/dev/null
 cp -R "$tmp/fixture/." .

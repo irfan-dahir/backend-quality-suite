@@ -88,15 +88,15 @@ def fixture(tmp: Path) -> Path:
 
     (root / ".design-suite" / "docs.manifest.json").write_text(json.dumps({
         "roles": {
-            "components": {"directory": "docs/pages"},
-            "patterns": {"directory": "docs/stubs"},
-            "gallery": {"directory": "docs/empty"},
-            "theming": {"directory": "docs/noise"},
-            "figma": {"directory": "docs/gone"},
+            "decisions": {"directory": "docs/pages"},
+            "backlog": {"directory": "docs/stubs"},
+            "builds": {"directory": "docs/empty"},
+            "release": {"directory": "docs/noise"},
+            "public-roadmap": {"directory": "docs/gone"},
             # A plain string role in the same manifest: the directory branch must
             # not change how an ordinary file role behaves, and a test with no
             # file role could not notice if it did.
-            "design": "docs/DESIGN.md",
+            "api": "docs/DESIGN.md",
         },
     }))
     return root
@@ -110,54 +110,54 @@ def main() -> int:
         print("check: the four directory states produce four distinct exit codes")
 
         for role, want, label in (
-            ("components", 0, "populated -> 0 (real coverage)"),
-            ("patterns", 5, "stubs only -> 5 (registered, unwritten)"),
-            ("gallery", 2, "empty -> 2 (I could not look)"),
-            ("theming", 2, "non-document members only -> 2 (a stray file is not coverage)"),
-            ("figma", 1, "absent -> 1 (mapped, does not exist)"),
+            ("decisions", 0, "populated -> 0 (real coverage)"),
+            ("backlog", 5, "stubs only -> 5 (registered, unwritten)"),
+            ("builds", 2, "empty -> 2 (I could not look)"),
+            ("release", 2, "non-document members only -> 2 (a stray file is not coverage)"),
+            ("public-roadmap", 1, "absent -> 1 (mapped, does not exist)"),
         ):
             result = run(root, role)
             codes[role] = result.returncode
             expect(result.returncode == want, f"{label}; got {result.returncode}")
 
-        expect(len({codes["components"], codes["patterns"],
-                    codes["gallery"], codes["figma"]}) == 4,
+        expect(len({codes["decisions"], codes["backlog"],
+                    codes["builds"], codes["public-roadmap"]}) == 4,
                "the four states are four DIFFERENT codes, not four assertions "
                "that happen to hold")
 
         print("check: the path is printed in every state, refusals included")
-        for role, where in (("components", "docs/pages"), ("patterns", "docs/stubs"),
-                            ("gallery", "docs/empty"), ("figma", "docs/gone")):
+        for role, where in (("decisions", "docs/pages"), ("backlog", "docs/stubs"),
+                            ("builds", "docs/empty"), ("public-roadmap", "docs/gone")):
             result = run(root, role)
             expect(result.stdout.splitlines()[0].strip() == where,
                    f"{role}: prints {where} on stdout even when refusing")
 
         print("check: every refusal says WHY on stderr, by name")
-        for role, word in (("patterns", "stub"), ("gallery", "could not look"),
-                           ("figma", "does not exist")):
+        for role, word in (("backlog", "stub"), ("builds", "could not look"),
+                           ("public-roadmap", "does not exist")):
             result = run(root, role)
             expect(word in result.stderr,
                    f"{role}: stderr names the state ({word!r})")
-        expect(run(root, "components").stderr.strip() == "",
+        expect(run(root, "decisions").stderr.strip() == "",
                "components: the healthy state says nothing on stderr")
 
         print("check: --members lists documents, and lists the right ones")
-        result = run(root, "components", "--members")
+        result = run(root, "decisions", "--members")
         listed = result.stdout.splitlines()[1:]
         expect(any(p.endswith("group/three.md") for p in listed),
                "--members finds nested pages (recursive)")
         expect(not any(p.endswith("two.md") for p in listed),
                "--members on a populated role lists AUTHORED pages, not the stub")
-        result = run(root, "patterns", "--members")
+        result = run(root, "backlog", "--members")
         expect(len(result.stdout.splitlines()[1:]) == 2,
                "--members on a stubs-only role lists the stubs (they are the work)")
 
         print("check: --reverse answers for a path INSIDE a directory role")
         result = run(root, "--reverse", "docs/pages/group/three.md")
-        expect(result.returncode == 0 and result.stdout.strip() == "components",
+        expect(result.returncode == 0 and result.stdout.strip() == "decisions",
                "a member document resolves to the directory role")
         result = run(root, "--reverse", "docs/pages")
-        expect(result.returncode == 0 and result.stdout.strip() == "components",
+        expect(result.returncode == 0 and result.stdout.strip() == "decisions",
                "the directory itself resolves to the role")
         # CONTROL. A path that merely shares a prefix must NOT be claimed: a
         # startswith() with no separator would hand `docs/pagesX.md` the role,
@@ -170,7 +170,7 @@ def main() -> int:
                "CONTROL: an unrelated path still exits 2")
 
         print("check: plain file roles are unaffected")
-        result = run(root, "design")
+        result = run(root, "api")
         expect(result.returncode == 0 and result.stdout.strip() == "docs/DESIGN.md",
                "CONTROL: a string-valued role still resolves to its file, exit 0")
         expect(run(root, "nonexistent-role").returncode == 2,
