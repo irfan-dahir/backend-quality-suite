@@ -4,7 +4,7 @@
 
 The user-facing companion to [CATALOG.md](./CATALOG.md). That one is organised for a maintainer, by plugin; this one is organised around what you type and whether you can trust the answer. Every row below is read from the components' own frontmatter, from `repo_health.py`'s audit discovery, and from each plugin's `hooks/hooks.json` — nothing here is typed by hand, because hand-written claims about this repo's own contents have been wrong repeatedly.
 
-**38 slash commands · 2 agents · 17 audits · 4 hooks.**
+**39 slash commands · 2 agents · 18 audits · 4 hooks.**
 
 ### What the maturity markers mean
 
@@ -18,7 +18,7 @@ The user-facing companion to [CATALOG.md](./CATALOG.md). That one is organised f
 
 ## Commands that can fire on their own
 
-These **24** are marked `invocation: auto`: Claude may run them from plain language, without you naming them, because they are read-only or ask before writing. You can still type them.
+These **25** are marked `invocation: auto`: Claude may run them from plain language, without you naming them, because they are read-only or ask before writing. You can still type them.
 
 | Slash command | What it does | Fires | Maturity | Plugin |
 |---|---|---|---|---|
@@ -36,6 +36,7 @@ These **24** are marked `invocation: auto`: Claude may run them from plain langu
 | `/audit-prose-flags` | Use when maintaining this plugin's own skills, or after renaming or removing a script flag. | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-rate-limit` | Report-only audit for inbound rate-limit coverage — endpoints with no limiter in their declaration and no global throttle, with documented exemptions carrying reasons. | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-route-coverage` | Report-only audit resolving every declared route action to a real controller method — a route whose action string no longer resolves 500s on every request. | auto | ⚠️ use with review | `backend-suite` |
+| `/audit-route-model-binding` | Audit Laravel route model bindings — implicit bindings, explicit Route::model/bind, resource routes, and controller signature matching. | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-test-network-coupling` | Report-only audit for tests that can reach a live service — tests referencing a live host with no recorded-client marker, and real-client fallbacks that go live when a… | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-toolchain-gates` | Report-only audit for the project's own test toolchain — required scripts absent from the manifest, scripts pointing at undeclared runner suites, and suites whose… | auto | ⚠️ use with review | `backend-suite` |
 | `/audit-versioning` | Report-only audit that the API's version statements agree — the versioned route file's name, the URL prefix it mounts under, and the controller namespace handlers… | auto | ⚠️ use with review | `backend-suite` |
@@ -79,9 +80,9 @@ All 2 are read-only, and that is checked rather than asserted: each one's `tools
 
 ## Audits
 
-**17 audits**, enumerated by `python3 plugins/backend-suite/bin/repo_health.py --list` — the same discovery `/repo-health` and the MCP audit server use, so this table cannot disagree with what actually runs.
+**18 audits**, enumerated by `python3 plugins/backend-suite/bin/repo_health.py --list` — the same discovery `/repo-health` and the MCP audit server use, so this table cannot disagree with what actually runs.
 
-**17 of them have a matching `/audit-…` command; 0 do not.** The ones that do not are not hidden and not broken — they are simply reachable another way: `/repo-health` (which runs all of them), the MCP audit server in `plugins/backend-suite/mcp/audit_server.py`, the edit-triggered hook, or running the script directly. The column below says which, per audit.
+**18 of them have a matching `/audit-…` command; 0 do not.** The ones that do not are not hidden and not broken — they are simply reachable another way: `/repo-health` (which runs all of them), the MCP audit server in `plugins/backend-suite/mcp/audit_server.py`, the edit-triggered hook, or running the script directly. The column below says which, per audit.
 
 | Audit | Live? | Reachable how | Backing script |
 |---|---|---|---|
@@ -99,6 +100,7 @@ All 2 are read-only, and that is checked rather than asserted: each one's `tools
 | `audit_prose_flags` | live | `/audit-prose-flags`, `/repo-health`, MCP, or the script directly | `bin/audit_prose_flags.py` |
 | `audit_rate_limit` | live | `/audit-rate-limit`, `/repo-health`, MCP, or the script directly | `bin/audit_rate_limit.py` |
 | `audit_route_coverage` | live | `/audit-route-coverage`, `/repo-health`, MCP, or the script directly | `bin/audit_route_coverage.py` |
+| `audit_route_model_binding` | live | `/audit-route-model-binding`, `/repo-health`, MCP, or the script directly | `bin/audit_route_model_binding.py` |
 | `audit_test_network_coupling` | live | `/audit-test-network-coupling`, `/repo-health`, MCP, or the script directly | `bin/audit_test_network_coupling.py` |
 | `audit_toolchain_gates` | live | `/audit-toolchain-gates`, `/repo-health`, MCP, or the script directly | `bin/audit_toolchain_gates.py` |
 | `audit_versioning` | live | `/audit-versioning`, `/repo-health`, MCP, or the script directly | `bin/audit_versioning.py` |
@@ -127,7 +129,7 @@ Every slash command, by the job you came here to do. Names only.
 
 *How this grouping is derived:* **no frontmatter field encodes a job-to-be-done** — components declare `name`, `description`, `invocation` and `maturity`, and nothing more. Rather than invent a second editorial list to drift against the first, the buckets come from two things that already exist: the command's own name (`audit-…`, `…-asset`, `…mock-api…`, which other gates already depend on), and failing that, `GROUPS` in `catalog.py` — the grouping already maintained for `docs/CATALOG.md`. Anything neither rule places lands in **Other**, visibly, rather than being dropped.
 
-**Audit** (16) — `/audit-api-consistency` · `/audit-cache-ttl-coverage` · `/audit-claude-md-drift` · `/audit-contract-headers` · `/audit-doc-staleness` · `/audit-endpoint-parity` · `/audit-error-handling` · `/audit-error-shape` · `/audit-layer-boundaries` · `/audit-proposal-status` · `/audit-prose-flags` · `/audit-rate-limit` · `/audit-route-coverage` · `/audit-test-network-coupling` · `/audit-toolchain-gates` · `/audit-versioning`
+**Audit** (17) — `/audit-api-consistency` · `/audit-cache-ttl-coverage` · `/audit-claude-md-drift` · `/audit-contract-headers` · `/audit-doc-staleness` · `/audit-endpoint-parity` · `/audit-error-handling` · `/audit-error-shape` · `/audit-layer-boundaries` · `/audit-proposal-status` · `/audit-prose-flags` · `/audit-rate-limit` · `/audit-route-coverage` · `/audit-route-model-binding` · `/audit-test-network-coupling` · `/audit-toolchain-gates` · `/audit-versioning`
 
 **Document** (6) — `/bootstrap-api-docs` · `/capture-backlog` · `/log-decision` · `/ratify` · `/review-docs` · `/sync-docs`
 
@@ -139,5 +141,5 @@ Every slash command, by the job you came here to do. Names only.
 
 **Other** (2) — `/draft-pr-description` · `/generate-client-readiness`
 
-38 of 38 commands placed.
+39 of 39 commands placed.
 
