@@ -18,7 +18,7 @@ You derive a **client-facing** production-readiness summary from **`{{doc:produc
 
 ## Why this exists, and why it's separate from the internal doc
 
-`{{doc:production-readiness}}` is written for the delivery team — file-and-line references, git commit hashes, internal tool names (`/audit-tokens`, `scripts/audit_adapter_pattern.py`), CI workflow filenames, and a running edit history in its footer. None of that belongs in front of the client, and none of it is actionable to them. What the client actually needs is: what's the overall picture, what do *they* need to decide or provide, and what's a normal part of any software project versus something specific to this one.
+`{{doc:production-readiness}}` is written for the delivery team — file-and-line references, git commit hashes, internal tool names (`/quality-debt`, `bin/audit_api_consistency.py`), CI workflow filenames, and a running edit history in its footer. None of that belongs in front of the client, and none of it is actionable to them. What the client actually needs is: what's the overall picture, what do *they* need to decide or provide, and what's a normal part of any software project versus something specific to this one.
 
 Producing that by hand each time invites drift — the two documents disagree the moment someone updates one and forgets the other. Deriving it mechanically from the internal doc, the same way `/generate-walkthrough` derives from `{{dir:derived}}/demo-flow-catalog.md` or `/audit-mock-api` derives its report from `contracts.json`, keeps them honest.
 
@@ -33,8 +33,8 @@ Read `{{doc:production-readiness}}` in full, every time — never work from memo
 Apply these rules uniformly. When a rule and the source content conflict, prefer omission over guessing at client-safe wording — ask rather than invent.
 
 **Strip entirely — internal-only, no client value:**
-- File/line references (`[auth_repository_impl.dart:22]`), git commit hashes, branch names
-- Named internal tools/skills/scripts (`/audit-tokens`, `scripts/audit_adapter_pattern.py`, workflow filenames)
+- File/line references (`[app/Repositories/AuthRepository.php:22]`), git commit hashes, branch names
+- Named internal tools/skills/scripts (`/quality-debt`, `bin/audit_api_consistency.py`, workflow filenames)
 - The document's own edit-history footer and §22 Sources
 - The "How to read this" severity-marker legend's internal framing — replace with a simpler client-facing key (see Step 3)
 
