@@ -117,12 +117,20 @@ def find_to_string_mangling(rel_path: str, lines: list[str], vocab: Vocabulary,
                     "line": lineno,
                     "check": "to_string_mangling",
                     "severity": "should_fix",
+                    # The wording is deliberately adapter-neutral: it names the
+                    # shapes every stack shares (cast / interpolation /
+                    # stringification) rather than one language's spellings —
+                    # the previous text told a PHP reader to write
+                    # `x is AppError ? … : …`, which is Dart's guard.
                     "detail": (
-                        f"{rel_path}:{lineno} uses `{var}.toString()` (or string "
-                        f"interpolation) on a caught exception instead of the explicit "
-                        f"`{var} is {vocab.exception_type} ? {var}.message : "
-                        f"{var}.toString()` guard. Implicit, and a silent trap the moment "
-                        f"{vocab.exception_type}.toString() stops returning the message."),
+                        f"{rel_path}:{lineno} puts the caught exception `{var}` into "
+                        f"a string whole — cast, interpolation, or stringification "
+                        f"— rather than narrowing it to its message. The whole "
+                        f"exception is message plus stack: test `{var}` against "
+                        f"{vocab.exception_type} and take its message explicitly. "
+                        f"An implicit conversion is a silent trap the moment "
+                        f"{vocab.exception_type}'s string form stops returning just "
+                        f"the message."),
                 })
                 break
     return findings
@@ -211,17 +219,24 @@ def find_dead_failure_states(files: dict[str, str], vocab: Vocabulary,
                     "line": lineno,
                     "check": "dead_failure_state",
                     "severity": "should_fix",
+                    # `type-tests` rather than `is X`/`instanceof X`: the type
+                    # test's spelling belongs to the adapter, and the previous
+                    # wording named Dart's for every stack.
                     "detail": (
-                        f"{class_name} ({rel_path}:{lineno}) is emitted but never "
-                        f"pattern-matched (`is {class_name}`) outside its own state "
-                        f"file — nothing surfaces this failure to the user."),
+                        f"{class_name} ({rel_path}:{lineno}) is declared but no "
+                        f"other file type-tests for it outside its own state file "
+                        f"— nothing surfaces this failure to the user."),
                 })
     return findings
 
 
 def find_inline_error_widgets(files: dict[str, str], vocab: Vocabulary) -> list[dict]:
     """A screen that reads an error and renders its own thing instead."""
-    ref_re = re.compile(rf"\.{re.escape(vocab.error_message_field)}\b")
+    # Member access takes `->` (PHP) as well as `.` (Dart-era spelling): with
+    # `\.` alone this check could never fire on the shipped adapter — a silent
+    # zero on every real PHP project, which is the failure mode the audit
+    # exists to prevent.
+    ref_re = re.compile(rf"(?:->|\.)\s*{re.escape(vocab.error_message_field)}\b")
     shared_re = re.compile(rf"\b{re.escape(vocab.error_state_widget)}\b")
     findings = []
     for rel_path, text in files.items():

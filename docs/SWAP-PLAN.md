@@ -51,8 +51,13 @@ Status legend: `[ ]` open · `[x]` done (with commit).
 - [ ] `bin/audit_report_paths_test.py` — report-path mechanics
   (`--out` wins, defaults inside `.backend-suite/`, scaffolded .gitignore
   covers them) against adapter-backed audits.
-- [ ] `bin/audit_contract_headers_test.py` + `bin/audit_error_handling_test.py`
-  — mockapi seed tests built on `adapters.dart` → php fixtures.
+- [ ] `bin/audit_contract_headers_test.py` — mockapi seed tests built on
+  `adapters.dart` → php fixtures. (`bin/audit_error_handling_test.py`
+  re-authored separately: (D5b-1, this commit) 23 in-process cases on
+  `php.ERROR_HANDLING` + a php vocabulary; surfaced and fixed two defects —
+  the `inline_error_without_shared_state` member match was dot-only, so it
+  could never fire on the shipped adapter, and the mangling/dead-state
+  details named Dart's spellings for every stack.)
 - [ ] `bin/scan_skip_and_tsx_cache_test.py` — scan-skip half is generic; the
   tsx cache half dies with the tsx adapter.
 - [ ] `bin/audit_findings_envelope_test.py` — the `ApiConsistency` class
