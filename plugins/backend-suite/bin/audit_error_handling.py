@@ -272,6 +272,20 @@ def _vocabulary(rules: dict) -> Vocabulary:
             "These are this project's names for its own error machinery, and this "
             "audit cannot guess them — a wrong name matches nothing and reports a "
             "confident zero.")
+    # Present-but-placeholder is the same incapacity wearing the other mask:
+    # the scaffolded `TODO: …` value is not this project's name for anything,
+    # it matches nothing, and the run reports a confident zero over real files
+    # (measured: scaffold vocabulary + a real fileGlob exited 0 clean). Refuse
+    # it the way audit_layer_boundaries refuses its own TODO rules.
+    todos = [f for f in fields if str(rules[f]).lstrip().startswith("TODO")]
+    if todos:
+        from backend_suite.engine.refusal import Refused  # noqa: E402
+        raise Refused(
+            "errorHandling still holds init.py's TODO placeholders: "
+            + ", ".join(sorted(todos)) + ".\n"
+            "A TODO string is not this project's name for its error machinery — "
+            "it matches nothing and reports a confident zero. Fill them in, or "
+            "delete the section and the audit together.")
     return Vocabulary(**{f: rules[f] for f in fields})
 
 
@@ -295,7 +309,7 @@ def main() -> int:
 
     repo = project_root()
     from backend_suite.engine.arch import load      # noqa: E402
-    from backend_suite.project import need, profile  # noqa: E402
+    from backend_suite.project import need_refused, profile  # noqa: E402
     from backend_suite.engine.refusal import Refused  # noqa: E402
 
     parser = argparse.ArgumentParser()
@@ -322,9 +336,12 @@ def main() -> int:
     # stylesheets) narrows them, so a CSS-only sweep refuses instead of passing.
     covered = (tuple(getattr(adapter, "ERROR_HANDLING_SUFFIXES", ()))
                or _suffixes(getattr(adapter, "FILE_GLOBS", ())))
-    scan_root = repo / (args.dir or need(prof, "source.root",
-                                         "is the tree this audit scans"))
-    file_glob = need(prof, "source.fileGlob", "is how this audit finds sources")
+    scan_root = repo / (args.dir or need_refused(prof, "source.root",
+                                                  "is the tree this audit scans",
+                                                  audit="audit_error_handling"))
+    file_glob = need_refused(prof, "source.fileGlob",
+                             "is how this audit finds sources",
+                             audit="audit_error_handling")
 
     known_dead = {}
     exceptions_rel = (prof.get("audits", {}) or {}).get("exceptionsFile")

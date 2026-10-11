@@ -20,9 +20,25 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   Two real fixes surfaced by the test: `_root()` no longer appends `/` to a
   namespace root (a `App\Http\` rule could never fire before), and
   `--update-baseline` now mkdirs the baselines dir it writes into.
-- [ ] `bin/structural_refusals_test.py` — every refusal case pairs a live
-  audit with `adapters.lang: tsx`; re-authored against php, dead-audit cases
-  dropped.
+- [x] (D5a, this commit) `bin/structural_refusals_test.py` — recreated fresh:
+  the cross-audit refusal contract over all six section-reading audits
+  (missing section, undeclared `archRulesFile`, malformed arch-rules file,
+  the shipped scaffold never reads clean, absent/unknown `adapters.lang`,
+  missing profile input) plus planted-violation control rows. Three real
+  defects surfaced and fixed while writing it: `arch.load` TypeError'd
+  (exit 1 traceback) on a bare-string arch-rules.json because
+  `section in rules` is a substring test on a str; the audits' missing-
+  input path raised bare `SystemExit(message)` = exit 1 (this suite's
+  findings code) via `project.need` — new `project.need_refused` keeps the
+  message, exits 2, and the three audits now use it; and
+  `audit_error_handling` reported a confident exit-0 clean over a scaffold
+  whose vocabulary was all `TODO:` placeholders (the TODO row now refuses,
+  as its own template comment already promised).
+- [x] (D5a, this commit) `bin/scan_skip_test.py` (was
+  `scan_skip_and_tsx_cache_test.py`) — scan-skip half recreated generic
+  over a php fixture (vendor/ beside composer.json, authored `src/build/`
+  kept, SKIPPED counted, scanSkipDirs include/add overrides); the tsx
+  span-cache half died with the tsx adapter and is not replaced.
 - [ ] `bin/survey_ui_roots_test.py` — the init-from-survey e2e (`audit_tokens`
   runs with no edits) → backend equivalent: init → a live php-backed audit runs.
 - [x] (D4b, this commit) `bin/propose_config_test.py` — proposes flutter
@@ -45,9 +61,11 @@ Status legend: `[ ]` open · `[x]` done (with commit).
   routing case, the convergence (declared silences) case, the
   `capability-undetermined` refusal kind, and exit-0-on-clean. Current state
   pinned instead: absent adapter ⇒ exit 1 + `capabilities-not-examined`.
-- [ ] `backend_suite/adapters/verify_seam.py` — gate "the engine still runs a
-  non-Dart adapter" runs the engine over a React fixture with the tsx adapter.
-  Re-author: PHP fixture + `php.py`. Gate is red until then.
+- [x] (D5a, this commit) `backend_suite/adapters/verify_seam.py` — measured as
+  already re-pointed: the shipped leg discovers `load("php")` and sweeps a
+  routes/api.php fixture through the adapter's own checks and globs, and the
+  seam gate is green in the current 14/16. The entry described pre-repoint
+  state.
 - [ ] `bin/survey.py` — the UI-decision path (`ui_adapter`, `UI_DIR_NAMES`,
   `ADAPTER_REFINEMENTS`) decides which language a *design* suite audits when
   server and UI stacks disagree. Backend suite: decide drop vs invert (route

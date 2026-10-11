@@ -149,3 +149,19 @@ def need(node: dict, dotted: str, why: str, default=_MISSING):
                 f"that silently inspects nothing.")
         cur = cur[part]
     return cur
+
+
+def need_refused(node: dict, dotted: str, why: str, audit: str | None = None):
+    """`need()` with refusal semantics — the audit-facing variant.
+
+    `need`'s hard error is a bare `SystemExit(message)`, which exits 1: this
+    suite's findings code. For a tool whose job is reporting problems that is
+    arguable; for an *audit* it is a miscoded refusal — a harness reads exit 1
+    as "found something" and the missing input becomes a result. Same message
+    and same named hard error, exit 2 (INERT — could not check, not clean).
+    """
+    try:
+        return need(node, dotted, why)
+    except SystemExit as exc:
+        from backend_suite.engine.refusal import Refused
+        raise Refused(str(exc), audit=audit) from None

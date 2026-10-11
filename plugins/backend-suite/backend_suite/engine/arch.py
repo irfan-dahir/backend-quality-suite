@@ -50,6 +50,14 @@ def load(repo: Path, section: str) -> dict:
         rules = json.loads(path.read_text())
     except ValueError as exc:
         raise Refused(f"{rel} is not valid JSON: {exc}")
+    # A JSON string or array parses fine and then answers `section in rules`
+    # in ways that are not the question: `"layerBoundaries" in "layerBoundaries"`
+    # is a substring test, and the following `rules[section]` raised TypeError
+    # (exit 1, a traceback read as findings) instead of refusing.
+    if not isinstance(rules, dict):
+        raise Refused(
+            f"{rel} must be a JSON object keyed by rule section — got "
+            f"{type(rules).__name__}. Nothing to enforce: refusing.")
     if section not in rules:
         raise Refused(
             f"{rel} has no {section!r} section. Add it, or remove the audit that needs it — "

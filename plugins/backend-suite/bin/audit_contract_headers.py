@@ -61,7 +61,7 @@ from backend_suite.adapters import for_project              # noqa: E402
 from backend_suite.adapters.base import CapabilityError     # noqa: E402
 from backend_suite.engine import contracts                  # noqa: E402
 from backend_suite.engine.arch import load                  # noqa: E402
-from backend_suite.project import need, profile             # noqa: E402
+from backend_suite.project import need_refused, profile             # noqa: E402
 
 RULES = load(REPO, "contractHeaders")
 
@@ -187,8 +187,9 @@ def main() -> int:
     screen_class_re = re.compile(RULES.get("screenClassPattern") or r"class\s+(\w+)\b")
 
     screens = _sources(
-        RULES.get("scope") or need(profile(REPO), "source.screensGlob",
-                                   "is the set of screens whose headers are checked"),
+        RULES.get("scope") or need_refused(profile(REPO), "source.screensGlob",
+                                            "is the set of screens whose headers are checked",
+                                            audit="audit_contract_headers"),
         "no screens to check")
     adapter_files = _sources(
         RULES.get("adapterGlob"), "the adapter classes cannot be found") \
@@ -210,8 +211,10 @@ def main() -> int:
 
     # Reads anywhere in the project, so a field forwarded by composition to a
     # sibling screen does not read as dead.
-    root = REPO / need(profile(REPO), "source.root", "is the tree searched for reads")
-    file_glob = need(profile(REPO), "source.fileGlob", "is how sources are found")
+    root = REPO / need_refused(profile(REPO), "source.root", "is the tree searched for reads",
+                               audit="audit_contract_headers")
+    file_glob = need_refused(profile(REPO), "source.fileGlob", "is how sources are found",
+                             audit="audit_contract_headers")
     alias_of = getattr(lang, "receiver_aliases", None)
 
     # Which contract classes exist to look for, gathered before the read sweep:

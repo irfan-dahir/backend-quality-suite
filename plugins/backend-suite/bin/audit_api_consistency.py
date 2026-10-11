@@ -118,7 +118,7 @@ from _bootstrap import project_root  # noqa: E402  (also puts the plugin on sys.
 REPO = project_root()
 from backend_suite.adapters import for_project  # noqa: E402
 from backend_suite.engine.arch import load  # noqa: E402
-from backend_suite.project import need, profile  # noqa: E402
+from backend_suite.project import need_refused, profile  # noqa: E402
 from backend_suite.engine import findings as F  # noqa: E402
 from backend_suite.engine.refusal import Refused  # noqa: E402
 
@@ -226,8 +226,8 @@ def _exceptions() -> dict:
     literal here would be one project's fact welded into every project's engine —
     which is exactly what the port existed to undo.
     """
-    rel = need(profile(REPO), "audits.exceptionsFile",
-               "is where audit_api_consistency reads its documented exemptions from")
+    rel = need_refused(profile(REPO), "audits.exceptionsFile",
+                       "is where audit_api_consistency reads its documented exemptions from")
     path = REPO / rel
     if not path.is_file():
         raise Refused(f"exceptions file not found at {rel}")
