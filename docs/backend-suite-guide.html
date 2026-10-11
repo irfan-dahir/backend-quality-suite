@@ -226,9 +226,9 @@
 </header>
 
 <div class="counts">
-  <div><b><!--gen:n-commands-->30<!--gen:/n-commands--></b><span>slash commands</span></div>
-  <div><b><!--gen:n-auto-->16<!--gen:/n-auto--></b><span>fire on their own</span></div>
-  <div><b><!--gen:n-audits-->9<!--gen:/n-audits--></b><span>audits</span></div>
+  <div><b><!--gen:n-commands-->38<!--gen:/n-commands--></b><span>slash commands</span></div>
+  <div><b><!--gen:n-auto-->24<!--gen:/n-auto--></b><span>fire on their own</span></div>
+  <div><b><!--gen:n-audits-->17<!--gen:/n-audits--></b><span>audits</span></div>
   <div><b><!--gen:n-agents-->2<!--gen:/n-agents--></b><span>agents, all read-only</span></div>
   <div><b><!--gen:n-hooks-->4<!--gen:/n-hooks--></b><span>hooks, all advisory</span></div>
 </div>
@@ -237,7 +237,7 @@
   <a href="#open">Opening a project</a>
   <a href="#stacks">Stacks &amp; reports</a>
   <a href="#unattended">What runs unasked</a>
-  <a href="#commands">All <!--gen:n-commands-->30<!--gen:/n-commands--> commands</a>
+  <a href="#commands">All <!--gen:n-commands-->38<!--gen:/n-commands--> commands</a>
   <a href="#agents">Agents</a>
   <a href="#audits">Audits</a>
   <a href="#hooks">Hooks</a>
@@ -326,8 +326,8 @@
 
   <div class="alarm">
     <h3>The complete unattended surface</h3>
-    <p class="big"><!--gen:n-auto-->16<!--gen:/n-auto--> commands · <!--gen:n-auto-agents-->2<!--gen:/n-auto-agents--> agents · <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks</p>
-    <p style="margin:10px 0 0">Nothing else in the suite starts itself. The <!--gen:n-auto-->16<!--gen:/n-auto--> commands are read-only or ask before writing; the <!--gen:n-auto-agents-->2<!--gen:/n-auto-agents--> agents are granted exactly <code>Read, Grep, Glob</code> — no <code>Write</code>, no <code>Edit</code>, no <code>Bash</code>, so none of them can change a file; the <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks print a reminder after a tool call, or a note to Claude when a session opens, and nothing more — none of them writes a file.</p>
+    <p class="big"><!--gen:n-auto-->24<!--gen:/n-auto--> commands · <!--gen:n-auto-agents-->2<!--gen:/n-auto-agents--> agents · <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks</p>
+    <p style="margin:10px 0 0">Nothing else in the suite starts itself. The <!--gen:n-auto-->24<!--gen:/n-auto--> commands are read-only or ask before writing; the <!--gen:n-auto-agents-->2<!--gen:/n-auto-agents--> agents are granted exactly <code>Read, Grep, Glob</code> — no <code>Write</code>, no <code>Edit</code>, no <code>Bash</code>, so none of them can change a file; the <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks print a reminder after a tool call, or a note to Claude when a session opens, and nothing more — none of them writes a file.</p>
   </div>
 
   <h3>How a command actually fires</h3>
@@ -366,7 +366,7 @@
 </section>
 
 <section id="commands">
-  <h2>All <!--gen:n-commands-->30<!--gen:/n-commands--> commands</h2>
+  <h2>All <!--gen:n-commands-->38<!--gen:/n-commands--> commands</h2>
   <p class="sub">Search, or filter by whether it fires on its own and how far to trust it. Every row is read from the component's own frontmatter.</p>
 
   <div class="filter">
@@ -374,7 +374,7 @@
     <button class="chip" id="f-auto" aria-pressed="false">Fires on its own</button>
     <button class="chip" id="f-explicit" aria-pressed="false">Waits for you</button>
     <button class="chip" id="f-proven" aria-pressed="false">✅ proven only</button>
-    <span class="hitcount" id="hits"><!--gen:n-commands-->30<!--gen:/n-commands--> of <!--gen:n-commands-->30<!--gen:/n-commands--></span>
+    <span class="hitcount" id="hits"><!--gen:n-commands-->38<!--gen:/n-commands--> of <!--gen:n-commands-->38<!--gen:/n-commands--></span>
   </div>
 
   <div class="scroller">
@@ -416,7 +416,7 @@
 
 <section id="audits">
   <h2>Audits</h2>
-  <p class="sub"><!--gen:n-audits-->9<!--gen:/n-audits--> audits, enumerated by the same discovery <code>/repo-health</code> and the MCP server use — so this cannot disagree with what actually runs. Each is reachable by its own command, by <code>/repo-health</code>, through MCP, or by running the script directly.</p>
+  <p class="sub"><!--gen:n-audits-->17<!--gen:/n-audits--> audits, enumerated by the same discovery <code>/repo-health</code> and the MCP server use — so this cannot disagree with what actually runs. Each is reachable by its own command, by <code>/repo-health</code>, through MCP, or by running the script directly.</p>
 
   <h3>The <!--gen:w-off-audits-->zero<!--gen:/w-off-audits--> that are switched off</h3>
   <p>A disabled audit stays listed on purpose. A check that quietly stopped running looks exactly like a check that ran and found nothing, so every surface has to name it.</p>
@@ -575,7 +575,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/bin/installed_drift.py"</pre>
   <h2>Cheat sheet</h2>
   <p class="sub">Every command, by the job you came here to do.</p>
   <div class="cheat"><!--gen:cheat-rows-->
-    <div><h3>Audit · 8</h3><p>/audit-api-consistency · /audit-claude-md-drift · /audit-contract-headers · /audit-doc-staleness · /audit-error-handling · /audit-layer-boundaries · /audit-proposal-status · /audit-prose-flags</p></div>
+    <div><h3>Audit · 16</h3><p>/audit-api-consistency · /audit-cache-ttl-coverage · /audit-claude-md-drift · /audit-contract-headers · /audit-doc-staleness · /audit-endpoint-parity · /audit-error-handling · /audit-error-shape · /audit-layer-boundaries · /audit-proposal-status · /audit-prose-flags · /audit-rate-limit · /audit-route-coverage · /audit-test-network-coupling · /audit-toolchain-gates · /audit-versioning</p></div>
     <div><h3>Document · 6</h3><p>/bootstrap-design-docs · /capture-backlog · /log-decision · /ratify · /review-docs · /sync-docs</p></div>
     <div><h3>Generate · 2</h3><p>/propose-config · /wire-endpoint</p></div>
     <div><h3>Mock API · 2</h3><p>/audit-mock-api · /sync-mock-api</p></div>
@@ -586,21 +586,29 @@ python3 "$CLAUDE_PLUGIN_ROOT/bin/installed_drift.py"</pre>
 </section>
 
 <footer>
-  <p>Counts on this page are measured, not remembered: <!--gen:n-commands-->30<!--gen:/n-commands--> commands, <!--gen:n-auto-->16<!--gen:/n-auto--> auto, <!--gen:n-audits-->9<!--gen:/n-audits--> audits, <!--gen:n-agents-->2<!--gen:/n-agents--> agents, <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks. The canonical generated source is <code>docs/SKILLS.md</code>; regenerate with <code>skills_catalog.py</code>, and CI fails if it is stale.</p>
+  <p>Counts on this page are measured, not remembered: <!--gen:n-commands-->38<!--gen:/n-commands--> commands, <!--gen:n-auto-->24<!--gen:/n-auto--> auto, <!--gen:n-audits-->17<!--gen:/n-audits--> audits, <!--gen:n-agents-->2<!--gen:/n-agents--> agents, <!--gen:n-hooks-->4<!--gen:/n-hooks--> hooks. The canonical generated source is <code>docs/SKILLS.md</code>; regenerate with <code>skills_catalog.py</code>, and CI fails if it is stale.</p>
 </footer>
 </div>
 
 <script>
 const DATA=[/*gen:data*/
 ["/audit-api-consistency","Use when asked whether a component API is coherent, or before a release that changes one.","auto","proven","backend-suite"],
+["/audit-cache-ttl-coverage","Report-only audit for per-endpoint cache TTL drift — routes whose action has no TTL map entry, and TTL map entries whose route no longer exists.","auto","review","backend-suite"],
 ["/audit-claude-md-drift","Use when asked whether CLAUDE.md is still accurate, or before trusting a rule it states.","auto","review","backend-suite"],
 ["/audit-contract-headers","Use when asked whether screen contracts or adapter interfaces are still accurate, or after adding or removing an adapter field.","auto","proven","backend-suite"],
 ["/audit-doc-staleness","Use when asked how stale a doc is by its own stated date, or before relying on an old doc.","auto","review","backend-suite"],
+["/audit-endpoint-parity","Report-only audit comparing served endpoints against their OpenAPI annotations — routes whose controller method carries no docblock marker (absent from the generated…","auto","review","backend-suite"],
 ["/audit-error-handling","Use when asked about error-handling coverage, or before wiring a new endpoint.","auto","proven","backend-suite"],
+["/audit-error-shape","Report-only audit for the error envelope — error-status responses authored outside the exception handler (callers branching on the envelope will not see their shape) and…","auto","review","backend-suite"],
 ["/audit-layer-boundaries","Mechanically check that no shared/design-system layer imports the feature code that consumes it — the layering inversion that blocks extracting that layer into a package.","auto","review","backend-suite"],
 ["/audit-mock-api","Report-only drift audit for registered mock-API contracts — never edits a contract artifact, but writes its findings to .backend-suite/mock-api-findings.json (pass --out…","auto","proven","backend-suite"],
 ["/audit-proposal-status","Use when asked whether a proposal's status is current, or before relying on a roadmap/proposal doc's header.","auto","review","backend-suite"],
 ["/audit-prose-flags","Use when maintaining this plugin's own skills, or after renaming or removing a script flag.","auto","review","backend-suite"],
+["/audit-rate-limit","Report-only audit for inbound rate-limit coverage — endpoints with no limiter in their declaration and no global throttle, with documented exemptions carrying reasons.","auto","review","backend-suite"],
+["/audit-route-coverage","Report-only audit resolving every declared route action to a real controller method — a route whose action string no longer resolves 500s on every request.","auto","review","backend-suite"],
+["/audit-test-network-coupling","Report-only audit for tests that can reach a live service — tests referencing a live host with no recorded-client marker, and real-client fallbacks that go live when a…","auto","review","backend-suite"],
+["/audit-toolchain-gates","Report-only audit for the project's own test toolchain — required scripts absent from the manifest, scripts pointing at undeclared runner suites, and suites whose…","auto","review","backend-suite"],
+["/audit-versioning","Report-only audit that the API's version statements agree — the versioned route file's name, the URL prefix it mounts under, and the controller namespace handlers…","auto","review","backend-suite"],
 ["/design-debt","Use when asked for an overall picture of design health or design debt across audits.","auto","review","backend-suite"],
 ["/design-review-pr","Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that…","auto","review","backend-suite"],
 ["/draft-pr-description","Draft a PR title and description from the actual diff and commit history, following the project's own PR template.","auto","proven","house-style"],

@@ -4,7 +4,7 @@
 
 A catalogue is a list of file-existence facts, and hand-written prose about those has already gone wrong three times in this project's history. So it is generated from the plugins' own frontmatter instead.
 
-**30 skills · 2 agents · 4 hooks** across 2 plugins.
+**38 skills · 2 agents · 4 hooks** across 2 plugins.
 
 **19 documentation templates** across **19 roles** — 18 in `backend-suite`, 1 in `house-style`. 0 role(s) have no template and cannot be scaffolded: . Vocabulary by group: any 4, core 6, library 3, service 6. Roles applicable per archetype: library 18, service 19.
 
@@ -96,6 +96,21 @@ A catalogue is a list of file-existence facts, and hand-written prose about thos
 | Skill | Invocation | Maturity | What it does |
 |---|---|---|---|
 | `/design-review-pr` | auto | ⚪ unverified | Review a branch's changes against a base ref: run every live audit, keep only findings on changed lines (then elsewhere in changed files), and list every audit that could not check. Prints a markdown review; never edits code and never posts unless explicitly told to. Use when asked to design-review a PR or branch, or before opening a PR. |
+
+### Other
+
+Not assigned to a group in `catalog.py`. Visible rather than dropped.
+
+| Skill | Invocation | Maturity | What it does |
+|---|---|---|---|
+| `/audit-cache-ttl-coverage` | auto | ⚪ unverified | Report-only audit for per-endpoint cache TTL drift — routes whose action has no TTL map entry, and TTL map entries whose route no longer exists. Use when asked whether the cache TTL config still matches the routing table, after adding or removing a route, or when endpoints cache outside the declared policy. |
+| `/audit-endpoint-parity` | auto | ⚪ unverified | Report-only audit comparing served endpoints against their OpenAPI annotations — routes whose controller method carries no docblock marker (absent from the generated spec) and annotated methods no route serves (phantom contract). Use when asked whether the API docs still match the routing table, after adding or removing an endpoint, or when the generated spec looks stale. |
+| `/audit-error-shape` | auto | ⚪ unverified | Report-only audit for the error envelope — error-status responses authored outside the exception handler (callers branching on the envelope will not see their shape) and declared envelope keys missing from the handler itself. Use when asked whether error responses are consistent, after changing the exception handler, or when a client reports an error payload it cannot parse. |
+| `/audit-rate-limit` | auto | ⚪ unverified | Report-only audit for inbound rate-limit coverage — endpoints with no limiter in their declaration and no global throttle, with documented exemptions carrying reasons. Use when asked which endpoints are rate-limited, after adding a route, or when deciding the API's protection policy. |
+| `/audit-route-coverage` | auto | ⚪ unverified | Report-only audit resolving every declared route action to a real controller method — a route whose action string no longer resolves 500s on every request. Use when asked whether the routing table is intact, after renaming or moving a controller method, or when routes appear to have broken without a build error. |
+| `/audit-test-network-coupling` | auto | ⚪ unverified | Report-only audit for tests that can reach a live service — tests referencing a live host with no recorded-client marker, and real-client fallbacks that go live when a recording is absent. Use when asked whether the suite is hermetic, after adding a test that fetches, or when CI behaves differently from local runs. |
+| `/audit-toolchain-gates` | auto | ⚪ unverified | Report-only audit for the project's own test toolchain — required scripts absent from the manifest, scripts pointing at undeclared runner suites, and suites whose directory no longer exists (running zero tests while exiting green). Use when asked whether the test command actually runs tests, after renaming a testsuite or moving a test directory. |
+| `/audit-versioning` | auto | ⚪ unverified | Report-only audit that the API's version statements agree — the versioned route file's name, the URL prefix it mounts under, and the controller namespace handlers resolve through. Use when asked whether versioning is consistent, before a version bump, or when endpoints appear on the wrong URL. |
 
 ### Agents
 
