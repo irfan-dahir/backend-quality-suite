@@ -1180,7 +1180,25 @@ def _looks_laravel(ctx: AdapterContext) -> bool:
 
 
 def _looks_symfony(ctx: AdapterContext) -> bool:
-    """Whether this tree reads as a Symfony application."""
+    """Whether this tree reads as a Symfony *application*, not just a consumer of
+    Symfony components.
+
+    Component use must not count: nearly every modern PHP project pulls some
+    `symfony/*` package (`http-client`, `browser-kit`, `css-selector`, ...) — and
+    none of those make it a Symfony app. Measured on jikan (a PHP library that
+    depends on symfony components, probed 2026-10-12): a blanket
+    `package.startswith("symfony/")` classified it as a Symfony application and
+    reported symfony_di / forms / doctrine / security / twig as
+    "declared-capability-unused" — the exact noise direction the Laravel gating
+    exists to avoid.
+
+    Conservative "yes on any strong signal", the same shape as `_looks_laravel`:
+      * composer.json requires `symfony/framework-bundle` (the full-stack kernel —
+        the one package that defines "a Symfony application");
+      * a `Kernel.php` exists (full-stack apps put it in src/ or app/);
+      * `config/routes.*` or `config/services.*` (yaml/xml/yml) exist, or a
+        `bin/console` entry — the full-stack layout, absent from library-only trees.
+    """
     root = Path(str(ctx.repo))
 
     composer = root / "composer.json"
@@ -1191,21 +1209,24 @@ def _looks_symfony(ctx: AdapterContext) -> bool:
             manifest = {}
         for section in ("require", "require-dev"):
             for package in (manifest.get(section) or {}):
-                if package == "symfony/framework-bundle" or package.startswith("symfony/"):
+                if package == "symfony/framework-bundle":
                     return True
 
     # Check for Kernel.php which is a strong indicator
     if (root / "src" / "Kernel.php").is_file() or (root / "app" / "Kernel.php").is_file():
         return True
 
-    # Check for config/routes.yaml or config/routes.xml
+    # Check for config/routes.yaml / config/services.yaml or a console entry
     config_dir = root / "config"
     if config_dir.is_dir():
         for path in config_dir.glob("routes.*"):
             if path.suffix in (".yaml", ".yml", ".xml"):
                 return True
+        for path in config_dir.glob("services.*"):
+            if path.suffix in (".yaml", ".yml", ".xml"):
+                return True
 
-    return False
+    return (root / "bin" / "console").is_file()
 
 
 def capabilities(ctx: AdapterContext) -> list:
