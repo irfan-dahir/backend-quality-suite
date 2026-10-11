@@ -55,6 +55,52 @@ Pre-1.0, a major-severity change increments the **minor** part, per SemVer §4.
 
 ---
 
+## [0.3.0] - 2026-10-12
+
+Symfony capability gating in PHP adapter; `audit_form_request_validation` crash fix; ROADMAP multi-language strategy.
+
+### Fixed
+
+- **`audit_form_request_validation.py` crash** — the audit was the only script missing the standard
+  `sys.path` bootstrap (`from _bootstrap import PLUGIN_ROOT`), causing `ModuleNotFoundError` on every
+  direct invocation. It also called `adapter.capabilities(None)` instead of a real `AdapterContext`,
+  which would crash inside the PHP adapter's `_looks_laravel()`. Both fixed: the audit now boots
+  correctly, checks the `form_requests` capability with a proper context, and **refuses cleanly
+  (exit 2)** on non-Laravel projects with "php adapter does not expose form_requests capability"
+  instead of crashing.
+
+- **`audit_skill_paths.py` gate** — added exemption for the same provenance-docstring pattern
+  already exempted in `audit_error_handling.py`, so the gate no longer reports an unexplained
+  dead path on the audit's own file.
+
+### Added
+
+- **PHP adapter: Symfony capability gating** — Laravel-only capabilities (`laravel_routing`,
+  `eloquent_models`, `form_requests`, `api_resources`, `policies`) now only offered when project
+  reads as Laravel (composer.json `laravel/framework` or `illuminate/*`, `artisan` script, or
+  `Illuminate\` namespace). Symfony capabilities (`symfony_routing`, `symfony_di`, `symfony_forms`,
+  `symfony_doctrine`, `symfony_security`, `symfony_twig`) only offered when project reads as
+  Symfony (composer.json `symfony/framework-bundle`, `Kernel.php`, or `config/routes.yaml`).
+
+- **LANGUAGE_STRATEGY.md** — multi-language support plan covering PHP (Symfony, Slim), Node.js/TypeScript,
+  Go (Gin, Echo), Python (FastAPI, Django), Java (Spring Boot), with capability matrix,
+  implementation template, decision matrix (weighted scoring), and milestone definitions
+  (Alpha/Beta/RC/GA).
+
+- **ROADMAP.md** — added Workstream E (Multi-language) with Phases 1-5, Capability Matrix across
+  5 languages, Implementation Priority by quarter, and updated Open Issues table.
+
+### Changed
+
+- **`verify_seam.py`** — seam proof now exercises the shipped `node` adapter alongside `php`,
+  proving the engine runs three languages (stublang, php, node) through the same seam with no
+  engine changes.
+
+- **Issues #14, #15, #19, #21 closed** — Symfony adapter delivered, Node.js adapter released in
+  v0.2.0, ROADMAP updated, FormRequest crash fixed.
+
+---
+
 ## [0.2.0] - 2026-10-11
 
 Third shipped language adapter: **Node.js/TypeScript** (Express, Fastify, NestJS, Hono, Koa, AdonisJS).
