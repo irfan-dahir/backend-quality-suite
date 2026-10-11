@@ -1218,9 +1218,12 @@ def capabilities(ctx: AdapterContext) -> list:
     capabilities it never claimed to have.
     """
     caps = list(CAPABILITIES)
-    if not _looks_laravel(ctx):
+    # 'ctx' is None when a caller is merely probing which capabilities exist
+    # (e.g. the form-request-validation audit). Treat that as "assume the
+    # project may be Laravel/Symfony" rather than crashing on 'ctx.repo'.
+    if ctx is not None and not _looks_laravel(ctx):
         caps = [c for c in caps if c.name not in LARAVEL_ONLY_CAPABILITIES]
-    if not _looks_symfony(ctx):
+    if ctx is not None and not _looks_symfony(ctx):
         caps = [c for c in caps if c.name not in SYMFONY_ONLY_CAPABILITIES]
     return caps
 
