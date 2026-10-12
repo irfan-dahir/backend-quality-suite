@@ -5,7 +5,7 @@ The engine's whole justification is that a second language plugs in without
 touching it. That claim is easy to assert and easy to get wrong, so two
 deliberately different proofs run here:
 
-  * the SHIPPED legs — the registry discovers `php`, `node` and `rust`,
+  * the SHIPPED legs — the registry discovers `php`, `node`, `rust` and `go`;
     `load(...)` returns each, and the engine sweeps a fixture for each through
     its own `checks()` / `FILE_GLOBS`, positives and negatives both held. This
     is the path a consumer project takes, end to end. If any shipped adapter
@@ -126,6 +126,31 @@ pub fn health() {
 pub fn session() {
     let legacy = password = "hunter2long";
     respond("ok");
+}
+"""
+
+# The go leg's fixture, same shape as the php/node/rust ones: one planted
+# debug call, one planted plaintext secret, and the correct shape for each
+# living in the same file. `os.Getenv("DB_PASSWORD")` is the config
+# REFERENCE and is the negative control the secret matcher must not flag.
+GO_FIXTURE = """// synthetic go fixture for the seam proof — positives and negatives both planted
+package main
+
+import (
+\t"fmt"
+\t"os"
+)
+
+func health() {
+\tfmt.Println("hit")
+\tpw := os.Getenv("DB_PASSWORD") // the config REFERENCE — never flagged
+\t_ = pw
+\trespond("ok")
+}
+
+func session() {
+\tvar password = "hunter2long"
+\trespond("ok")
 }
 """
 
@@ -296,14 +321,57 @@ def main() -> int:
                 print(f"shipped rust adapter over a rust fixture: "
                       f"{len(rust_findings)} finding(s), 2 expected")
 
+        # 8. The same leg for the FIFTH shipped language: go. A seam that
+        #    holds for three languages could still be calm in the face of
+        #    "similar" languages; go is the fourth real one — a different
+        #    comment grammar (backtick raw strings, non-nesting blocks), a
+        #    value-model error language (no exceptions), and a module-based
+        #    build — so it exercises the seam where the others do not.
+        if "go" not in names:
+            problems.append("the go adapter is missing from the registry — this "
+                            "file's shipped-language leg exists to prove a real "
+                            "language loads and sweeps; its absence is a "
+                            "regression, not a skip")
+        else:
+            go = load("go")
+            with tempfile.TemporaryDirectory() as raw:
+                fixture = Path(raw)
+                (fixture / "main.go").write_text(GO_FIXTURE)
+                ctx = AdapterContext(repo=fixture, profile={}, exceptions={})
+                go_findings = scan_tree(fixture, fixture, go.checks(ctx),
+                                        globs=go.FILE_GLOBS)
+
+                if not any(f["kind"] == "debug_statement"
+                           and "fmt.Println" in f["snippet"]
+                           for f in go_findings):
+                    problems.append("go leg: no debug_statement finding for the "
+                                    "planted fmt.Println() call")
+                if not any(f["kind"] == "plaintext_secret"
+                           and "hunter2long" in f["snippet"]
+                           for f in go_findings):
+                    problems.append("go leg: no plaintext_secret finding for the "
+                                    "planted literal")
+                # The negative control, same as the php/node/rust legs':
+                # os.Getenv("DB_PASSWORD") is a config REFERENCE, the correct
+                # shape, and must never be flagged.
+                if any("DB_PASSWORD" in f["snippet"] for f in go_findings):
+                    problems.append("go leg: os.Getenv(\"DB_PASSWORD\") was flagged — "
+                                    "a naive secret matcher that cannot tell a "
+                                    "literal from a config reference")
+                if any(f["file"] != "main.go" for f in go_findings):
+                    problems.append("go leg: a finding landed outside the "
+                                    "adapter's FILE_GLOBS")
+                print(f"shipped go adapter over a go fixture: "
+                      f"{len(go_findings)} finding(s), 2 expected")
+
     if problems:
         print("\nSEAM BROKEN:")
         for p in problems:
             print(f"  ✗ {p}")
         return 1
-    print("\nSeam holds: the engine ran a fourth language (stublang) with no "
-          "engine changes, and all shipped adapters (php, node, rust) load and "
-          "sweep through the same seam.")
+    print("\nSeam holds: the engine ran a fifth language (stublang plus go) with "
+          "no engine changes, and all shipped adapters (php, node, rust, go) "
+          "load and sweep through the same seam.")
     return 0
 
 

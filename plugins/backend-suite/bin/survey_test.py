@@ -409,14 +409,15 @@ def main() -> int:
         # every JS/TS project was told "no adapter in this plugin" while the plugin
         # was printing the adapter's name two lines below. `php` ships for
         # PHP/Laravel projects, `node` for JavaScript/TypeScript backends, `rust`
-        # for Rust backends; the same controls hold all three reachable, via
-        # composer.json, package.json and Cargo.toml in the MANIFESTS table.
+        # for Rust backends and `go` for Go backends; the same controls hold all
+        # four reachable, via composer.json, package.json, Cargo.toml and go.mod
+        # in the MANIFESTS table.
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import survey as S  # noqa: E402
 
-        expect(S.language_adapters() == ["node", "php", "rust"],
-               "the registry's language adapters are discovered — node, php and "
-               "rust ship")
+        expect(S.language_adapters() == ["go", "node", "php", "rust"],
+               "the registry's language adapters are discovered — go, node, php "
+               "and rust ship")
         expect(S.adapter_reachability() == [],
                "every language adapter that ships is named by some root manifest — "
                "an adapter no manifest can reach can never be proposed")
@@ -454,6 +455,16 @@ def main() -> int:
                "a root Cargo.toml still decides the stack")
         expect(report["stack"]["candidateAdapter"] == "rust",
                "the shipped rust adapter is proposed on a Cargo.toml project")
+
+        gofix = tmpdir / "gofix"
+        (gofix / "cmd" / "api").mkdir(parents=True)
+        (gofix / "go.mod").write_text("module github.com/me/gofix\n\ngo 1.22\n")
+        (gofix / "cmd" / "api" / "main.go").write_text("package main\n")
+        report = json.loads(run("--stdout", "--project-root", str(gofix)).stdout)
+        expect(report["stack"]["stack"] == "go",
+               "a root go.mod still decides the stack")
+        expect(report["stack"]["candidateAdapter"] == "go",
+               "the shipped go adapter is proposed on a go.mod project")
 
         print("survey: writes exactly one file, and only survey.json")
         before = {p.name for p in (root / ".backend-suite").iterdir()}

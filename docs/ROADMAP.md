@@ -12,7 +12,7 @@
 | **B — Portability** | ✅ PHP/Laravel done | PHP adapter shipped with 6 capabilities; Laravel routing signatures; 5 new capabilities |
 | **C — Migration** | ✅ Mostly done | C1/C2/C4 done; C3 audit-first; C5 pending |
 | **D — Defects** | 🔄 Partially done | D1/D4/D5 done; D2/D3 N/A for PHP |
-| **E — Multi-language** | ✅ PHP/Node/Rust shipped | Go and Python adapters planned; Java dropped, Rust shipped in its place (see LANGUAGE_STRATEGY.md) |
+| **E — Multi-language** | ✅ PHP/Node/Rust/Go shipped | Python adapter planned; Java dropped, Rust shipped in its place (see LANGUAGE_STRATEGY.md) |
 | **New: Laravel audits** | ✅ Done | `audit_route_model_binding`, `audit_form_request_validation` |
 | **New: Harness integration** | ✅ Done | AGENTS.md, MCP configs for 11 harnesses, pre-commit hook |
 
@@ -51,17 +51,24 @@ The whole phase shipped with `node` (v0.2.0 and extended since). **Detection str
 
 ### Phase 3: Go
 
-| Framework | Detection | Capabilities | Priority |
+| Framework | Detection | Capabilities | Status |
 |---|---|---|---|
-| **Gin** | `go.mod` + `github.com/gin-gonic/gin` | routing, middleware, binding | 🥇 High |
-| **Echo** | `go.mod` + `github.com/labstack/echo` | routing, middleware, binding | 🥇 High |
-| **Chi** | `go.mod` + `github.com/go-chi/chi` | routing, middleware | 🥈 Medium |
-| **Fiber** | `go.mod` + `github.com/gofiber/fiber` | routing, middleware | 🥈 Medium |
-| **Standard lib** | `go.mod` only | `http.Handler` | 🥉 Low |
+| **Gin** | `go.mod` require + `github.com/gin-gonic/gin` | routing, middleware, binding | ✅ Shipped |
+| **Echo** | `go.mod` require + `github.com/labstack/echo` | routing, middleware, binding | ✅ Shipped |
+| **Chi** | `go.mod` require + `github.com/go-chi/chi` | routing, middleware | ✅ Shipped |
+| **Fiber** | `go.mod` require + `github.com/gofiber/fiber` | routing, middleware | ✅ Shipped |
+| **Standard lib** | `go.mod` only | `net/http` Handle/HandleFunc/ServeMux | ✅ Shipped |
 
-**Detection strategy:**
-1. `go.mod` + imports (`import "github.com/gin-gonic/gin"`)
-2. Go AST parsing (`go/ast`, `go/parser`)
+**Detection:** `go.mod` require lines (skipping the `module` directive's own path) or source
+imports; versioned module subpaths (`/v2`…`/v8`) resolve to the base module.
+
+Two honest refusals, not omissions:
+
+- `IMPORT_TARGETS = "module"` — a Go `import` names a *package path*, not a file path, so
+  `audit_layer_boundaries` **refuses (exit 2)** rather than resolving every same-module
+  import as external and printing a confident zero.
+- Base `routing` is dynamic rather than `net/http`-only: `r.GET("/orders", …)` and `mux.HandleFunc`
+  both count, the way Rust's base set recognises `Router::new().route(…)` across every framework.
 
 ### Phase 4: Python
 
@@ -97,13 +104,13 @@ The whole phase shipped with `node` (v0.2.0 and extended since). **Detection str
 
 | Capability | PHP | Node/TS | Rust | Go | Python |
 |---|---|---|---|---|---|
-| **routing** | ✅ | ✅ | ✅ | 📋 | 📋 |
-| **models/ORM** | ✅ (Eloquent) | ✅ (Prisma/TypeORM/Sequelize) | ✅ (sea-orm/sqlx derives) | 📋 (GORM) | 📋 (SQLAlchemy/Django ORM) |
-| **validation** | ✅ (FormRequest) | ✅ (Zod/class-validator) | ✅ (validator derives) | 📋 (go-playground/validator) | 📋 (Pydantic) |
-| **routing signatures** | ✅ (Laravel+base) | ✅ (Express/Fastify/Nest) | ✅ (Axum/Actix/Rocket/Poem/Warp) | 📋 (Gin/Echo) | 📋 (FastAPI/Django) |
-| **contract headers** | ✅ | ✅ | ✅ | 📋 | 📋 |
-| **layer boundaries** | ✅ | ✅ | ✅ (refuses: module imports) | 📋 | 📋 |
-| **route coverage** | ✅ | ✅ | ✅ | 📋 | 📋 |
+| **routing** | ✅ | ✅ | ✅ | ✅ | 📋 |
+| **models/ORM** | ✅ (Eloquent) | ✅ (Prisma/TypeORM/Sequelize) | ✅ (sea-orm/sqlx derives) | ✅ (structural follows) | 📋 (SQLAlchemy/Django ORM) |
+| **validation** | ✅ (FormRequest) | ✅ (Zod/class-validator) | ✅ (validator derives) | ✅ (go-playground/validator) | 📋 (Pydantic) |
+| **routing signatures** | ✅ (Laravel+base) | ✅ (Express/Fastify/Nest) | ✅ (Axum/Actix/Rocket/Poem/Warp) | ✅ (Gin/Echo/Chi/Fiber) | 📋 (FastAPI/Django) |
+| **contract headers** | ✅ | ✅ | ✅ | ✅ | 📋 |
+| **layer boundaries** | ✅ | ✅ | ✅ (refuses: module imports) | ✅ (refuses: module imports) | 📋 |
+| **route coverage** | ✅ | ✅ | ✅ | ✅ | 📋 |
 | **cache TTL** | ✅ (Laravel) | 📋 | 📋 | 📋 | 📋 |
 
 ### Implementation Priority
@@ -113,8 +120,8 @@ The whole phase shipped with `node` (v0.2.0 and extended since). **Detection str
 | 1 | PHP (Laravel, Symfony) | ✅ Shipped |
 | 2 | Node.js/TypeScript | ✅ Shipped (v0.2.0) |
 | 5 | Rust (Axum, Actix Web, Rocket, Poem, Warp) | ✅ Shipped |
-| 3 | Go (Gin, Echo, Chi, Fiber) | 📋 Next |
-| 4 | Python (FastAPI, Django, Flask, Starlette) | 📋 After Go |
+| 3 | Go (Gin, Echo, Chi, Fiber) | ✅ Shipped |
+| 4 | Python (FastAPI, Django, Flask, Starlette) | 📋 Next |
 
 ### Design Principles
 
@@ -203,7 +210,7 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 | 10 | ROADMAP.md current status | ✅ Updated | This file |
 | 14 | Symfony adapter (PHP) | ✅ Done | Shipped in 0.3.0 |
 | 15 | Node.js/TypeScript adapter | ✅ Done | Released in v0.2.0 |
-| 16 | Go adapter | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 3 |
+| 16 | Go adapter | ✅ Done | Shipped as the fifth language adapter |
 | 17 | Python adapter | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 4 |
 | 18 | Java/JVM adapter | ✅ Closed not-planned | Dropped; Rust shipped in its place |
 | 19 | ROADMAP.md multi-language update | ✅ Done | This update |
@@ -217,10 +224,9 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 
 | Priority | Work | Rationale |
 |---|---|---|
-| 1 | Go adapter (Phase 3) | Growing fast; Gin/Echo — next decision-matrix pick |
-| 2 | Python adapter (Phase 4) | FastAPI/Django high value |
-| 3 | Heal the two documented known-red test files (`suite_upgrade_test.py`, `gate_consumer_compat_test.py`) | Pinned to fixture revisions not in this fork's lineage; they auto-heal on the next release tag |
-| 4 | Tag the next release (`backend-suite--v0.4.0`) from the `[Unreleased]` changelog | Releases the rust adapter and toolchain gates to consumers; heals the known-red baseline |
+| 1 | Python adapter (Phase 4) | FastAPI/Django high value |
+| 2 | Heal the two documented known-red test files (`suite_upgrade_test.py`, `gate_consumer_compat_test.py`) | Pinned to fixture revisions not in this fork's lineage; they auto-heal on the next release tag |
+| 3 | Tag the next release (`backend-suite--v0.4.0`) from the `[Unreleased]` changelog | Releases the rust and go adapters and the toolchain gates to consumers; heals the known-red baseline |
 
 ---
 

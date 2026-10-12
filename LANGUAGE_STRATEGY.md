@@ -11,7 +11,7 @@
 | **PHP** | `php.py` | `routing`, `laravel_routing`, `eloquent_models`, `form_requests`, `api_resources`, `policies`, `symfony_routing`, `symfony_di`, `symfony_forms`, `symfony_doctrine`, `symfony_security`, `symfony_twig` | ✅ Shipped |
 | **Node.js/TypeScript** | `node.py` | `routing`, `models`, `validation`, `middleware`, `dependency_injection`, `api_resources`, `policies` + framework-gated `express/fastify/nestjs/hono/koa/adonis_routing` | ✅ Shipped |
 | **Rust** | `rust.py` | `routing`, `models`, `validation`, `middleware`, `api_resources`, `policies` + framework-gated `axum/actix/rocket/poem/warp_routing` | ✅ Shipped |
-| **Go** | — | — | 📋 Planned |
+| **Go** | `go.py` | `routing`, `models`, `validation`, `middleware`, `api_resources`, `policies` + framework-gated `gin/echo/chi/fiber_routing` | ✅ Shipped |
 | **Python** | — | — | 📋 Planned |
 
 Where a capability column says "framework-gated", the capability is offered only to projects
@@ -67,19 +67,26 @@ tree a Symfony application — only `symfony/framework-bundle` plus `Kernel.php`
 
 ---
 
-## Phase 3: Go (Planned)
+## Phase 3: Go (Shipped)
 
-| Framework | Detection | Capabilities | Priority |
+| Framework | Detection | Capabilities | Status |
 |---|---|---|---|
-| **Gin** | `go.mod` + `github.com/gin-gonic/gin` | routing, middleware, binding | 🥇 High |
-| **Echo** | `go.mod` + `github.com/labstack/echo` | routing, middleware, binding | 🥇 High |
-| **Chi** | `go.mod` + `github.com/go-chi/chi` | routing, middleware | 🥈 Medium |
-| **Fiber** | `go.mod` + `github.com/gofiber/fiber` | routing, middleware | 🥈 Medium |
-| **Standard lib** | `go.mod` only | `http.Handler` | 🥉 Low |
+| **Gin** | `go.mod` require + `github.com/gin-gonic/gin` | routing, middleware, binding | ✅ Shipped |
+| **Echo** | `go.mod` require + `github.com/labstack/echo` | routing, middleware, binding | ✅ Shipped |
+| **Chi** | `go.mod` require + `github.com/go-chi/chi` | routing, middleware | ✅ Shipped |
+| **Fiber** | `go.mod` require + `github.com/gofiber/fiber` | routing, middleware | ✅ Shipped |
+| **Standard lib** | `go.mod` only | `net/http` Handle/HandleFunc/ServeMux | ✅ Shipped |
 
-**Detection strategy:**
-1. `go.mod` + imports (`import "github.com/gin-gonic/gin"`)
-2. `go/ast` via the standard library (`go/parser` is stdlib, so the zero-dep constraint holds)
+**Detection:** `go.mod` require lines (skipping the `module` directive's own path) or source
+imports; versioned module subpaths (`/v2`…`/v8`) resolve to the base module.
+
+Two honest refusals, not omissions:
+
+- `IMPORT_TARGETS = "module"` — a Go `import` names a *package path*, not a file path, so
+  `audit_layer_boundaries` **refuses (exit 2)** rather than resolving every same-module
+  import as external and printing a confident zero.
+- Base `routing` is dynamic rather than `net/http`-only: `r.GET("/orders", …)` and `mux.HandleFunc`
+  both count, the way Rust's base set recognises `Router::new().route(…)` across every framework.
 
 ---
 
@@ -129,13 +136,13 @@ Two honest refusals, not omissions:
 
 | Capability | PHP | Node/TS | Rust | Go | Python |
 |---|---|---|---|---|---|
-| **routing** | ✅ | ✅ | ✅ | 📋 | 📋 |
-| **models/ORM** | ✅ (Eloquent) | ✅ (Prisma/TypeORM/Sequelize/Mongoose/MikroORM) | ✅ (sea-orm/sqlx derives) | 📋 (GORM) | 📋 (SQLAlchemy/Django ORM) |
-| **validation** | ✅ (FormRequest) | ✅ (Zod/class-validator/Joi/Yup) | ✅ (validator derives) | 📋 (go-playground/validator) | 📋 (Pydantic) |
-| **framework routing** | ✅ (laravel/symfony_routing) | ✅ (express/fastify/nestjs/hono/koa/adonis_routing) | ✅ (axum/actix/rocket/poem/warp_routing) | 📋 (Gin/Echo) | 📋 (FastAPI/Django) |
-| **contract headers** | ✅ | ✅ | ✅ | 📋 | 📋 |
-| **layer boundaries** | ✅ | ✅ | ✅ (refuses: module imports) | 📋 | 📋 |
-| **route coverage** | ✅ | ✅ | ✅ | 📋 | 📋 |
+| **routing** | ✅ | ✅ | ✅ | ✅ | 📋 |
+| **models/ORM** | ✅ (Eloquent) | ✅ (Prisma/TypeORM/Sequelize/Mongoose/MikroORM) | ✅ (sea-orm/sqlx derives) | ✅ (structural follows) | 📋 (SQLAlchemy/Django ORM) |
+| **validation** | ✅ (FormRequest) | ✅ (Zod/class-validator/Joi/Yup) | ✅ (validator derives) | ✅ (go-playground/validator) | 📋 (Pydantic) |
+| **framework routing** | ✅ (laravel/symfony_routing) | ✅ (express/fastify/nestjs/hono/koa/adonis_routing) | ✅ (axum/actix/rocket/poem/warp_routing) | ✅ (gin/echo/chi/fiber_routing) | 📋 (FastAPI/Django) |
+| **contract headers** | ✅ | ✅ | ✅ | ✅ | 📋 |
+| **layer boundaries** | ✅ | ✅ | ✅ (refuses: module imports) | ✅ (refuses: module imports) | 📋 |
+| **route coverage** | ✅ | ✅ | ✅ | ✅ | 📋 |
 | **cache TTL** | ✅ (Laravel) | 📋 | 📋 | 📋 | 📋 |
 
 ---
@@ -147,8 +154,8 @@ Two honest refusals, not omissions:
 | 1 | PHP (Laravel, Symfony) | ✅ Shipped |
 | 2 | Node.js/TypeScript | ✅ Shipped (v0.2.0) |
 | 5 | Rust (Axum, Actix Web, Rocket, Poem, Warp) | ✅ Shipped |
-| 3 | Go (Gin, Echo, Chi, Fiber) | 📋 Next |
-| 4 | Python (FastAPI, Django, Flask, Starlette) | 📋 After Go |
+| 3 | Go (Gin, Echo, Chi, Fiber) | ✅ Shipped |
+| 4 | Python (FastAPI, Django, Flask, Starlette) | 📋 Next |
 
 ---
 
@@ -317,4 +324,4 @@ favour of Rust, which is a better fit for a stdlib-only regex seam.
 | **Weighted score** | 100% | **8.25** | **7.75** | **7.25** | **7.75** | **7.00** |
 
 **Shipped in order:** Symfony → Express (as the Node adapter's framework) → axum (as the Rust
-adapter's framework). **Next:** Gin (Go), then FastAPI/Django (Python).
+adapter's framework) → Gin (as the Go adapter's framework). **Next:** FastAPI/Django (Python).

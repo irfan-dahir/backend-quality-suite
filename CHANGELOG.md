@@ -55,6 +55,15 @@ Pre-1.0, a major-severity change increments the **minor** part, per SemVer §4.
 
 ### Added
 
+- **Go language adapter** (`backend_suite/adapters/go.py`) — fifth shipped language
+  adapter: Gin, Echo, Chi, and Fiber routing, plus the base capability set (models,
+  validation, middleware, api_resources, policies). A project with a root `go.mod` is now
+  proposed `go` by `survey.py`; set `adapters.lang: go`. The adapter refuses
+  `audit_layer_boundaries` (exit 2) because a Go `import` names a package path, not a file
+  path. The error model follows errors-as-values (`if err != nil`, `errors.As`, `%+v`
+  stringify), and members read off untyped container extracts (`c.MustGet("key").(X)`
+  vs a plain `MustGet`) are distinguished so service reads resolve without inventing types.
+
 - **Rust language adapter** (`backend_suite/adapters/rust.py`) — fourth shipped language
   adapter: Axum, Actix Web, Rocket, Poem, and Warp routing, plus the base capability set
   (models, validation, middleware, api_resources, policies). A project with a root
