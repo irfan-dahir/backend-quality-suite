@@ -6,9 +6,11 @@ For putting this on a project it has never seen. Assumes you've read
 
 **The honest summary:** documentation tooling and doc-role resolution are stack-
 agnostic today and work anywhere. Source scanning depends on a language adapter,
-and the `php` adapter ships (the first workstream — see [ROADMAP.md](./ROADMAP.md)).
-The documentation half works on every stack today; the scanning half works on
-projects the php adapter reads.
+and three ship — `php` (Laravel/Lumen, Symfony, plain PHP), `node` (Express,
+Fastify, NestJS, Hono, Koa, AdonisJS), and `rust` (Axum, Actix Web, Rocket,
+Poem, Warp); Go and Python are planned (see [ROADMAP.md](./ROADMAP.md)). The
+documentation half works on every stack today; the scanning half works on
+projects one of the shipped adapters reads.
 
 ---
 
@@ -59,11 +61,11 @@ Which tools read which instruction, skill, hook and MCP files is in
 | `audit-doc-staleness`, `audit-proposal-status`, `audit-claude-md-drift`, `audit-prose-flags` | **No.** They read docs and config, not source |
 | `audit-mock-api`, `/sync-mock-api` | **No** — once a mock-API contract is configured |
 | PR drafting, client-readiness reporting | **No** |
-| `audit-error-handling`, `audit-api-consistency`, `audit-contract-headers`, `audit-layer-boundaries` | **Yes** — they need a language adapter, and today no stack has one |
+| `audit-error-handling`, `audit-api-consistency`, `audit-contract-headers`, `audit-layer-boundaries` | **Yes** — they need a language adapter: `php`/`node`/`rust` stacks have one; any other stack is refused (exit 2) |
 
 So the first question isn't "is my language supported" — it's "which half do I
-need first," and for every stack right now the answer is: the documentation
-half.
+need first." For a stack a shipped adapter reads, both halves work; for a stack
+without one, the documentation half is the answer.
 
 ---
 
@@ -175,14 +177,14 @@ python3 "${CLAUDE_PLUGIN_ROOT}/bin/repo_health.py"
 
 `adapters.lang` in `.backend-suite/profile.json` stays a TODO until an adapter
 for your stack ships. `/survey` proposes a value only when it can resolve one
-against the adapters that actually exist — today, none.
+against the adapters that actually exist — today php, node, and rust.
 
 Setting it anyway to a name nothing resolves makes the code-shape audits refuse
 with exit 2 naming the unknown adapter rather than reporting zero findings.
 That refusal is the designed behaviour — see
 [capability negotiation](./CONCEPTS.md#capability-negotiation) — and it is why
-leaving the field unset and relying on the documentation skills is the honest
-configuration right now.
+leaving the field unset is the honest configuration on a stack with no shipped
+adapter.
 
 ---
 
@@ -589,11 +591,10 @@ yet claim the second one.
 ## Writing an adapter
 
 `backend_suite/adapters/base.py` defines the contracts: `AdapterContext`,
-`Check`, `CheckSet`, `CapabilityError`, and the capability protocols. No
-language adapter ships right now — the UI adapters left with the design domain
-— so there is no reference adapter to read beside the contract yet; the `php`
-adapter (see [ROADMAP.md](./ROADMAP.md)) is next and will be the one to copy.
-The contract's behaviour is still proven on every change — two rules to keep it that way:
+`Check`, `CheckSet`, `CapabilityError`, and the capability protocols. Three
+language adapters ship (`php`, `node`, `rust`) and each is a reference to read
+beside the contract; new adapters copy them. The contract's behaviour is still
+proven on every change — two rules keep it that way:
 
 1. **Declare only capabilities you implement.** A capability that returns empty
    is worse than one that refuses, because empty reads as "clean."
@@ -723,8 +724,8 @@ offer onboarding — do not start it."
 
 | Limit | Status |
 |---|---|
-| No language adapter ships | Real gap. The code-shape audits refuse by name (exit 2) rather than under-reporting; `php` is the next workstream |
-| The profile schema still carries design-era sections (`tokens`, `assets`, …) | Transitional. The schema and its scaffolds swap to the backend vocabulary with the php adapter workstream |
+| A stack with no shipped language adapter | Real gap, by design. The code-shape audits refuse by name (exit 2) rather than under-reporting; adapters ship for php, node, and rust, with Go and Python planned |
+| The profile schema still carries design-era sections (`tokens`, `assets`, …) | Transitional. The schema and its scaffolds are still on the design-era vocabulary; the adapters do not depend on it |
 | house-style duplicates ~40 lines of role resolution | Deliberate. It cannot reach backend-suite's resolver across the plugin cache's per-plugin version hashes. `bin/resolve_role.py` is parity-tested against the real one; extend `resolve.py`, never this |
 | Much of the suite is ⚪ `unverified` | Read the maturity column in [CATALOG.md](./CATALOG.md) before relying on a skill |
 

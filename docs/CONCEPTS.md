@@ -251,14 +251,15 @@ Three seams are defined:
 
 | Seam | What it abstracts | Status |
 |---|---|---|
-| **Language** | Parsing source — endpoints, error shapes, layer imports | No adapter ships yet; `php` is next (see [ROADMAP.md](./ROADMAP.md)) |
+| **Language** | Parsing source — endpoints, error shapes, layer imports | `php`, `node`, and `rust` ship; Go and Python planned (see [ROADMAP.md](./ROADMAP.md)) |
 | **Asset** | How a project's static files are registered with its build | Deferred with the backend config-schema swap |
 | **Scaffold** | Generating new code in the project's idiom | Deferred with the backend config-schema swap |
 
 The contracts live in `backend_suite/adapters/base.py`, because a written
-contract is what an implementation gets checked against. No implementation
-ships right now — the UI adapters left with the design domain — so the
-contract's behaviour is proven a different way: `verify_seam.py` (below).
+contract is what an implementation gets checked against. Three adapters ship
+(`php`, `node`, `rust`); each is tested against the contract through the real
+registry, and `verify_seam.py` (below) also proves the engine runs a synthetic
+language with no engine changes.
 
 An adapter's job includes **refusing correctly**. Where a stack has no answer
 to a capability's question, the adapter raises rather than inventing a
@@ -267,10 +268,10 @@ question covers; returning True would hide every real one.
 
 `backend_suite/adapters/verify_seam.py` runs in CI and proves the engine still
 works through an adapter nobody's project uses — a synthetic language driven by
-an in-process stub, positive and negative controls included. Without it, the
-seam would rot back into one-language assumptions within a few commits and
-nobody would notice until the next project tried to adopt it. When the `php`
-adapter lands it becomes a second leg of the same proof.
+an in-process stub, positive and negative controls included — and that every
+shipped adapter (`php`, `node`, `rust`) sweeps a fixture through the same seam.
+Without it, the seam would rot back into one-language assumptions within a few
+commits and nobody would notice until the next project tried to adopt it.
 
 ---
 
@@ -280,8 +281,9 @@ adapter lands it becomes a second leg of the same proof.
 
 An adapter implements some capabilities and not others. Ask it for one it
 does not implement and it fails with a clear message naming the missing
-capability — the seam's `CapabilityError`. Today, with no language adapter
-shipped, every code-shape audit fails this way on every stack, by design.
+capability — the seam's `CapabilityError`. On a stack with no adapter shipped,
+every code-shape audit fails this way, by design; on a stack with an adapter,
+only the capabilities the adapter lacks do.
 
 The alternative — returning zero findings — is the failure mode this rule
 exists to prevent, because **zero findings and cannot-look are indistinguishable
@@ -293,13 +295,16 @@ suite's design-era portability work (recorded in
 [ADOPTING.md](./ADOPTING.md#validation-history-and-what-validates-next)'s
 validation-history note): the audits that could see returned genuine findings,
 and the ones that could not refused by name. Both outcomes were the designed
-one. The first backend validation runs — jikan-rest and jikan — are next.
+one. The first backend validation runs — jikan-rest and jikan — measured the
+`php` adapter against real codebases.
 
 ---
 
 ## Laravel Adapter Quick Reference
 
-The `php` adapter is the first shipped language adapter. It targets PHP 8.0+
+The `php` adapter is the first shipped language adapter. (`node` and `rust`
+ship the same capability vocabulary; see [LANGUAGE_STRATEGY.md](../LANGUAGE_STRATEGY.md)
+for their capability lists and a count of what each detects.) It targets PHP 8.0+
 backends in the Laravel/Lumen mould (routes files, service classes, middleware)
 and plain PHP libraries (src/ + tests/).
 
