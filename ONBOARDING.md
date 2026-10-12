@@ -101,12 +101,11 @@ on the repo, commit these two blocks into the project's `.claude/settings.json`:
 Both are **objects keyed by identifier**, not arrays. Worth stating because
 getting this wrong fails quietly — the plugin just doesn't load, with no error.
 
-> **The repo is private, permanently.** Anyone installing — including anyone
-> who picks up the repo from this committed config — needs their own read access
-> to `irfan-dahir/backend-quality-suite`. Committing the blocks above makes the
-> plugin automatic for people who *have* access; it does not grant it. If
-> `marketplace add` fails on auth, that's what it is — request access rather
-> than debugging the command.
+> **The repo is public.** Anyone can install from `irfan-dahir/backend-quality-suite`
+> without an account. Committing the blocks above makes the plugin automatic for
+> people who have the repo's `enabledPlugins`/marketplace references in place;
+> if `marketplace add` still fails on auth, it is a transient GitHub auth issue,
+> not missing access — check `gh auth status` and retry.
 
 ---
 
@@ -299,13 +298,13 @@ authority.
 
 ---
 
-## What to expect before a language adapter ships
+## What shipped language adapters look like
 
-No language adapter ships yet. The UI adapters left with the design domain this
-suite was re-domained from; a `php` adapter is the first workstream (see
-[docs/ROADMAP.md](./docs/ROADMAP.md)). Leave `adapters.lang` unset until an
-adapter for your stack exists — `/survey` will propose one when it can resolve
-it.
+Three language adapters ship: `php` (Laravel/Lumen, Symfony, plain PHP), `node`
+(Express, Fastify, NestJS, Hono, Koa, AdonisJS), and `rust` (Axum, Actix Web,
+Rocket, Poem, Warp) — see [docs/ROADMAP.md](./docs/ROADMAP.md). Go and Python
+are planned. `/survey` proposes `adapters.lang` for a project when it can
+resolve one; a project whose stack has no adapter yet leaves the field unset.
 
 The documentation audits work on any stack today: they read the profile and the
 doc roles, not source code — `audit-doc-staleness`, `audit-proposal-status`,
@@ -330,7 +329,7 @@ Details, and what to do when no adapter fits your stack, are in
 
 | Symptom | Cause |
 |---|---|
-| `marketplace add` fails on auth | The marketplace is private — an auth failure means missing read access to `irfan-dahir/backend-quality-suite`. Request access; if you already have it, check `gh auth status` and retry |
+| `marketplace add` fails on auth | The repo is public, so an auth failure is a transient GitHub issue — check `gh auth status` and retry; installs need no elevated access |
 | A script dies on `'str' object has no attribute 'removeprefix'` | `python3` is older than 3.9. Run the backend-suite doctor, which names this directly |
 | Plugin installs but no skills appear | `extraKnownMarketplaces`/`enabledPlugins` written as arrays. They're objects |
 | An audit reports a path that doesn't exist | Stale `profile.json`. Ask Claude to run the backend-suite doctor |

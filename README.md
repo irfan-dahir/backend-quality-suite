@@ -4,8 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-525%20cases%20%7C%2060%20passed-brightgreen)](#test-status)
-[![Release](https://img.shields.io/badge/Release-v0.1.0-orange)](#release)
+[![Tests](https://img.shields.io/badge/Tests-538%20cases%20%7C%2061%20passed-brightgreen)](#test-status)
+[![Release](https://img.shields.io/badge/Release-v0.3.0-orange)](#release)
 
 ---
 
@@ -78,7 +78,7 @@ claude plugin install house-style@backend-quality-suite
 | **Mock API** | `audit-mock-api`, `sync-mock-api` | ✅ Shipped |
 | **Meta** | `quality-debt`, `repo-health`, `verify`, `survey`, `doctor` | ✅ Shipped |
 
-**Language adapter:** `php` (Laravel/Lumen + plain PHP). No other adapters ship yet.
+**Language adapters:** `php` (Laravel/Lumen + plain PHP), `node` (Express, Fastify, NestJS, Hono, Koa, AdonisJS), and `rust` (Axum, Actix Web, Rocket, Poem, Warp) ship. Go and Python are planned — see [LANGUAGE_STRATEGY.md](LANGUAGE_STRATEGY.md).
 
 ---
 
@@ -90,7 +90,7 @@ plugins/backend-suite/
 ├── bin/                              # CLI entry points (no language knowledge)
 └── backend_suite/
     ├── engine/      # LAYER 1: stdlib-only, zero project literals
-    ├── adapters/    # LAYER 2: stack seams (php.py ships)
+    ├── adapters/    # LAYER 2: stack seams (php.py, node.py, rust.py ship)
     └── project.py   # Resolves project under audit
 
 <your-repo>/.backend-suite/           # LAYER 3: data only
@@ -152,7 +152,7 @@ claude plugin install backend-suite@backend-quality-suite
 ## Test Status
 
 ```
-62 test files | 525 cases | 60 passed | 2 failed (documented)
+63 test files | 538 cases | 61 passed | 2 failed (documented)
 eval_suite_lint: 14/14 clean
 eval_fixture_selftest: 6/6 fixtures
 ```
@@ -175,7 +175,7 @@ python3 plugins/backend-suite/bin/gates.py
 ## Release
 
 ```bash
-git tag backend-suite--v0.1.0
+git tag backend-suite--v0.3.0
 git push origin main --tags
 ```
 
@@ -204,5 +204,5 @@ MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Irfan Dahir.
 ---
 
 **Repo:** https://github.com/irfan-dahir/backend-quality-suite  
-**Tag:** `backend-suite--v0.1.0`  
+**Tag:** `backend-suite--v0.3.0`  
 **Install:** `pip install git+https://github.com/irfan-dahir/backend-quality-suite.git`

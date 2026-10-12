@@ -12,7 +12,7 @@
 | **B — Portability** | ✅ PHP/Laravel done | PHP adapter shipped with 6 capabilities; Laravel routing signatures; 5 new capabilities |
 | **C — Migration** | ✅ Mostly done | C1/C2/C4 done; C3 audit-first; C5 pending |
 | **D — Defects** | 🔄 Partially done | D1/D4/D5 done; D2/D3 N/A for PHP |
-| **E — Multi-language** | 📋 Planned | Symfony, Node.js, Go, Python, Java adapters (see LANGUAGE_STRATEGY.md) |
+| **E — Multi-language** | ✅ PHP/Node/Rust shipped | Go and Python adapters planned; Java dropped, Rust shipped in its place (see LANGUAGE_STRATEGY.md) |
 | **New: Laravel audits** | ✅ Done | `audit_route_model_binding`, `audit_form_request_validation` |
 | **New: Harness integration** | ✅ Done | AGENTS.md, MCP configs for 11 harnesses, pre-commit hook |
 
@@ -25,28 +25,28 @@
 | Framework | Detection | Capabilities | Status |
 |---|---|---|---|
 | **Laravel/Lumen** | `composer.json` + `artisan` | 11 capabilities | ✅ Done |
-| **Symfony** | `composer.json` + `Kernel.php` | routing, services, DI, forms | 📋 Planned (Issue #14) |
+| **Symfony** | `composer.json` + `Kernel.php` | routing, services, DI, forms | ✅ Shipped (Issue #14) |
 | **Slim/Laminas** | `composer.json` | routing, middleware | 📋 Planned |
-| **Plain PHP** | `composer.json` only | routing (attributes), models | 📋 Planned |
+| **Plain PHP** | `composer.json` only | routing (attributes), models | ✅ Shipped |
 | **WordPress** | `wp-config.php` | hooks, REST API | 📋 Low priority |
 
-**Next:** Symfony support (2nd most popular PHP framework)
+**Done:** Symfony support (2nd most popular PHP framework), shipped in 0.3.0.
 
 ### Phase 2: Node.js / TypeScript
 
-| Framework | Detection | Capabilities | Priority |
+| Framework | Detection | Capabilities | Status |
 |---|---|---|---|
-| **Express** | `package.json` + `express` dep | routing, middleware, error handling | 🥇 High |
-| **Fastify** | `package.json` + `fastify` dep | routing, schemas, hooks | 🥇 High |
-| **NestJS** | `package.json` + `@nestjs/core` | controllers, guards, pipes, DI | 🥇 High |
-| **Hono** | `package.json` + `hono` dep | routing, middleware | 🥈 Medium |
-| **Koa** | `package.json` + `koa` dep | middleware, routing | 🥈 Medium |
-| **AdonisJS** | `package.json` + `@adonisjs/core` | controllers, validators, ORM | 🥈 Medium |
-| **Plain TS/JS** | `tsconfig.json`/`package.json` | basic routing | 🥉 Low |
+| **Express** | `package.json` + `express` dep | routing, middleware, error handling | ✅ Shipped |
+| **Fastify** | `package.json` + `fastify` dep | routing, schemas, hooks | ✅ Shipped |
+| **NestJS** | `package.json` + `@nestjs/core` | controllers, guards, pipes, DI | ✅ Shipped |
+| **Hono** | `package.json` + `hono` dep | routing, middleware | ✅ Shipped |
+| **Koa** | `package.json` + `koa` dep | middleware, routing | ✅ Shipped |
+| **AdonisJS** | `package.json` + `@adonisjs/core` | controllers, validators, ORM | ✅ Shipped |
+| **Plain TS/JS** | `tsconfig.json`/`package.json` | basic routing | ✅ Shipped |
 
-**Detection strategy:**
+The whole phase shipped with `node` (v0.2.0 and extended since). **Detection strategy:**
 1. `package.json` dependencies
-2. Import patterns (`import express from 'express'`)
+2. Import patterns (`import express from 'express'`, `require('express')`)
 3. Framework-specific files (`nest-cli.json`, `fastify.config.js`)
 
 ### Phase 3: Go
@@ -75,42 +75,46 @@
 
 **Detection:** `pyproject.toml`, `requirements.txt`, `setup.py`, `poetry.lock`, imports
 
-### Phase 5: Java / JVM
+### Phase 5: Rust (Shipped)
 
-| Framework | Detection | Capabilities | Priority |
+| Framework | Detection | Capabilities | Status |
 |---|---|---|---|
-| **Spring Boot** | `pom.xml`/`build.gradle` + `spring-boot-starter-web` | controllers, services, JPA, config | 🥇 High |
-| **Micronaut** | `build.gradle` + `io.micronaut` | controllers, DI, AOP | 🥈 Medium |
-| **Quarkus** | `pom.xml` + `quarkus` | REST, Panache, config | 🥈 Medium |
-| **Ktor** | `build.gradle` + `io.ktor` | routing, plugins | 🥉 Low |
+| **Axum** | `Cargo.toml` + `axum` dep | routing, models, validation | ✅ Shipped |
+| **Actix Web** | `Cargo.toml` + `actix-web` dep | routing, middleware | ✅ Shipped |
+| **Rocket** | `Cargo.toml` + `rocket` dep | routing (attributes) | ✅ Shipped |
+| **Poem** | `Cargo.toml` + `poem` dep | routing (`Route::new()`) | ✅ Shipped |
+| **Warp** | `Cargo.toml` + `warp` dep | routing (`warp::path`) | ✅ Shipped |
 
-**Detection:** `pom.xml`, `build.gradle`, `build.gradle.kts`, imports
+**Detection:** `Cargo.toml` dependencies + `use` paths. `IMPORT_TARGETS` is `module`, so
+`audit_layer_boundaries` refuses (exit 2) rather than resolving `use` paths as files.
 
-### Capability Matrix (Target)
+> **Java/JVM was dropped, not deferred** (issue #18, closed as not-planned): the zero-dep seam
+> is at its most fragile on annotation processors and the split `pom.xml`/`build.gradle`/
+> `build.gradle.kts` surface, and the decision matrix scored Spring Boot lowest. Rust replaced
+> it as the fourth language.
 
-| Capability | PHP | Node/TS | Go | Python | Java |
+### Capability Matrix (Shipped vs Planned)
+
+| Capability | PHP | Node/TS | Rust | Go | Python |
 |---|---|---|---|---|---|
-| **routing** | ✅ | 📋 | 📋 | 📋 | 📋 |
-| **models/ORM** | ✅ (Eloquent) | 📋 (Prisma/TypeORM/Sequelize) | 📋 (GORM) | 📋 (SQLAlchemy/Django ORM) | 📋 (JPA/Hibernate) |
-| **validation** | ✅ (FormRequest) | 📋 (Zod/class-validator) | 📋 (go-playground/validator) | 📋 (Pydantic) | 📋 (Bean Validation) |
-| **routing signatures** | ✅ (Laravel+base) | 📋 (Express/Fastify/Nest) | 📋 (Gin/Echo) | 📋 (FastAPI/Django) | 📋 (Spring) |
-| **contract headers** | ✅ | 📋 | 📋 | 📋 | 📋 |
-| **layer boundaries** | ✅ | 📋 | 📋 | 📋 | 📋 |
-| **route coverage** | ✅ | 📋 | 📋 | 📋 | 📋 |
-| **cache TTL** | ✅ | 📋 | 📋 | 📋 | 📋 |
+| **routing** | ✅ | ✅ | ✅ | 📋 | 📋 |
+| **models/ORM** | ✅ (Eloquent) | ✅ (Prisma/TypeORM/Sequelize) | ✅ (sea-orm/sqlx derives) | 📋 (GORM) | 📋 (SQLAlchemy/Django ORM) |
+| **validation** | ✅ (FormRequest) | ✅ (Zod/class-validator) | ✅ (validator derives) | 📋 (go-playground/validator) | 📋 (Pydantic) |
+| **routing signatures** | ✅ (Laravel+base) | ✅ (Express/Fastify/Nest) | ✅ (Axum/Actix/Rocket/Poem/Warp) | 📋 (Gin/Echo) | 📋 (FastAPI/Django) |
+| **contract headers** | ✅ | ✅ | ✅ | 📋 | 📋 |
+| **layer boundaries** | ✅ | ✅ | ✅ (refuses: module imports) | 📋 | 📋 |
+| **route coverage** | ✅ | ✅ | ✅ | 📋 | 📋 |
+| **cache TTL** | ✅ (Laravel) | 📋 | 📋 | 📋 | 📋 |
 
 ### Implementation Priority
 
-| Quarter | Focus | Deliverable |
+| Phase | Adapter | Status |
 |---|---|---|
-| **Q1** | Symfony PHP adapter | 5 capabilities |
-| **Q1** | Express/Fastify/NestJS Node adapter | 8 capabilities |
-| **Q2** | Gin/Echo Go adapter | 6 capabilities |
-| **Q2** | FastAPI/Django Python adapter | 8 capabilities |
-| **Q3** | Spring Boot Java adapter | 7 capabilities |
-| **Q3** | Remaining PHP frameworks (Symfony, Slim) | 6 capabilities |
-| **Q4** | Go frameworks (Echo, Chi, Fiber) | 6 capabilities |
-| **Q4** | Python frameworks (Django, Flask) | 6 capabilities |
+| 1 | PHP (Laravel, Symfony) | ✅ Shipped |
+| 2 | Node.js/TypeScript | ✅ Shipped (v0.2.0) |
+| 5 | Rust (Axum, Actix Web, Rocket, Poem, Warp) | ✅ Shipped |
+| 3 | Go (Gin, Echo, Chi, Fiber) | 📋 Next |
+| 4 | Python (FastAPI, Django, Flask, Starlette) | 📋 After Go |
 
 ### Design Principles
 
@@ -144,7 +148,7 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 
 | Item | Status | Notes |
 |---|---|---|
-| **B1** Third adapter (tsx) | 📋 Deferred | No non-Flutter consumer; PHP adapter is the seam-proof |
+| **B1** Third adapter (tsx) | ✅ Superseded | The seam-proof is three shipped adapters — php, node, rust (Workstream E) |
 | **B2** `/onboard-new-client` | ✅ Done | `survey → init --from-survey` works |
 | **B3** Cross-consumer drift check | 📋 Planned | |
 | **B4** Two-plugin split | ✅ Resolved | Stays two (backend-suite + house-style) |
@@ -195,15 +199,17 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 | 6 | `suite_upgrade_test.py` fixture dependency | ✅ Skipped | Fixture revisions don't exist in fork |
 | 7 | Lumen → Laravel migration guide | 📋 Planned | |
 | 8 | Wire harness for plugin itself | ✅ Done | AGENTS.md, MCP, pre-commit |
-| 9 | Laravel Adapter Quick Reference in CONCEPTS.md | 📋 Planned | |
+| 9 | Laravel Adapter Quick Reference in CONCEPTS.md | ✅ Done | Section exists in docs/CONCEPTS.md |
 | 10 | ROADMAP.md current status | ✅ Updated | This file |
-| 14 | Symfony adapter (PHP) | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 1 |
+| 14 | Symfony adapter (PHP) | ✅ Done | Shipped in 0.3.0 |
 | 15 | Node.js/TypeScript adapter | ✅ Done | Released in v0.2.0 |
 | 16 | Go adapter | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 3 |
 | 17 | Python adapter | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 4 |
-| 18 | Java/JVM adapter | 📋 Planned | Tracked in LANGUAGE_STRATEGY.md Phase 5 |
+| 18 | Java/JVM adapter | ✅ Closed not-planned | Dropped; Rust shipped in its place |
 | 19 | ROADMAP.md multi-language update | ✅ Done | This update |
 | 21 | `audit_form_request_validation` crash fix | ✅ Done | Fixed in commit 943a353 |
+| 25 | Rust adapter | ✅ Done | Shipped as the fourth language adapter |
+| 26 | Sync stale docs (README, ONBOARDING, ROADMAP, LANGUAGE_STRATEGY) | 🔄 In progress | This branch |
 
 ---
 
@@ -211,20 +217,17 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 
 | Priority | Work | Rationale |
 |---|---|---|
-| 1 | Lumen → Laravel migration guide (ADOPTING.md) | Real adoption blocker |
-| 2 | Laravel Adapter Quick Reference in CONCEPTS.md | Documentation parity |
-| 3 | Symfony PHP adapter (Phase 1) | 2nd most popular PHP framework; highest decision-matrix score |
-| 4 | Node.js/TypeScript adapter (Phase 2) | Huge market; Express/Fastify/NestJS |
-| 5 | Go adapter (Phase 3) | Growing fast; Gin/Echo |
-| 6 | Python adapter (Phase 4) | FastAPI/Django high value |
-| 7 | Java/JVM adapter (Phase 5) | Spring Boot enterprise demand |
+| 1 | Go adapter (Phase 3) | Growing fast; Gin/Echo — next decision-matrix pick |
+| 2 | Python adapter (Phase 4) | FastAPI/Django high value |
+| 3 | Lumen → Laravel migration guide (ADOPTING.md) | Real adoption blocker |
+| 4 | Laravel Adapter Quick Reference in CONCEPTS.md | Documentation parity |
 
 ---
 
 ## Test Baseline
 
 ```
-62 test files | 525 cases | 60 passed | 2 failed (documented)
+63 test files | 538 cases | 61 passed | 2 failed (documented)
 eval_suite_lint: 14/14 clean
 eval_fixture_selftest: 6/6 fixtures
 ```
@@ -238,7 +241,7 @@ The two failing tests are documented fixture-pinned cases that require a tagged 
 - **Repo**: https://github.com/irfan-dahir/backend-quality-suite (public)
 - **Install**: `pip install git+https://github.com/irfan-dahir/backend-quality-suite.git`
 - **CLI**: `backend-suite` command after install
-- **Tag**: `backend-suite--v0.1.0`
+- **Tag**: `backend-suite--v0.3.0`
 - **CI**: 16 gates in `.github/workflows/validate.yml`
 
 ---
@@ -255,4 +258,4 @@ The governing principle: **an audit that reports nothing must never be indisting
 
 ---
 
-_Last updated: 2026-10-12 (commit 6409d51)_
+_Last updated: 2026-10-12_

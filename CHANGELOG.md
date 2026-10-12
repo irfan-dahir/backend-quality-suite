@@ -53,6 +53,33 @@ Pre-1.0, a major-severity change increments the **minor** part, per SemVer §4.
 
 ## [Unreleased]
 
+### Added
+
+- **Rust language adapter** (`backend_suite/adapters/rust.py`) — fourth shipped language
+  adapter: Axum, Actix Web, Rocket, Poem, and Warp routing, plus the base capability set
+  (models, validation, middleware, api_resources, policies). A project with a root
+  `Cargo.toml` is now proposed `rust` by `survey.py`; set `adapters.lang: rust`. The adapter
+  refuses `audit_layer_boundaries` (exit 2) because `use` names a module path, not a file
+  path, and deliberately has no `dependency_injection` capability — Rust has no DI-container
+  idiom and declaring one would invent a boolean.
+
+- **Toolchain gates** — a project's declared `checkScripts` now run as gates beside the
+  suite's own audits (`audit_toolchain_gates.py`), closing the gap where a project's own
+  failing checks could not fail its CI.
+
+### Fixed
+
+- **PHP adapter: Symfony capability gating** — having a `symfony/*` component as a dependency
+  no longer classifies the tree as a Symfony *application*. `symfony_di / symfony_forms /
+  symfony_doctrine / symfony_security / symfony_twig` are offered only on a full-stack signal
+  (`symfony/framework-bundle` + `Kernel.php` + `config/routes.*` or `config/services.*`).
+  Projects that merely consume Symfony components stop reporting `declared-capability-unused`
+  on `source.root`.
+
+- **`audit_endpoint_parity`** — swagger-php 6 `#[OA\...]` attribute markers are now
+  recognized alongside the annotation forms (`@OA\...`), so documented endpoint parity is
+  still measured on PHP 8 projects using attributes.
+
 ---
 
 ## [0.3.0] - 2026-10-12
