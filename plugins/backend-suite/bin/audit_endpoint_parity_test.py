@@ -9,6 +9,7 @@ defect belongs to route coverage.
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import subprocess
@@ -71,6 +72,18 @@ INSIGHTS = """<?php
 class InsightsController
 {
     public function main()
+    {
+    }
+}
+"""
+ATTR_SEARCH = """<?php
+
+use OpenApi\Attributes as OA;
+
+class SearchController
+{
+    #[OA\Get(path="/search", operationId="searchAnime", responses: [new OA\Response(response: "200", description: "OK")])]
+    public function anime()
     {
     }
 }
@@ -179,6 +192,25 @@ class EndpointParity(unittest.TestCase):
             result = run([], repo)
             self.assertEqual(result.returncode, 2, result.stderr)
             self.assertIn("docMarkers", result.stderr)
+
+    def test_attribute_marker_counts_as_documented(self):
+        """swagger-php 6 controllers document routes with #[OA\Get] attributes
+        above the method; an attribute-marked action is not "undocumented". Only
+        the dead InsightsController@main route remains uncovered."""
+        rules = copy.deepcopy(RULES)
+        rules["endpointParity"]["docMarkers"] = ["#[OA\Get("]
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = build(tmp, search=ATTR_SEARCH, rules=rules)
+            result = run(["--findings"], repo)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            data = json.loads(
+                (repo / ".backend-suite" / "findings" /
+                 "endpoint-parity.json").read_text())
+            categories = {f["category"] for f in data["findings"]}
+            self.assertEqual(categories, {"undocumented_endpoint"})
+            summaries = "\n".join(f.get("summary", "") for f in data["findings"])
+            self.assertIn("InsightsController@main", summaries)
+            self.assertNotIn("SearchController", summaries)
 
 
 if __name__ == "__main__":

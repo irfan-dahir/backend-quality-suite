@@ -65,6 +65,49 @@ _ADJACENT = re.compile(
     r"/\*\*((?:(?!\*/).)*)\*/\s*(?:\w+\s+)*function\s+&?\s*(\w+)\s*\(",
     re.S)
 
+# swagger-php 6 reads annotations from PHP 8 attributes, not docblocks; a
+# controller method is documented when a `#[OA\Get(...)]`-style attribute
+# chain sits directly above it. `_attr_prefix` peels those blocks back from
+# the method declaration (skipping `public` etc.) with bracket-aware matching.
+_ATTR_OPEN = re.compile(r"#\[")
+
+
+def _attr_prefix(source, func_start):
+    """Concatenated attribute text directly above the method at func_start,
+    or '' when the method carries no OA attribute chain."""
+    head = source[:func_start]
+    end = None
+    for mm in re.finditer(r"\)\]", head):
+        if re.fullmatch(r"\s*(?:\w+\s+)*", head[mm.end():]):
+            end = mm.end()
+    if end is None:
+        return ""
+    pieces = []
+    cur = end
+    while True:
+        opener = None
+        for cand in reversed([m.start() for m in _ATTR_OPEN.finditer(head[:cur])]):
+            if head[cand:cur].count("[") - head[cand:cur].count("]") == 0:
+                opener = cand
+                break
+        if opener is None:
+            break
+        block = head[opener:cur]
+        if not re.match(r"#\[OA\\[A-Za-z]+", block):
+            break
+        pieces.append(block)
+        cur = opener
+        ws = cur
+        while ws > 0 and head[ws - 1].isspace():
+            ws -= 1
+        if ws == 0:
+            break
+        if head[ws - 1] == "]":
+            cur = ws
+            continue
+        break
+    return "\n".join(pieces)
+
 
 def _glob(key: str, why: str) -> list[Path]:
     pattern = RULES.get(key)
@@ -93,6 +136,19 @@ def _methods(path: Path) -> tuple[dict[str, bool], set[str]]:
     for docblock, method in _ADJACENT.findall(source):
         documented.setdefault(
             method, any(m in docblock for m in RULES["docMarkers"]))
+    # swagger-php 6 attributes: `#[OA\Get(...)]` directly above the method
+    for m in re.finditer(r"\bfunction\s+&?\s*(\w+)\s*\(", source):
+        method = m.group(1)
+        if documented.get(method):
+            continue
+        prefix = _attr_prefix(source, m.start())
+        # A docblock-style marker ("@OA\Get(") counts for attributes too, so
+        # existing docMarkers keep working after a docblock->attribute migration.
+        if prefix and any(
+            (marker if marker.startswith("#") else "#" + marker) in prefix
+            for marker in RULES["docMarkers"]
+        ):
+            documented[method] = True
     declared = set(re.findall(r"function\s+&?\s*(\w+)\s*\(", source))
     return documented, declared
 
