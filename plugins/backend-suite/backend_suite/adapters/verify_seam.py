@@ -5,12 +5,12 @@ The engine's whole justification is that a second language plugs in without
 touching it. That claim is easy to assert and easy to get wrong, so two
 deliberately different proofs run here:
 
-  * the SHIPPED leg — the registry discovers `php`, `load("php")` returns
-    it, and the engine sweeps a PHP fixture through its own
-    `checks()` / `FILE_GLOBS`, positives and negatives both held. This is
-    the path a consumer project takes, end to end. If the php adapter ever
-    leaves the registry, this leg FAILS rather than skips: a second shipped
-    language is the point, not an optional extra.
+  * the SHIPPED legs — the registry discovers `php`, `node` and `rust`,
+    `load(...)` returns each, and the engine sweeps a fixture for each through
+    its own `checks()` / `FILE_GLOBS`, positives and negatives both held. This
+    is the path a consumer project takes, end to end. If any shipped adapter
+    ever leaves the registry, its leg FAILS rather than skips: shipped
+    languages are the point, not optional extras.
   * the MINIMAL leg — a deliberately tiny language built IN PROCESS through
     the same `Check` / `AdapterContext` / `scan_tree` seam, so every
     expectation is about the SEAM rather than about any real language's
@@ -108,6 +108,25 @@ app.post('/session', (req, res) => {
   const legacy = password = 'hunter2long';
   res.json({ message: 'ok' });
 });
+"""
+
+# The rust leg's fixture, same shape as the php/node ones: one planted debug
+# call, one planted plaintext secret, and the correct shape for each living in
+# the same file. `env::var("DB_PASSWORD")` is the config REFERENCE and is the
+# negative control the secret matcher must not flag.
+RUST_FIXTURE = """// synthetic rust fixture for the seam proof — positives and negatives both planted
+use std::env;
+
+pub fn health() {
+    println!("hit");
+    let password = env::var("DB_PASSWORD").expect("set");
+    respond("ok");
+}
+
+pub fn session() {
+    let legacy = password = "hunter2long";
+    respond("ok");
+}
 """
 
 
@@ -234,13 +253,56 @@ def main() -> int:
                 print(f"shipped node adapter over a node fixture: "
                       f"{len(node_findings)} finding(s), 2 expected")
 
+        # 7. The same leg for the FOURTH shipped language: rust. A seam that
+        #    holds for php and node could still be "a curated pair"; rust is a
+        #    systems language with a different comment grammar (nested block
+        #    comments, raw strings, lifetimes) and a different error model, so
+        #    it exercises the seam where the other two do not.
+        if "rust" not in names:
+            problems.append("the rust adapter is missing from the registry — this "
+                            "file's shipped-language leg exists to prove a real "
+                            "language loads and sweeps; its absence is a "
+                            "regression, not a skip")
+        else:
+            rust = load("rust")
+            with tempfile.TemporaryDirectory() as raw:
+                fixture = Path(raw)
+                (fixture / "src").mkdir()
+                (fixture / "src" / "main.rs").write_text(RUST_FIXTURE)
+                ctx = AdapterContext(repo=fixture, profile={}, exceptions={})
+                rust_findings = scan_tree(fixture, fixture, rust.checks(ctx),
+                                          globs=rust.FILE_GLOBS)
+
+                if not any(f["kind"] == "debug_statement"
+                           and "println!" in f["snippet"]
+                           for f in rust_findings):
+                    problems.append("rust leg: no debug_statement finding for the "
+                                    "planted println!() call")
+                if not any(f["kind"] == "plaintext_secret"
+                           and "hunter2long" in f["snippet"]
+                           for f in rust_findings):
+                    problems.append("rust leg: no plaintext_secret finding for the "
+                                    "planted literal")
+                # The negative control, same as the php/node legs':
+                # env::var("DB_PASSWORD") is a config REFERENCE, the correct
+                # shape, and must never be flagged.
+                if any("DB_PASSWORD" in f["snippet"] for f in rust_findings):
+                    problems.append("rust leg: env::var(\"DB_PASSWORD\") was flagged — "
+                                    "a naive secret matcher that cannot tell a "
+                                    "literal from a config reference")
+                if any(f["file"] != "src/main.rs" for f in rust_findings):
+                    problems.append("rust leg: a finding landed outside the "
+                                    "adapter's FILE_GLOBS")
+                print(f"shipped rust adapter over a rust fixture: "
+                      f"{len(rust_findings)} finding(s), 2 expected")
+
     if problems:
         print("\nSEAM BROKEN:")
         for p in problems:
             print(f"  ✗ {p}")
         return 1
-    print("\nSeam holds: the engine ran two more languages (stublang, node) with "
-          "no engine changes, and both shipped adapters (php, node) load and "
+    print("\nSeam holds: the engine ran a fourth language (stublang) with no "
+          "engine changes, and all shipped adapters (php, node, rust) load and "
           "sweep through the same seam.")
     return 0
 

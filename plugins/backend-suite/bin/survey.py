@@ -130,7 +130,7 @@ MANIFESTS = {
     "pyproject.toml": ("python", None, ["src"], "a root pyproject.toml is the Python project manifest"),
     "setup.py": ("python", None, ["src"], "a root setup.py is a Python distutils manifest"),
     "go.mod": ("go", None, ["."], "a root go.mod is the Go module manifest"),
-    "Cargo.toml": ("rust", None, ["src"], "a root Cargo.toml is the Cargo manifest"),
+    "Cargo.toml": ("rust", "rust", ["src"], "a root Cargo.toml is the Cargo manifest"),
     "Gemfile": ("ruby", None, ["app", "lib"], "a root Gemfile is the Bundler manifest"),
     "composer.json": ("php", "php", ["src"], "a root composer.json is the Composer manifest"),
     "pom.xml": ("java", None, ["src/main/java"], "a root pom.xml is the Maven manifest"),
