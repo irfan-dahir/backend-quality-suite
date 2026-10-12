@@ -219,8 +219,8 @@ See `LANGUAGE_STRATEGY.md` for the full adapter template and integration checkli
 |---|---|---|
 | 1 | Go adapter (Phase 3) | Growing fast; Gin/Echo — next decision-matrix pick |
 | 2 | Python adapter (Phase 4) | FastAPI/Django high value |
-| 3 | Lumen → Laravel migration guide (ADOPTING.md) | Real adoption blocker |
-| 4 | Laravel Adapter Quick Reference in CONCEPTS.md | Documentation parity |
+| 3 | Heal the two documented known-red test files (`suite_upgrade_test.py`, `gate_consumer_compat_test.py`) | Pinned to fixture revisions not in this fork's lineage; they auto-heal on the next release tag |
+| 4 | Tag the next release (`backend-suite--v0.4.0`) from the `[Unreleased]` changelog | Releases the rust adapter and toolchain gates to consumers; heals the known-red baseline |
 
 ---
 
