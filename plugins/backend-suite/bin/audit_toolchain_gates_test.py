@@ -79,12 +79,13 @@ def run(args: list[str], repo: Path):
 
 
 def build(tmp: str, *, composer: dict,
-          phpunit: str = PHPUNIT_OK) -> Path:
+          phpunit: str = PHPUNIT_OK, rules: dict | None = None) -> Path:
     repo = Path(tmp)
     (repo / ".backend-suite").mkdir(parents=True)
     (repo / "tests").mkdir()
     (repo / ".backend-suite" / "profile.json").write_text(json.dumps(PROFILE))
-    (repo / ".backend-suite" / "arch-rules.json").write_text(json.dumps(RULES))
+    (repo / ".backend-suite" / "arch-rules.json").write_text(
+        json.dumps(rules if rules is not None else RULES))
     (repo / "composer.json").write_text(json.dumps(composer))
     (repo / "phpunit.xml").write_text(phpunit)
     return repo
@@ -142,6 +143,51 @@ class ToolchainGates(unittest.TestCase):
             result = run([], repo)
             self.assertEqual(result.returncode, 2, result.stderr)
             self.assertIn("not parseable XML", result.stderr)
+
+    def test_check_script_gate_runs_clean(self):
+        rules = {**RULES, "toolchainGates": {
+            **RULES["toolchainGates"], "checkScripts": ["lint-gate"]}}
+        composer = {"scripts": {"test": "phpunit", "lint-gate": "true"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = build(tmp, composer=composer, rules=rules)
+            result = run(["--findings"], repo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = json.loads(
+                (repo / ".backend-suite" / "findings" /
+                 "toolchain-gates.json").read_text())
+            kinds = {f["category"] for f in data["findings"]}
+            self.assertNotIn("check_script_failed", kinds)
+
+    def test_failing_check_script_is_a_finding(self):
+        rules = {**RULES, "toolchainGates": {
+            **RULES["toolchainGates"], "checkScripts": ["lint-gate"]}}
+        composer = {"scripts": {"test": "phpunit", "lint-gate": "false"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = build(tmp, composer=composer, rules=rules)
+            result = run(["--findings"], repo)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            data = json.loads(
+                (repo / ".backend-suite" / "findings" /
+                 "toolchain-gates.json").read_text())
+            failed = [f for f in data["findings"]
+                      if f["category"] == "check_script_failed"]
+            self.assertEqual(len(failed), 1, data["findings"])
+            self.assertEqual(failed[0]["severity"], "critical")
+            self.assertIn("exit 1", failed[0]["summary"])
+
+    def test_missing_check_script_is_a_finding(self):
+        rules = {**RULES, "toolchainGates": {
+            **RULES["toolchainGates"], "checkScripts": ["no-such-gate"]}}
+        composer = {"scripts": {"test": "phpunit"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = build(tmp, composer=composer, rules=rules)
+            result = run(["--findings"], repo)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            data = json.loads(
+                (repo / ".backend-suite" / "findings" /
+                 "toolchain-gates.json").read_text())
+            kinds = {f["category"] for f in data["findings"]}
+            self.assertIn("check_script_missing", kinds)
 
 
 if __name__ == "__main__":

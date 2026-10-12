@@ -35,6 +35,10 @@ Measured on the first validation targets (probed 2026-10-11):
   `<directory>` at a path that no longer exists. This is the quiet one:
   a suite over a missing directory runs zero tests and exits green, which
   is this suite's governing failure wearing the project's own clothes.
+- `check_script_missing` / `check_script_failed` — gates the project opted
+  into via `toolchainGates.checkScripts`: each named composer script must
+  exist in the manifest AND exit 0 when executed in the repo (capped at
+  120s). Nothing is executed unless the project lists it.
 
 Parsed as JSON and XML, not grepped: these are structured documents and a
 regex reading of them is a second parser that can silently disagree with
@@ -45,6 +49,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -67,6 +72,35 @@ def _script_lines(value) -> list[str]:
     if isinstance(value, list):
         return [v for v in value if isinstance(v, str)]
     return []
+
+
+def _run_check_script(repo, name: str, spec) -> tuple[bool, str]:
+    """(ok, why) for one composer script the project opted into running.
+
+    Composer script values may be a string or a list of lines. Lines are
+    joined with `&&` and executed via `bash -c` in the repo; composer's
+    `@php`/`@composer` shorthands are normalized to platform binaries. Capped
+    at 120s so a runaway gate cannot hang the audit. Only scripts listed in
+    toolchainGates.checkScripts are ever executed — nothing runs by default.
+    """
+    lines = [spec] if isinstance(spec, str) else list(spec)
+    cmd = " && ".join(
+        line.replace("@php ", "php ", 1).replace("@composer ", "composer ", 1)
+        for line in lines)
+    try:
+        proc = subprocess.run(["bash", "-c", cmd], cwd=repo,
+                              capture_output=True, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        return False, f"{name!r} did not finish within 120s"
+    except (OSError, ValueError) as exc:
+        return False, f"could not run ({exc})"
+    if proc.returncode == 0:
+        return True, ""
+    tail = (proc.stdout or "").strip().splitlines()[-4:]
+    if not tail:
+        last_err = (proc.stderr or "").strip().splitlines()
+        tail = last_err[-1:] if last_err else ["(no output)"]
+    return False, f"exit {proc.returncode}: {' | '.join(tail)}"
 
 
 def main() -> int:
@@ -104,6 +138,7 @@ def main() -> int:
 
     required = RULES.get("requiredScripts") or []
     testsuite_flag = RULES.get("testsuiteFlag") or "--testsuite"
+    check_scripts = RULES.get("checkScripts") or []
 
     # Runner suites: name -> declared directories (paths relative to the
     # runner file's directory, per phpunit's own resolution).
@@ -169,6 +204,27 @@ def main() -> int:
                     f"location — the suite runs zero tests and exits green.",
                     severity=F.CRITICAL))
 
+    # checkScripts — gates the project chose to have THIS audit actually run.
+    # A script the gate list names must exist in the manifest AND exit 0 when
+    # executed in the repo; a missing name is a config drift finding, a failing
+    # name is a broken gate. Only scripts the project opts into via
+    # toolchainGates.checkScripts are ever executed — nothing runs by default.
+    for name in check_scripts:
+        if name not in scripts:
+            records.append(F.make(
+                ENVELOPE, "check_script_missing",
+                f"{rel} declares no {name!r} script, but toolchainGates."
+                f"checkScripts requires it — the gate its name promises exists "
+                f"nowhere to run.",
+                severity=F.SHOULD_FIX, file=rel))
+            continue
+        ok, why = _run_check_script(REPO, name, scripts[name])
+        if not ok:
+            records.append(F.make(
+                ENVELOPE, "check_script_failed",
+                f"{rel} script {name!r} failed its toolchain gate: {why}",
+                severity=F.CRITICAL, file=rel))
+
     if args.out:
         (REPO / args.out).parent.mkdir(parents=True, exist_ok=True)
         (REPO / args.out).write_text(json.dumps(
@@ -180,7 +236,7 @@ def main() -> int:
             F.default_path(REPO, "toolchain-gates") if args.findings is True
             else REPO / args.findings,
             ENVELOPE, records,
-            scanned=len(manifests) + len(runners),
+            scanned=len(manifests) + len(runners) + len(check_scripts),
         )
 
     print(f"  manifests           {len(manifests)} ({scripts_seen} scripts)")
